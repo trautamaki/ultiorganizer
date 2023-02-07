@@ -2159,7 +2159,6 @@ function GenerateGames($poolId, $rounds=1, $generate=true, $nomutual=false, $hom
 
       $pseudoteams = false;
 
-      $poolInfo = PoolInfo($poolId);
       $query = sprintf("SELECT team.team_id from uo_team_pool as tp left join uo_team team
                 on (tp.team = team.team_id) WHERE tp.pool=%d ORDER BY tp.rank",
       (int)$poolId);
