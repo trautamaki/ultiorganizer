@@ -261,8 +261,43 @@ while($row = mysql_fetch_assoc($scores)){
 }
 
 $html .= "</table>";
-$html .= "<a href='?view=scorestatus&amp;series=".$seriesinfo['series_id']."'>"._("Scoreboard")."</a>";
+$html .= "<a href='?view=scorestatus&amp;series=".$seriesinfo['series_id']."'>"._("Scoreboard")."</a><br>";
 
+# Goals
+$html .= "<div style='float: left; width: 50%'>";
+$html .= "<h2>"._("Goals leaders")."</h2>\n";
+$html .= "<table cellspacing='0' border='0'>\n";
+$html .= "<tr><th style='width:100%'>"._("Player")."</th><th>"._("Team")."</th><th class='center'>"._("Games")."</th>
+<th class='center'>"._("Goals")."</th></tr>\n";
+
+$scores = SeriesScoreBoard($seriesinfo['series_id'],"goal", 10);
+while($row = mysql_fetch_assoc($scores)){
+  $html .= "<tr><td>". utf8entities($row['firstname']." ".$row['lastname'])."</td>";
+  $html .= "<td>".utf8entities($row['abbr'])."</td>";
+  $html .= "<td class='center'>".intval($row['games'])."</td>";
+  $html .= "<td class='center'>".intval($row['done'])."</td></tr>\n";
+}
+
+$html .= "</table>";
+$html .= "</div>";
+
+# Assists
+$html .= "<div style='float: right; width: 50%'>";
+$html .= "<h2>"._("Assists leaders")."</h2>\n";
+$html .= "<table cellspacing='0' border='0'>\n";
+$html .= "<tr><th style='width:100%'>"._("Player")."</th><th>"._("Team")."</th><th class='center'>"._("Games")."</th>
+<th class='center'>"._("Assists")."</th></tr>\n";
+
+$scores = SeriesScoreBoard($seriesinfo['series_id'],"pass", 10);
+while($row = mysql_fetch_assoc($scores)){
+  $html .= "<tr><td>". utf8entities($row['firstname']." ".$row['lastname'])."</td>";
+  $html .= "<td>".utf8entities($row['abbr'])."</td>";
+  $html .= "<td class='center'>".intval($row['games'])."</td>";
+  $html .= "<td class='center'>".intval($row['fedin'])."</td></tr>\n";
+}
+
+$html .= "</table>";
+$html .= "</div>";
 
 if(ShowDefenseStats()) {
   $html .= "<h2>"._("Defenseboard leaders")."</h2>\n";
