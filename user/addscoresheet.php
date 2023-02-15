@@ -30,16 +30,6 @@ function validTime(field)
 	field.value=field.value.replace(/[^0-9]/g, '.');
 	}
 
-function validNumber(field) 
-	{
-	field.value=field.value.replace(/[^0-9]/g, '');
-	}
-
-function validNumberX(field) 
-	{
-	field.value=field.value.replace(/[^0-9|^xX]/g, '');
-	}
-
 function highlightError(id) 
 	{
 	var errorDiv = YAHOO.util.Dom.get(id);
@@ -287,7 +277,7 @@ if(!empty($_POST['save']))
       $errIds[]="time$i";
     }
 
-    if(strcasecmp($pass,'xx')==0 || strcasecmp($pass,'x')==0)
+    if(strcasecmp($pass,'xx')==0 || strcasecmp($pass,'x')==0 || strcasecmp($pass,'-')==0)
     $iscallahan = 1;
     	
     $prevtime = $time;
@@ -551,6 +541,10 @@ $style_right .= "border-top-style:solid;border-top-width:1px;border-top-color:#0
 $style_right .= "border-bottom-style:solid;border-bottom-width:1px;border-bottom-color:#000000;";
 $style_right .= "border-left-style:dashed;border-left-width:1px;border-left-color:#E0E0E0;";
 
+$input_goal = "inputmode='numeric' pattern='^[0-9]*$' type='text'";
+$input_assist = "inputmode='numeric' pattern='^[a-zA-Z0-9\-]*$' type='text'";
+$input_time = "inputmode='numeric' pattern='^[0-9\.\,\:]*$' type='text'";
+
 echo "</td><td>";
 echo "<table style='border-collapse:collapse' cellspacing='0' cellpadding='2' border='0'>\n";
 echo "<tr><th style='background-color:#FFFFFF;border-style:none;border-width:0;border-color:#FFFFFF'></th>";
@@ -580,7 +574,7 @@ while($row = DB()->FetchAssoc($scores))
 
   if (intval($row['iscallahan']))
   {
-    echo "<td class='center' style='width:50px;$style_mid'><input class='input' onkeyup=\"validNumberX(this);\" id='pass$i' name='pass$i' maxlength='3' size='4' value='XX'/></td>";
+    echo "<td class='center' style='width:50px;$style_mid'><input class='input' $input_assist id='pass$i' name='pass$i' maxlength='3' size='4' value='-'/></td>";
   }
   else
   {
@@ -588,15 +582,15 @@ while($row = DB()->FetchAssoc($scores))
     if($n < 0)
     $n="";
     	
-    echo "<td class='center' style='width:50px;$style_mid'><input class='input' onkeyup=\"validNumberX(this);\" id='pass$i' name='pass$i' maxlength='3' size='4' value='$n'/></td>";
+    echo "<td class='center' style='width:50px;$style_mid'><input class='input' $input_assist id='pass$i' name='pass$i' maxlength='3' size='4' value='$n'/></td>";
   }
 
   $n = PlayerNumber($row['scorer'],$gameId);
   if($n < 0)
   $n="";
 
-  echo "<td class='center' style='width:50px;$style_mid'><input class='input' onkeyup=\"validNumber(this);\" id='goal$i' name='goal$i' maxlength='3' size='4' value='$n'/></td>";
-  echo "<td style='width:60px;$style_mid'><input class='input' onkeyup=\"validTime(this);\" id='time$i' name='time$i' maxlength='8' size='8' value='". SecToMin($row['time']) ."'/></td>";
+  echo "<td class='center' style='width:50px;$style_mid'><input class='input' $input_goal id='goal$i' name='goal$i' maxlength='3' size='4' value='$n'/></td>";
+  echo "<td style='width:60px;$style_mid'><input class='input' $input_time onkeyup=\"validTime(this);\" id='time$i' name='time$i' maxlength='8' size='8' value='". SecToMin($row['time']) ."'/></td>";
   echo "<td class='center' style='width:60px;$style_right'><input class='fakeinput center' id='sit$i' name='sit$i' size='7' disabled='disabled'
 	value='".utf8entities($row['homescore'])." - ". $row['visitorscore'] ."'/></td>";
 
@@ -610,9 +604,9 @@ for($i;$i<$maxscores; $i++)
   echo "<td class='center' style='width:25px;color:#B0B0B0;'>",$i+1,"</td>\n";
   echo "<td class='center' style='width:40px;$style_left'><input onclick=\"updateScores($i);\" id='hteam$i' name='team$i' type='radio' value='H' /></td>";
   echo "<td class='center' style='width:40px;$style_mid'><input onclick=\"updateScores($i);\" id='ateam$i' name='team$i' type='radio' value='A' /></td>";
-  echo "<td class='center' style='width:50px;$style_mid'><input class='input' onkeyup=\"validNumberX(this);\" id='pass$i' name='pass$i' size='4' maxlength='3'/></td>";
-  echo "<td  class='center' style='width:50px;$style_mid'><input class='input' onkeyup=\"validNumber(this);\" id='goal$i' name='goal$i' size='4' maxlength='3'/></td>";
-  echo "<td style='width:60px;$style_mid'><input class='input' onkeyup=\"validTime(this);\" id='time$i' name='time$i' maxlength='8' size='8'/></td>";
+  echo "<td class='center' style='width:50px;$style_mid'><input class='input' $input_assist id='pass$i' name='pass$i' size='4' maxlength='3'/></td>";
+  echo "<td  class='center' style='width:50px;$style_mid'><input class='input' $input_goal id='goal$i' name='goal$i' size='4' maxlength='3'/></td>";
+  echo "<td style='width:60px;$style_mid'><input class='input' $input_time onkeyup=\"validTime(this);\" id='time$i' name='time$i' maxlength='8' size='8'/></td>";
   echo "<td class='center' style='width:60px;$style_right'><input class='fakeinput center' id='sit$i' name='sit$i' size='7' disabled='disabled'/></td>";
   echo "</tr>\n";
 }
