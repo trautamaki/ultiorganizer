@@ -1,12 +1,13 @@
-<?php 
-class Goals extends Restful {
-	function Goals() {
-		
+<?php
+class Goals extends Restful
+{
+	function Goals()
+	{
 	}
 }
-class Passess extends Restful {
-	function Passes() {
-		
+class Passess extends Restful
+{
+	function Passes()
+	{
 	}
 }
-?>

@@ -1,18 +1,21 @@
 <?php
-include_once $include_prefix.'lib/configuration.functions.php';
-include_once $include_prefix.'lib/gettext/gettext.inc';
-include_once $include_prefix.'lib/translation.functions.php';
+include_once $include_prefix . 'lib/configuration.functions.php';
+include_once $include_prefix . 'lib/gettext/gettext.inc';
+include_once $include_prefix . 'lib/translation.functions.php';
 
 // Map locales to defined ones that are "close enough"
-$localeMap = array("en" => "en_GB.utf8",
-					"en-gb" => "en_GB.utf8", 
-					"en-au" => "en_GB.utf8",
-					"en-ca" => "en_GB.utf8",
-					"en-us" => "en_GB.utf8",
-					"fi" => "fi_FI.utf8",
-					"fi-fi" => "fi_FI.utf8");
+$localeMap = array(
+  "en" => "en_GB.utf8",
+  "en-gb" => "en_GB.utf8",
+  "en-au" => "en_GB.utf8",
+  "en-ca" => "en_GB.utf8",
+  "en-us" => "en_GB.utf8",
+  "fi" => "fi_FI.utf8",
+  "fi-fi" => "fi_FI.utf8"
+);
 
-function setSessionLocale() {
+function setSessionLocale()
+{
   global $include_prefix;
 
   if (isset($_SESSION['userproperties']['locale'])) {
@@ -30,10 +33,10 @@ function setSessionLocale() {
     $_SESSION['userproperties']['locale'] = array(PreferredLocale() => 0);
   }
 
-  if(is_array($_SESSION['userproperties']['locale'])){
+  if (is_array($_SESSION['userproperties']['locale'])) {
     $tmparr = array_keys($_SESSION['userproperties']['locale']);
     $locale = $tmparr[0];
-  }else{
+  } else {
     $locale = $_SESSION['userproperties']['locale'];
   }
   $encoding = 'UTF-8';
@@ -41,7 +44,7 @@ function setSessionLocale() {
   putenv("LC_MESSAGES=$locale");
   $domain = 'messages';
   T_textdomain($domain);
-  T_bindtextdomain($domain, $include_prefix."locale");
+  T_bindtextdomain($domain, $include_prefix . "locale");
   T_bind_textdomain_codeset($domain, $encoding);
   T_setlocale(LC_MESSAGES, $locale);
 
@@ -57,11 +60,13 @@ function setSessionLocale() {
 }
 
 
-function utf8entities($string) {
+function utf8entities($string)
+{
   return htmlentities($string, ENT_QUOTES, "UTF-8");
 }
 
-function styles() {
+function styles()
+{
   global $styles_prefix;
   global $include_prefix;
   if (!isset($styles_prefix)) {
@@ -69,27 +74,28 @@ function styles() {
     //		$styles_prefix = "../";
   }
   $ret = "";
-  if (is_file($include_prefix.'cust/'.CUSTOMIZATIONS.'/layout.css')) {
-    $ret .= "		<link rel=\"stylesheet\" href=\"".$styles_prefix."cust/".CUSTOMIZATIONS."/layout.css\" type=\"text/css\" />\n";
+  if (is_file($include_prefix . 'cust/' . CUSTOMIZATIONS . '/layout.css')) {
+    $ret .= "		<link rel=\"stylesheet\" href=\"" . $styles_prefix . "cust/" . CUSTOMIZATIONS . "/layout.css\" type=\"text/css\" />\n";
   } else {
-    $ret .= "		<link rel=\"stylesheet\" href=\"".$styles_prefix."cust/default/layout.css\" type=\"text/css\" />\n";
+    $ret .= "		<link rel=\"stylesheet\" href=\"" . $styles_prefix . "cust/default/layout.css\" type=\"text/css\" />\n";
   }
-  if (is_file($include_prefix.'cust/'.CUSTOMIZATIONS.'/font.css')) {
-    $ret .= "		<link rel=\"stylesheet\" href=\"".$styles_prefix."cust/".CUSTOMIZATIONS."/font.css\" type=\"text/css\" />\n";
+  if (is_file($include_prefix . 'cust/' . CUSTOMIZATIONS . '/font.css')) {
+    $ret .= "		<link rel=\"stylesheet\" href=\"" . $styles_prefix . "cust/" . CUSTOMIZATIONS . "/font.css\" type=\"text/css\" />\n";
   } else {
-    $ret .= "		<link rel=\"stylesheet\" href=\"".$styles_prefix."cust/default/font.css\" type=\"text/css\" />\n";
+    $ret .= "		<link rel=\"stylesheet\" href=\"" . $styles_prefix . "cust/default/font.css\" type=\"text/css\" />\n";
   }
-  if (is_file($include_prefix.'cust/'.CUSTOMIZATIONS.'/default.css')) {
-    $ret .= "		<link rel=\"stylesheet\" href=\"".$styles_prefix."cust/".CUSTOMIZATIONS."/default.css\" type=\"text/css\" />\n";
+  if (is_file($include_prefix . 'cust/' . CUSTOMIZATIONS . '/default.css')) {
+    $ret .= "		<link rel=\"stylesheet\" href=\"" . $styles_prefix . "cust/" . CUSTOMIZATIONS . "/default.css\" type=\"text/css\" />\n";
   } else {
-    $ret .= "		<link rel=\"stylesheet\" href=\"".$styles_prefix."cust/default/default.css\" type=\"text/css\" />\n";
+    $ret .= "		<link rel=\"stylesheet\" href=\"" . $styles_prefix . "cust/default/default.css\" type=\"text/css\" />\n";
   }
   return $ret;
 }
 
-function MapLocale($ext_locale) {
+function MapLocale($ext_locale)
+{
   global $localeMap;
-  $locale = strtolower(str_replace("_",'-',$ext_locale));
+  $locale = strtolower(str_replace("_", '-', $ext_locale));
   if (isset($localeMap[$locale])) {
     return $localeMap[$locale];
   } else {
@@ -97,7 +103,8 @@ function MapLocale($ext_locale) {
   }
 }
 
-function PreferredLocale() {
+function PreferredLocale()
+{
   $langs = array();
 
   //temporarly disabled, seems not working properly on ffda server with english windows and
@@ -128,5 +135,3 @@ function PreferredLocale() {
    */
   return GetDefaultLocale();
 }
-
-?>

@@ -1,7 +1,8 @@
-<?php 
-class Playerprofiles extends Restful {
-	function Playerprofiles() {
+<?php
+class Playerprofiles extends Restful
+{
+	function Playerprofiles()
+	{
 		$this->localizename = false;
 	}
 }
-?>

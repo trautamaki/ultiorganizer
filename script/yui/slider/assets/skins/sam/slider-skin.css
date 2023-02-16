@@ -9,6 +9,7 @@ version: 2.8.2r1
     height: 28px;
     width: 228px;
 }
+
 .yui-skin-sam .yui-h-slider .yui-slider-thumb {
     top: 4px;
 }
@@ -18,6 +19,7 @@ version: 2.8.2r1
     height: 228px;
     width: 48px;
 }
+
 .yui-skin-sam .yui-region-slider {
     height: 228px;
     width: 228px;

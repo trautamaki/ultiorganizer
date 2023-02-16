@@ -18,6 +18,7 @@ function GetServerName() {
 $serverName = GetServerName();
 //include prefix can be used to locate root level of directory tree.
 $include_prefix = "";
+
 while (!(is_file($include_prefix.'conf/config.inc.php') || is_file($include_prefix.'conf/'.$serverName.".config.inc.php"))) {
   $include_prefix .= "../";
 }
@@ -271,4 +272,3 @@ if (function_exists('mysql_set_charset') === false) {
     }
   }
 }
-?>

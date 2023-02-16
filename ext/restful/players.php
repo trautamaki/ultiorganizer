@@ -1,6 +1,8 @@
-<?php 
-class Players extends Restful {
-	function Players() {
+<?php
+class Players extends Restful
+{
+	function Players()
+	{
 		$this->listsql = "SELECT player_id, CONCAT(player.firstname, ' ', player.lastname) as name, num, 
 		player.firstname, player.lastname, player.accredited, player.accreditation_id
 		FROM uo_player player
@@ -18,16 +20,15 @@ class Players extends Restful {
 		WHERE player_id='%s'";
 		$this->tables = array("uo_player" => "player", "uo_team" => "team", "uo_pool" => "pool", "uo_series" => "series", "uo_season" => "season");
 		$this->defaultOrdering = array("season.starttime" => "ASC", "series.ordering" => "ASC", "pool.ordering" => "ASC");
-		
+
 		$this->localizename = false;
 		$this->linkfields["accreditation_id"] = "playerprofiles";
 		$this->linkfields["team"] = "teams";
 		$this->children["games"] = array("field" => "game.game_id", "operator" => "subselect", "value" =>
-			array("table" => "played", "field" => "played.game", "join" => "and", "criteria" =>
-				array(array("field" => "played.player", "operator" => "=", "value" => array("variable" => "id")))));
+		array("table" => "played", "field" => "played.game", "join" => "and", "criteria" =>
+		array(array("field" => "played.player", "operator" => "=", "value" => array("variable" => "id")))));
 
 		//$this->children["goals"];
 		//$this->children["passes"];
-	}	
+	}
 }
-?>
