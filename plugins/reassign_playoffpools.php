@@ -32,15 +32,15 @@ if (!empty($_POST['series'])) {
 
 	// get all playoff pools from this series
 	$seriesId = $_POST['series'];
-	$pools = SeriesPools($seriesId);
+	$pools = SeriesPools($database, $seriesId);
 
 	$moveablepools = array();
 
 	foreach ($pools as $pool) {
 		$poolId = $pool['pool_id'];
-		$poolinfo = PoolInfo($poolId);
-		//		if(PoolIsMoveFromPoolsPlayed($poolId) && !PoolIsAllMoved($poolId)) {
-		if (!PoolIsAllMoved($poolId)) {
+		$poolinfo = PoolInfo($database, $poolId);
+		//		if(PoolIsMoveFromPoolsPlayed($database, $poolId) && !PoolIsAllMoved($database, $poolId)) {
+		if (!PoolIsAllMoved($database, $poolId)) {
 			$moveablepools[] = $pool;
 			$html .= "<h2>" . utf8entities($pool['name']) . "</h2>\n";
 
@@ -52,27 +52,27 @@ if (!empty($_POST['series'])) {
 				<th>" . _("To pool") . "</th>
 				<th>" . _("Name in Schedule") . "</th></tr>\n";
 
-			$moves = PoolMovingsToPool($poolId);
+			$moves = PoolMovingsToPool($database, $poolId);
 			foreach ($moves as $row) {
 				$html .= "<tr>\n";
 				$html .= "<td style='white-space: nowrap'>" . utf8entities($row['name']) . "</td>\n";
 				if (!$playoffpool) {
-					$frompool = PoolInfo($row['frompool']);
+					$frompool = PoolInfo($database, $row['frompool']);
 					if ($frompool['type'] == 2) {
 						$playoffpool = true;
 					}
 				}
 				//		echo "fetching ".$row['frompool']." ".$row['fromplacing']."</p>";
-				$team = PoolTeamFromStandings($row['frompool'], $row['fromplacing'], $poolinfo['type'] != 2);  // do not count the BYE team if we are moving to a playoff pool
+				$team = PoolTeamFromStandings($database, $row['frompool'], $row['fromplacing'], $poolinfo['type'] != 2);  // do not count the BYE team if we are moving to a playoff pool
 				$html .= "<td class='center'>" . intval($row['fromplacing']) . "</td>\n";
-				if (TeamPoolCountBYEs($team['team_id'], $row['frompool']) > 0) {
+				if (TeamPoolCountBYEs($database, $team['team_id'], $row['frompool']) > 0) {
 					$html .= "<td class='highlight'><b>" . utf8entities($team['name']) . "</b></td>\n";
 					$BYEs = true;
 				} else {
 					$html .= "<td class='highlight'>" . utf8entities($team['name']) . "</td>\n";
 				}
 				$html .= "<td class='center'>" . intval($row['torank']) . "</td>\n";
-				$html .= "<td style='white-space: nowrap'>" . utf8entities(PoolName($poolId)) . "</td>\n";
+				$html .= "<td style='white-space: nowrap'>" . utf8entities(PoolName($database, $poolId)) . "</td>\n";
 				$html .= "<td>" . utf8entities($row['pteamname']) . "</td>\n";
 				$html .= "</tr>\n";
 			}
@@ -88,7 +88,7 @@ if (!empty($_POST['series'])) {
 
 			$html .= "<p>" . _("Games to move") . ":</p>\n";
 			$mvgames = intval($poolinfo['mvgames']);
-			$games = PoolGetGamesToMove($poolId, $mvgames);
+			$games = PoolGetGamesToMove($database, $poolId, $mvgames);
 			if (count($games) > 0) {
 				die('This tool is not designed to work if games are moved as well');
 			} else {
@@ -128,8 +128,8 @@ if (!empty($_POST['series'])) {
 	}
 
 	// check if second pool moves follows the moves of the first pool
-	$moves1 = PoolMovingsToPool($poolId1);
-	$moves2 = PoolMovingsToPool($poolId2);
+	$moves1 = PoolMovingsToPool($database, $poolId1);
+	$moves2 = PoolMovingsToPool($database, $poolId2);
 
 	sort($moves1);
 	sort($moves2);
@@ -198,58 +198,58 @@ if (!empty($_POST['series'])) {
 		$query = sprintf(
 			"UPDATE uo_moveteams SET topool='%s', torank='%s', scheduling_id='%s' 
 						WHERE frompool='%s' AND fromplacing='%s'",
-			mysql_real_escape_string($newmove1[$i]['topool']),
-			mysql_real_escape_string($newmove1[$i]['torank']),
-			mysql_real_escape_string($newmove1[$i]['scheduling_id']),
-			mysql_real_escape_string($newmove1[$i]['frompool']),
-			mysql_real_escape_string($newmove1[$i]['fromplacing'])
+			$database->RealEscapeString($newmove1[$i]['topool']),
+			$database->RealEscapeString($newmove1[$i]['torank']),
+			$database->RealEscapeString($newmove1[$i]['scheduling_id']),
+			$database->RealEscapeString($newmove1[$i]['frompool']),
+			$database->RealEscapeString($newmove1[$i]['fromplacing'])
 		);
 
 		//		echo $query."<br>";
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error() . $query);
+			die('Invalid query: ' . $database->GetConnection()->error() . $query);
 		}
 
 		$query = sprintf(
 			"UPDATE uo_scheduling_name SET name='%s' 
 						WHERE scheduling_id='%s'",
-			mysql_real_escape_string($newmove1[$i]['pteamname']),
-			mysql_real_escape_string($newmove1[$i]['scheduling_id'])
+			$database->RealEscapeString($newmove1[$i]['pteamname']),
+			$database->RealEscapeString($newmove1[$i]['scheduling_id'])
 		);
 		//		echo $query."<br>";
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error() . $query);
+			die('Invalid query: ' . $database->GetConnection()->error() . $query);
 		}
 	}
 	for ($i = 0; $i < (count($newmove2)); $i++) {
 		$query = sprintf(
 			"UPDATE uo_moveteams SET topool='%s', torank='%s', scheduling_id='%s' 
 						WHERE frompool='%s' AND fromplacing='%s'",
-			mysql_real_escape_string($newmove2[$i]['topool']),
-			mysql_real_escape_string($newmove2[$i]['torank']),
-			mysql_real_escape_string($newmove2[$i]['scheduling_id']),
-			mysql_real_escape_string($newmove2[$i]['frompool']),
-			mysql_real_escape_string($newmove2[$i]['fromplacing'])
+			$database->RealEscapeString($newmove2[$i]['topool']),
+			$database->RealEscapeString($newmove2[$i]['torank']),
+			$database->RealEscapeString($newmove2[$i]['scheduling_id']),
+			$database->RealEscapeString($newmove2[$i]['frompool']),
+			$database->RealEscapeString($newmove2[$i]['fromplacing'])
 		);
 		//		echo $query."<br>";
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 
 
 		$query = sprintf(
 			"UPDATE uo_scheduling_name SET name='%s' 
 						WHERE scheduling_id='%s'",
-			mysql_real_escape_string($newmove2[$i]['pteamname']),
-			mysql_real_escape_string($newmove2[$i]['scheduling_id'])
+			$database->RealEscapeString($newmove2[$i]['pteamname']),
+			$database->RealEscapeString($newmove2[$i]['scheduling_id'])
 		);
 		//		echo $query."<br>";
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 	}
 
@@ -262,9 +262,9 @@ if (!empty($_POST['series'])) {
 
 	$html .= "<p>" . ("Select division") . ": <select class='dropdown' name='series'>\n";
 
-	$series = Series();
+	$series = Series($database);
 
-	while ($row = mysql_fetch_assoc($series)) {
+	while ($row = $database->FetchAssoc($series)) {
 		$html .= "<option class='dropdown' value='" . utf8entities($row['series_id']) . "'>" . utf8entities($row['seasonname']) . " " . utf8entities($row['name']) . "</option>";
 	}
 
@@ -274,5 +274,5 @@ if (!empty($_POST['series'])) {
 	$html .= "</form>";
 }
 
-showPage($title, $html);
+showPage($database, $title, $html);
 ?>

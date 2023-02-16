@@ -8,16 +8,16 @@ include_once $include_prefix . 'lib/logging.functions.php';
 include_once $include_prefix . 'lib/common.functions.php';
 //include_once $include_prefix.'lib/configuration.functions.php';
 
-function FailRedirect($user)
+function FailRedirect($database, $user)
 {
-	SetUserSessionData('anonymous');
+	SetUserSessionData($database, 'anonymous');
 	header("location:?view=login_failed&user=" . urlencode($user));
 	exit();
 }
 
-function FailRedirectMobile($user)
+function FailRedirectMobile($database, $user)
 {
-	SetUserSessionData('anonymous');
+	SetUserSessionData($database, 'anonymous');
 	header("location:?view=mobile/login_failed&user=" . urlencode($user));
 	exit();
 }
@@ -45,23 +45,23 @@ function Forbidden($user)
 	exit();
 }
 
-function UserAuthenticate($user, $passwd, $failcallback)
+function UserAuthenticate($database, $user, $passwd, $failcallback)
 {
 	$query = sprintf(
 		"SELECT * FROM uo_users WHERE UserID='%s' AND Password=MD5('%s')",
-		mysql_real_escape_string($user),
-		mysql_real_escape_string($passwd)
+		$database->RealEscapeString($user),
+		$database->RealEscapeString($passwd)
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
-	$count = mysql_num_rows($result);
+	$count = $database->NumRows($result);
 	if ($count == 1) {
-		LogUserAuthentication($user, "success");
-		SetUserSessionData($user);
-		$row = mysql_fetch_assoc($result);
-		mysql_query("UPDATE uo_users SET last_login=NOW() WHERE userid='" . mysql_real_escape_string($user) . "'");
+		LogUserAuthentication($database, $user, "success");
+		SetUserSessionData($database, $user);
+		$row = $database->FetchAssoc($result);
+		$database->DBQuery("UPDATE uo_users SET last_login=NOW() WHERE userid='" . $database->RealEscapeString($user) . "'");
 
 		//first logging
 		if (empty($row['last_login']) && $user == "admin") {
@@ -74,50 +74,50 @@ function UserAuthenticate($user, $passwd, $failcallback)
 			exit();
 		}
 	} else {
-		LogUserAuthentication($user, "failed");
+		LogUserAuthentication($database, $user, "failed");
 		if (!empty($failcallback)) {
-			$failcallback($user);
+			$failcallback($database, $user);
 		} else {
 			return false;
 		}
 	}
 }
 
-function UserInfo($user_id)
+function UserInfo($database, $user_id)
 {
 	if ($user_id == $_SESSION['uid'] || hasEditUsersRight()) {
 		$query = sprintf(
 			"SELECT * FROM uo_users WHERE userid='%s'",
-			mysql_real_escape_string($user_id)
+			$database->RealEscapeString($user_id)
 		);
-		return DBQueryToRow($query, true);
+		return $database->DBQueryToRow($query, true);
 	} else {
 		die('Insufficient rights to get user info');
 	}
 }
 
-function UserIdForMail($mail)
+function UserIdForMail($database, $mail)
 {
 	$query = sprintf(
 		"SELECT userid FROM uo_users WHERE email='%s'",
-		mysql_real_escape_string($mail)
+		$database->RealEscapeString($mail)
 	);
-	return DBQueryToValue($query);
+	return $database->DBQueryToValue($query);
 }
 
-function UserExtraEmails($user_id)
+function UserExtraEmails($database, $user_id)
 {
 	if ($user_id == $_SESSION['uid'] || hasEditUsersRight()) {
 		$query = sprintf(
 			"SELECT email FROM uo_extraemail WHERE userid='%s'",
-			mysql_real_escape_string($user_id)
+			$database->RealEscapeString($user_id)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
 		$ret = array();
-		while ($row = mysql_fetch_row($result)) {
+		while ($row = $result->fetch_row) {
 			$ret[] = $row[0];
 		}
 		if (count($ret) > 0) {
@@ -128,7 +128,7 @@ function UserExtraEmails($user_id)
 	}
 }
 
-function IsRegistered($user_id)
+function IsRegistered($database, $user_id)
 {
 	if ($user_id == "anonymous") {
 		return false;
@@ -136,55 +136,55 @@ function IsRegistered($user_id)
 
 	$query = sprintf(
 		"SELECT userid FROM uo_users WHERE userid='%s'",
-		mysql_real_escape_string($user_id)
+		$database->RealEscapeString($user_id)
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
-	if ($row = mysql_fetch_assoc($result)) {
+	if ($row = $database->FetchAssoc($result)) {
 		return true;
 	} else {
 		$query = sprintf(
 			"SELECT userid FROM uo_registerrequest WHERE userid='%s'",
-			mysql_real_escape_string($user_id)
+			$database->RealEscapeString($user_id)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
-		if ($row = mysql_fetch_assoc($result)) {
+		if ($row = $database->FetchAssoc($result)) {
 			return true;
 		}
 		return false;
 	}
 }
 
-function UserUpdateInfo($user_id, $olduser, $user, $name)
+function UserUpdateInfo($database, $user_id, $olduser, $user, $name)
 {
 	if ($olduser == $_SESSION['uid'] || hasEditUsersRight()) {
 
 		$query = sprintf(
 			"UPDATE uo_users SET UserID='%s', name='%s' WHERE ID=%d",
-			mysql_real_escape_string($user),
-			mysql_real_escape_string($name),
+			$database->RealEscapeString($user),
+			$database->RealEscapeString($name),
 			(int)$user_id
 		);
 
-		DBQuery($query);
+		$database->DBQuery($query);
 
 		if ($olduser != $user) {
 			$query = sprintf(
 				"UPDATE uo_userproperties SET userid='%s' WHERE userid='%s'",
-				mysql_real_escape_string($user),
-				mysql_real_escape_string($olduser)
+				$database->RealEscapeString($user),
+				$database->RealEscapeString($olduser)
 			);
 
-			DBQuery($query);
+			$database->DBQuery($query);
 		}
 		//update session data only if user is current use
 		if ($olduser == $_SESSION['uid']) {
-			SetUserSessionData($user);
+			SetUserSessionData($database, $user);
 		}
 		return true;
 	} else {
@@ -192,23 +192,23 @@ function UserUpdateInfo($user_id, $olduser, $user, $name)
 	}
 }
 
-function UserChangePassword($user_id, $passwd)
+function UserChangePassword($database, $user_id, $passwd)
 {
 
 	if ($user_id == $_SESSION['uid'] || hasEditUsersRight()) {
 		$query = sprintf(
 			"UPDATE uo_users SET password=MD5('%s') WHERE userid='%s'",
-			mysql_real_escape_string($passwd),
-			mysql_real_escape_string($user_id)
+			$database->RealEscapeString($passwd),
+			$database->RealEscapeString($user_id)
 		);
 
-		DBQuery($query);
+		$database->DBQuery($query);
 	} else {
 		die('Insufficient rights to change user info');
 	}
 }
 
-function SetUserSessionData($user_id)
+function SetUserSessionData($database, $user_id)
 {
 	unset($_SESSION['userproperties']);
 	unset($_SESSION['navigation']);
@@ -217,18 +217,18 @@ function SetUserSessionData($user_id)
 
 	$query = sprintf(
 		"SELECT prop_id, name, value FROM uo_userproperties WHERE userid='%s'",
-		mysql_real_escape_string($user_id)
+		$database->RealEscapeString($user_id)
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
 
 	if (!isset($_SESSION['userproperties'])) {
 		$_SESSION['userproperties'] = array();
 	}
 
-	while ($property = mysql_fetch_assoc($result)) {
+	while ($property = $database->FetchAssoc($result)) {
 		$propname = $property['name'];
 		$propvalue = explode(":", $property['value']);
 		$propid = $property['prop_id'];
@@ -249,12 +249,13 @@ function SetUserSessionData($user_id)
 	}
 }
 
-function getEditSeasons($userid)
+function getEditSeasons($database, $userid)
 {
-	$editSeasons = getUserpropertyArray($userid, 'editseason');
-	return SortEditSeasons($editSeasons);
+	$editSeasons = getUserpropertyArray($database, $userid, 'editseason');
+	return SortEditSeasons($database, $editSeasons);
 }
-function SortEditSeasons($editSeasons)
+
+function SortEditSeasons($database, $editSeasons)
 {
 	if (count($editSeasons) == 0)
 		return $editSeasons;
@@ -267,35 +268,35 @@ function SortEditSeasons($editSeasons)
 			} else {
 				$seasons .= ", '";
 			}
-			$seasons .= mysql_real_escape_string($season) . "'";
+			$seasons .= $database->RealEscapeString($season) . "'";
 		}
 		$query = "SELECT season_id FROM uo_season WHERE season_id IN (" . $seasons . ") ORDER BY starttime ASC";
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
 		$ret = array();
-		while ($row = mysql_fetch_row($result)) {
+		while ($row = $result->fetch_row()) {
 			$ret[$row[0]] = $editSeasons[$row[0]];
 		}
 		return $ret;
 	}
 }
 
-function getPoolselectors($userid)
+function getPoolselectors($database, $userid)
 {
-	return getUserpropertyArray($userid, 'poolselector');
+	return getUserpropertyArray($database, $userid, 'poolselector');
 }
 
-function getUserroles($userid)
+function getUserroles($database, $userid)
 {
-	return getUserpropertyArray($userid, 'userrole');
+	return getUserpropertyArray($database, $userid, 'userrole');
 }
 
-function getUserLocale($userid)
+function getUserLocale($database, $userid)
 {
-	$localearr = getUserpropertyArray($userid, 'locale');
+	$localearr = getUserpropertyArray($database, $userid, 'locale');
 	if (count($localearr) > 0) {
 		$tmparr = array_keys($localearr);
 		return $tmparr[0];
@@ -304,29 +305,29 @@ function getUserLocale($userid)
 	}
 }
 
-function SetUserLocale($userid, $locale)
+function SetUserLocale($database, $userid, $locale)
 {
 	if ($userid == $_SESSION['uid'] || hasEditUsersRight()) {
 		global $locales;
 		if (isset($locales[$locale])) {
-			$localearr = getUserpropertyArray($userid, 'locale');
+			$localearr = getUserpropertyArray($database, $userid, 'locale');
 			if (count($localearr) > 0) {
 				$query = sprintf(
 					"UPDATE uo_userproperties SET value='%s' WHERE userid='%s' AND name='locale'",
-					mysql_real_escape_string($locale),
-					mysql_real_escape_string($userid)
+					$database->RealEscapeString($locale),
+					$database->RealEscapeString($userid)
 				);
 			} else {
 				$query = sprintf(
 					"INSERT INTO uo_userproperties (name, value, userid) VALUES ('locale', '%s', '%s')",
-					mysql_real_escape_string($locale),
-					mysql_real_escape_string($userid)
+					$database->RealEscapeString($locale),
+					$database->RealEscapeString($userid)
 				);
 			}
-			$result = mysql_query($query);
+			$result = $database->DBQuery($query);
 
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . $database->GetConnection()->error);
 			}
 		} else {
 			die('Invalid locale: ' . $locale);
@@ -336,44 +337,44 @@ function SetUserLocale($userid, $locale)
 	}
 }
 
-function getPropId($userid, $name, $value)
+function getPropId($database, $userid, $name, $value)
 {
 	if ($userid == $_SESSION['uid'] || hasEditUsersRight()) {
 		$query = sprintf(
 			"SELECT prop_id FROM uo_userproperties WHERE userid='%s' and name='%s'
 							and value='%s'",
-			mysql_real_escape_string($userid),
-			mysql_real_escape_string($name),
-			mysql_real_escape_string($value)
+			$database->RealEscapeString($userid),
+			$database->RealEscapeString($name),
+			$database->RealEscapeString($value)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
 
-		$row = mysql_fetch_row($result);
+		$row = $result->fetch_row();
 		return $row[0];
 	} else {
 		die('Insufficient rights to get user info');
 	}
 }
 
-function getUserpropertyArray($userid, $propertyname)
+function getUserpropertyArray($database, $userid, $propertyname)
 {
 	if ($userid == $_SESSION['uid'] || hasEditUsersRight()) {
 		$query = sprintf(
 			"SELECT prop_id, value FROM uo_userproperties WHERE userid='%s' and name='%s'",
-			mysql_real_escape_string($userid),
-			mysql_real_escape_string($propertyname)
+			$database->RealEscapeString($userid),
+			$database->RealEscapeString($propertyname)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
 		$ret = array();
-		while ($property = mysql_fetch_assoc($result)) {
+		while ($property = $database->FetchAssoc($result)) {
 			$propvalue = explode(":", $property['value']);
 			$propid = $property['prop_id'];
 			if (count($propvalue) == 1) {
@@ -403,7 +404,7 @@ function setSelectedSeason()
 	}
 }
 
-function getViewPools($selSeasonId)
+function getViewPools($database, $selSeasonId)
 {
 	$numselectors = 0;
 	$query = "SELECT seas.season_id as season, seas.name as season_name, ser.series_id as series, ser.name as series_name, pool.pool_id as pool, pool.name as pool_name ";
@@ -420,12 +421,12 @@ function getViewPools($selSeasonId)
 				$query .= "OR ";
 			}
 			if ($selector == 'currentseason') {
-				$query .= sprintf("seas.season_id='%s' ", mysql_real_escape_string($selSeasonId));
+				$query .= sprintf("seas.season_id='%s' ", $database->RealEscapeString($selSeasonId));
 			} elseif ($selector == 'team') {
 				$query .= sprintf("pool.pool_id in (SELECT pool FROM uo_team WHERE team_id=%d) ", (int)key($param));
 				$query .= sprintf("OR pool.pool_id in (SELECT pool FROM uo_team_pool WHERE team=%d) ", (int)key($param));
 			} elseif ($selector == 'season') {
-				$query .= sprintf("seas.season_id='%s' ", mysql_real_escape_string(key($param)));
+				$query .= sprintf("seas.season_id='%s' ", $database->RealEscapeString(key($param)));
 			} elseif ($selector == 'series') {
 				$query .= sprintf("ser.series_id=%d ", (int)key($param));
 			} elseif ($selector == 'pool') {
@@ -441,47 +442,47 @@ function getViewPools($selSeasonId)
 	}
 	$query .= " ORDER BY seas.endtime > NOW() DESC, seas.starttime DESC, ser.season ASC, ser.ordering ASC, pool.ordering ASC";
 
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
 
 	return $result;
 }
 
 
-function ClearUserSessionData()
+function ClearUserSessionData($database)
 {
 	if (IsFacebookEnabled()) {
 		global $serverConf;
 		setcookie('fbs_' . $serverConf['FacebookAppId'], "", 1, "/");
 		unset($_COOKIE['fbs_' . $serverConf['FacebookAppId']]);
 	}
-	SetUserSessionData("anonymous");
+	SetUserSessionData($database, "anonymous");
 }
 
-function setSuperAdmin($userid, $value)
+function setSuperAdmin($database, $userid, $value)
 {
 	if (hasEditUsersRight()) {
-		if ($value && !isSuperAdminByUserid($userid)) {
+		if ($value && !isSuperAdminByUserid($database, $userid)) {
 			$query = sprintf(
 				"INSERT INTO uo_userproperties (userid, name, value) VALUES ('%s', 'userrole', 'superadmin')",
-				mysql_real_escape_string($userid)
+				$database->RealEscapeString($userid)
 			);
-			$result = mysql_query($query);
-			Log1("security", "add", $userid, "", "superadmin acceess granted");
+			$result = $database->DBQuery($query);
+			Log1($database, "security", "add", $userid, "", "superadmin acceess granted");
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . $database->GetConnection()->error);
 			}
 		} else if (!$value) {
 			$query = sprintf(
 				"DELETE FROM uo_userproperties WHERE userid='%s' AND name='userrole' AND value='superadmin'",
-				mysql_real_escape_string($userid)
+				$database->RealEscapeString($userid)
 			);
-			$result = mysql_query($query);
-			Log1("security", "add", $userid, "", "superadmin acceess removed");
+			$result = $database->DBQuery($query);
+			Log1($database, "security", "add", $userid, "", "superadmin acceess removed");
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . $database->GetConnection()->error);
 			}
 		}
 	} else {
@@ -489,28 +490,28 @@ function setSuperAdmin($userid, $value)
 	}
 }
 
-function setTranslationAdmin($userid, $value)
+function setTranslationAdmin($database, $userid, $value)
 {
 	if (hasEditUsersRight()) {
-		if ($value && !isTranslationAdminByUserid($userid)) {
+		if ($value && !isTranslationAdminByUserid($database, $userid)) {
 			$query = sprintf(
 				"INSERT INTO uo_userproperties (userid, name, value) VALUES ('%s', 'userrole', 'translationadmin')",
-				mysql_real_escape_string($userid)
+				$database->RealEscapeString($userid)
 			);
-			$result = mysql_query($query);
-			Log1("security", "add", $userid, "", "translationadmin acceess granted");
+			$result = $database->DBQuery($query);
+			Log1($database, "security", "add", $userid, "", "translationadmin acceess granted");
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . $database->GetConnection()->error);
 			}
 		} else if (!$value) {
 			$query = sprintf(
 				"DELETE FROM uo_userproperties WHERE userid='%s' AND name='userrole' AND value='translationadmin'",
-				mysql_real_escape_string($userid)
+				$database->RealEscapeString($userid)
 			);
-			$result = mysql_query($query);
-			Log1("security", "add", $userid, "", "translationadmin acceess removed");
+			$result = $database->DBQuery($query);
+			Log1($database, "security", "add", $userid, "", "translationadmin acceess removed");
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . $database->GetConnection()->error);
 			}
 		}
 	} else {
@@ -518,19 +519,19 @@ function setTranslationAdmin($userid, $value)
 	}
 }
 
-function isSuperAdminByUserid($userid)
+function isSuperAdminByUserid($database, $userid)
 {
 	if (hasEditUsersRight()) {
 		$query = sprintf(
 			"SELECT * FROM uo_userproperties WHERE userid='%s' AND name='userrole' AND value='superadmin'",
-			mysql_real_escape_string($userid)
+			$database->RealEscapeString($userid)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
 
-		if ($row = mysql_fetch_assoc($result)) {
+		if ($row = $database->FetchAssoc($result)) {
 			return true;
 		} else {
 			return false;
@@ -538,19 +539,19 @@ function isSuperAdminByUserid($userid)
 	}
 }
 
-function isTranslationAdminByUserid($userid)
+function isTranslationAdminByUserid($database, $userid)
 {
 	if (hasEditUsersRight()) {
 		$query = sprintf(
 			"SELECT * FROM uo_userproperties WHERE userid='%s' AND name='userrole' AND value='translationadmin'",
-			mysql_real_escape_string($userid)
+			$database->RealEscapeString($userid)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
 
-		if ($row = mysql_fetch_assoc($result)) {
+		if ($row = $database->FetchAssoc($result)) {
 			return true;
 		} else {
 			return false;
@@ -603,10 +604,10 @@ function hasChangeCurrentSeasonRight()
 	return isset($_SESSION['userproperties']['userrole']['superadmin']);
 }
 
-function hasCurrentSeasonsEditRight()
+function hasCurrentSeasonsEditRight($database)
 {
-	$seasons = EnrollSeasons();
-	$seasons[] = CurrentSeason();
+	$seasons = EnrollSeasons($database);
+	$seasons[] = CurrentSeason($database);
 	$ret = false;
 	foreach ($seasons as $season) {
 		$ret = $ret || isSeasonAdmin($season);
@@ -627,28 +628,28 @@ function hasEditPlacesRight($season)
 		isset($_SESSION['userproperties']['userrole']['seasonadmin'][$season]);
 }
 
-function hasEditTeamsRight($series)
+function hasEditTeamsRight($database, $series)
 {
-	$season = SeriesSeasonId($series);
+	$season = SeriesSeasonId($database, $series);
 	return isset($_SESSION['userproperties']['userrole']['superadmin']) ||
 		isset($_SESSION['userproperties']['userrole']['seasonadmin'][$season]) ||
 		isset($_SESSION['userproperties']['userrole']['seriesadmin'][$series]);
 }
 
-function  hasEditGamesRight($series)
+function hasEditGamesRight($database, $series)
 {
-	$season = SeriesSeasonId($series);
+	$season = SeriesSeasonId($database, $series);
 	return isset($_SESSION['userproperties']['userrole']['superadmin']) ||
 		isset($_SESSION['userproperties']['userrole']['seasonadmin'][$season]) ||
 		isset($_SESSION['userproperties']['userrole']['seriesadmin'][$series]);
 }
 
-function hasEditPlayerProfileRight($playerId)
+function hasEditPlayerProfileRight($database, $playerId)
 {
-	$playerInfo = PlayerInfo($playerId);
+	$playerInfo = PlayerInfo($database, $playerId);
 	$team = $playerInfo['team'];
-	$series = getTeamSeries($team);
-	$season = SeriesSeasonId($series);
+	$series = getTeamSeries($database, $team);
+	$season = SeriesSeasonId($database, $series);
 	return isPlayerAdmin($playerInfo['profile_id']) ||
 		isset($_SESSION['userproperties']['userrole']['superadmin']) ||
 		isset($_SESSION['userproperties']['userrole']['seasonadmin'][$season]) ||
@@ -656,22 +657,22 @@ function hasEditPlayerProfileRight($playerId)
 		isset($_SESSION['userproperties']['userrole']['teamadmin'][$team]);
 }
 
-function hasEditPlayersRight($team)
+function hasEditPlayersRight($database, $team)
 {
-	$series = getTeamSeries($team);
-	$season = SeriesSeasonId($series);
+	$series = getTeamSeries($database, $team);
+	$season = SeriesSeasonId($database, $series);
 	return isset($_SESSION['userproperties']['userrole']['superadmin']) ||
 		isset($_SESSION['userproperties']['userrole']['seasonadmin'][$season]) ||
 		isset($_SESSION['userproperties']['userrole']['seriesadmin'][$series]) ||
 		isset($_SESSION['userproperties']['userrole']['teamadmin'][$team]);
 }
 
-function hasEditGamePlayersRight($game)
+function hasEditGamePlayersRight($database, $game)
 {
-	$team = GameRespTeam($game);
-	$series = GameSeries($game);
-	$season = SeriesSeasonId($series);
-	$reservation = GameReservation($game);
+	$team = GameRespTeam($database, $game);
+	$series = GameSeries($database, $game);
+	$season = SeriesSeasonId($database, $series);
+	$reservation = GameReservation($database, $game);
 	return isset($_SESSION['userproperties']['userrole']['superadmin']) ||
 		isset($_SESSION['userproperties']['userrole']['seasonadmin'][$season]) ||
 		isset($_SESSION['userproperties']['userrole']['seriesadmin'][$series]) ||
@@ -680,12 +681,12 @@ function hasEditGamePlayersRight($game)
 		isset($_SESSION['userproperties']['userrole']['gameadmin'][$game]);
 }
 
-function hasEditGameEventsRight($game)
+function hasEditGameEventsRight($database, $game)
 {
-	$team = GameRespTeam($game);
-	$series = GameSeries($game);
-	$season = SeriesSeasonId($series);
-	$reservation = GameReservation($game);
+	$team = GameRespTeam($database, $game);
+	$series = GameSeries($database, $game);
+	$season = SeriesSeasonId($database, $series);
+	$reservation = GameReservation($database, $game);
 	return isset($_SESSION['userproperties']['userrole']['superadmin']) ||
 		isset($_SESSION['userproperties']['userrole']['seasonadmin'][$season]) ||
 		isset($_SESSION['userproperties']['userrole']['seriesadmin'][$series]) ||
@@ -693,9 +694,9 @@ function hasEditGameEventsRight($game)
 		isset($_SESSION['userproperties']['userrole']['resgameadmin'][$reservation]) ||
 		isset($_SESSION['userproperties']['userrole']['gameadmin'][$game]);
 }
-function hasAccredidationRight($team)
+function hasAccredidationRight($database, $team)
 {
-	return hasEditTeamsRight(getTeamSeries($team)) ||
+	return hasEditTeamsRight($database, getTeamSeries($database, $team)) ||
 		isset($_SESSION['userproperties']['userrole']['accradmin'][$team]);
 }
 
@@ -713,19 +714,19 @@ function hasAddMediaRight()
 function getSeriesSeason($series) {
 	$query = sprintf("SELECT ser.season FROM uo_series ser 
 	LEFT JOIN uo_series ser ON (pool.series=ser.series_id) WHERE ser.series_id=%d", (int)$series);
-	$result = mysql_query($query);
-	if (!$result) { die('Invalid query: ' . mysql_error()); }
-	if ($row = mysql_fetch_row($result)) {
+	$result = $database->DBQuery($query);
+	if (!$result) { die('Invalid query: ' . $database->GetConnection()->error); }
+	if ($row = $result->fetch_row()) {
 		return $row[0];
 	} else return "";
 }
 */
-function UserListRightsHtml($userId)
+function UserListRightsHtml($database, $userId)
 {
-	$query = sprintf("SELECT value FROM uo_userproperties WHERE userid='%s'", mysql_real_escape_string($userId));
-	$result = DBQuery($query);
+	$query = sprintf("SELECT value FROM uo_userproperties WHERE userid='%s'", $database->RealEscapeString($userId));
+	$result = $database->DBQuery($query);
 	$rights = "";
-	while ($row = mysql_fetch_row($result)) {
+	while ($row = $result->fetch_row()) {
 		$value = preg_split('/:/', $row[0]);
 		switch ($value[0]) {
 			case "superadmin":
@@ -733,12 +734,12 @@ function UserListRightsHtml($userId)
 				break;
 			case "seasonadmin":
 				$rights .= "<span style='color:#ff00ff;'>" . $value[0] . ": ";
-				$rights .= utf8entities(SeasonName($value[1]));
+				$rights .= utf8entities(SeasonName($database, $value[1]));
 				$rights .= "</span><br/>";
 				break;
 			case "teamadmin":
 				$rights .= "<span'>" . $value[0] . ": ";
-				$rights .= utf8entities(TeamName($value[1]));
+				$rights .= utf8entities(TeamName($database, $value[1]));
 				$rights .= "</span><br/>";
 				break;
 		}
@@ -748,69 +749,69 @@ function UserListRightsHtml($userId)
 }
 
 
-function getSeriesName($series)
+function getSeriesName($database, $series)
 {
 	$query = sprintf("SELECT name FROM uo_series WHERE series_id=%d", (int)$series);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
-	if ($row = mysql_fetch_assoc($result)) {
+	if ($row = $database->FetchAssoc($result)) {
 		return $row['name'];
 	} else return "";
 }
 
-function getTeamSeries($team)
+function getTeamSeries($database, $team)
 {
 	$query = sprintf("SELECT series FROM uo_team WHERE team_id=%d", (int)$team);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
-	if ($row = mysql_fetch_assoc($result)) {
+	if ($row = $database->FetchAssoc($result)) {
 		return $row['series'];
 	} else return "";
 }
 
-function getTeamSeason($team)
+function getTeamSeason($database, $team)
 {
 	$query = sprintf("SELECT ser.season as season FROM uo_team as team left join uo_series as ser on (team.series = ser.series_id)  WHERE team_id=%d", (int)$team);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
-	if ($row = mysql_fetch_assoc($result)) {
+	if ($row = $database->FetchAssoc($result)) {
 		return $row['season'];
 	} else return "";
 }
 
-function getTeamName($team)
+function getTeamName($database, $team)
 {
 	$query = sprintf("SELECT name FROM uo_team WHERE team_id=%d", (int)$team);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
-	if ($row = mysql_fetch_assoc($result)) {
+	if ($row = $database->FetchAssoc($result)) {
 		return $row['name'];
 	} else return "";
 }
 
-function RemovePoolSelector($userid, $propid)
+function RemovePoolSelector($database, $userid, $propid)
 {
 	if ($userid == $_SESSION['uid'] || hasEditUsersRight()) {
 		$query = sprintf(
 			"DELETE FROM uo_userproperties WHERE prop_id=%d AND userid='%s' AND name='poolselector'",
 			(int)$propid,
-			mysql_real_escape_string($userid)
+			$database->RealEscapeString($userid)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
-		Log1("security", "delete", $userid, $propid, "poolselector");
+		Log1($database, "security", "delete", $userid, $propid, "poolselector");
 		if ($userid == $_SESSION['uid']) {
-			SetUserSessionData($userid);
+			SetUserSessionData($database, $userid);
 		}
 		return true;
 	} else {
@@ -818,59 +819,59 @@ function RemovePoolSelector($userid, $propid)
 	}
 }
 
-function RemoveExtraEmail($userid, $extraEmail)
+function RemoveExtraEmail($database, $userid, $extraEmail)
 {
 	if ($userid == $_SESSION['uid'] || hasEditUsersRight()) {
 		$query = sprintf(
 			"DELETE FROM uo_extraemail WHERE userid='%s' AND email='%s'",
-			mysql_real_escape_string($userid),
-			mysql_real_escape_string($extraEmail)
+			$database->RealEscapeString($userid),
+			$database->RealEscapeString($extraEmail)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
-		Log1("security", "delete", $userid, $extraEmail, "extraemail");
+		Log1($database, "security", "delete", $userid, $extraEmail, "extraemail");
 		return true;
 	} else {
 		die('Insufficient rights to change user info');
 	}
 }
 
-function ToPrimaryEmail($userid, $extraEmail)
+function ToPrimaryEmail($database, $userid, $extraEmail)
 {
 	if ($userid == $_SESSION['uid'] || hasEditUsersRight()) {
 		$query = sprintf(
 			"SELECT * FROM uo_extraemail WHERE userid='%s' AND email='%s'",
-			mysql_real_escape_string($userid),
-			mysql_real_escape_string($extraEmail)
+			$database->RealEscapeString($userid),
+			$database->RealEscapeString($extraEmail)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
-		if ($row = mysql_fetch_row($result)) {
-			$userInfo = UserInfo($userid);
+		if ($row = $result->fetch_row()) {
+			$userInfo = UserInfo($database, $userid);
 			$oldPrimary = $userInfo['email'];
 			if ($oldPrimary != $extraEmail) {
 				$query = sprintf(
 					"UPDATE uo_extraemail SET email='%s' WHERE userid='%s' and email='%s'",
-					mysql_real_escape_string($oldPrimary),
-					mysql_real_escape_string($userid),
-					mysql_real_escape_string($extraEmail)
+					$database->RealEscapeString($oldPrimary),
+					$database->RealEscapeString($userid),
+					$database->RealEscapeString($extraEmail)
 				);
-				$result = mysql_query($query);
+				$result = $database->DBQuery($query);
 				if (!$result) {
-					die('Invalid query: ' . mysql_error());
+					die('Invalid query: ' . $database->GetConnection()->error);
 				}
 				$query = sprintf(
 					"UPDATE uo_users SET email='%s' WHERE userid='%s'",
-					mysql_real_escape_string($extraEmail),
-					mysql_real_escape_string($userid)
+					$database->RealEscapeString($extraEmail),
+					$database->RealEscapeString($userid)
 				);
-				$result = mysql_query($query);
+				$result = $database->DBQuery($query);
 				if (!$result) {
-					die('Invalid query: ' . mysql_error());
+					die('Invalid query: ' . $database->GetConnection()->error);
 				}
 			}
 		}
@@ -879,21 +880,21 @@ function ToPrimaryEmail($userid, $extraEmail)
 	}
 }
 
-function AddPoolSelector($userid, $selector)
+function AddPoolSelector($database, $userid, $selector)
 {
 	if ($userid == $_SESSION['uid'] || hasEditUsersRight()) {
 		$query = sprintf(
 			"INSERT INTO uo_userproperties (userid, name, value) VALUES ('%s', 'poolselector', '%s')",
-			mysql_real_escape_string($userid),
-			mysql_real_escape_string($selector)
+			$database->RealEscapeString($userid),
+			$database->RealEscapeString($selector)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
-		Log1("security", "add", $userid, $selector, "poolselector");
+		Log1($database, "security", "add", $userid, $selector, "poolselector");
 		if ($userid == $_SESSION['uid']) {
-			SetUserSessionData($userid);
+			SetUserSessionData($database, $userid);
 		}
 		return true;
 	} else {
@@ -901,21 +902,21 @@ function AddPoolSelector($userid, $selector)
 	}
 }
 
-function RemoveEditSeason($userid, $propid)
+function RemoveEditSeason($database, $userid, $propid)
 {
 	if ($userid == $_SESSION['uid'] || hasEditUsersRight()) {
 		$query = sprintf(
 			"DELETE FROM uo_userproperties WHERE prop_id=%d AND userid='%s' AND name='editseason'",
 			(int)$propid,
-			mysql_real_escape_string($userid)
+			$database->RealEscapeString($userid)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
-		Log1("security", "delete", $userid, $propid, "editseason");
+		Log1($database, "security", "delete", $userid, $propid, "editseason");
 		if ($userid == $_SESSION['uid']) {
-			SetUserSessionData($userid);
+			SetUserSessionData($database, $userid);
 		}
 		return true;
 	} else {
@@ -924,31 +925,31 @@ function RemoveEditSeason($userid, $propid)
 }
 
 
-function AddEditSeason($userid, $season)
+function AddEditSeason($database, $userid, $season)
 {
 	if ($userid == $_SESSION['uid'] || hasEditUsersRight() || isSeasonAdmin($season)) {
 		$query = sprintf(
 			"SELECT COUNT(*) FROM uo_userproperties 
 			WHERE userid='%s' AND name='editseason' AND value='%s'",
-			mysql_real_escape_string($userid),
-			mysql_real_escape_string($season)
+			$database->RealEscapeString($userid),
+			$database->RealEscapeString($season)
 		);
-		$exist = DBQueryToValue($query);
+		$exist = $database->DBQueryToValue($query);
 
 		if ($exist == 0) {
 			$query = sprintf(
 				"INSERT INTO uo_userproperties (userid, name, value) VALUES ('%s', 'editseason', '%s')",
-				mysql_real_escape_string($userid),
-				mysql_real_escape_string($season)
+				$database->RealEscapeString($userid),
+				$database->RealEscapeString($season)
 			);
-			$result = mysql_query($query);
+			$result = $database->DBQuery($query);
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . $database->GetConnection()->error);
 			}
-			Log1("security", "add", $userid, $season, "editseason");
+			Log1($database, "security", "add", $userid, $season, "editseason");
 		}
 		if ($userid == $_SESSION['uid']) {
-			SetUserSessionData($userid);
+			SetUserSessionData($database, $userid);
 		}
 		return true;
 	} else {
@@ -956,21 +957,21 @@ function AddEditSeason($userid, $season)
 	}
 }
 
-function RemoveUserRole($userid, $propid)
+function RemoveUserRole($database, $userid, $propid)
 {
 	if (hasEditUsersRight() || $_SESSION['uid'] == $userid) {
 		$query = sprintf(
 			"DELETE FROM uo_userproperties WHERE prop_id=%d AND userid='%s' AND name='userrole'",
 			(int)$propid,
-			mysql_real_escape_string($userid)
+			$database->RealEscapeString($userid)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
-		Log1("security", "delete", $userid, $propid, "userrole");
+		Log1($database, "security", "delete", $userid, $propid, "userrole");
 		if ($userid == $_SESSION['uid']) {
-			SetUserSessionData($userid);
+			SetUserSessionData($database, $userid);
 		}
 		return true;
 	} else {
@@ -978,21 +979,21 @@ function RemoveUserRole($userid, $propid)
 	}
 }
 
-function AddUserRole($userid, $role)
+function AddUserRole($database, $userid, $role)
 {
 	if (hasEditUsersRight()) {
 		$query = sprintf(
 			"INSERT INTO uo_userproperties (userid, name, value) VALUES ('%s', 'userrole', '%s')",
-			mysql_real_escape_string($userid),
-			mysql_real_escape_string($role)
+			$database->RealEscapeString($userid),
+			$database->RealEscapeString($role)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
-		Log1("security", "add", $userid, $role, "userrole");
+		Log1($database, "security", "add", $userid, $role, "userrole");
 		if ($userid == $_SESSION['uid']) {
-			SetUserSessionData($userid);
+			SetUserSessionData($database, $userid);
 		}
 		return true;
 	} else {
@@ -1000,29 +1001,29 @@ function AddUserRole($userid, $role)
 	}
 }
 
-function AddSeasonUserRole($userid, $role, $seasonId)
+function AddSeasonUserRole($database, $userid, $role, $seasonId)
 {
 	if (hasEditUsersRight() || isSeasonAdmin($seasonId)) {
 
 		$query = sprintf(
 			"SELECT COUNT(*) FROM uo_userproperties WHERE userid='%s' AND name='userrole' AND value='%s'",
-			mysql_real_escape_string($userid),
-			mysql_real_escape_string($role)
+			$database->RealEscapeString($userid),
+			$database->RealEscapeString($role)
 		);
-		$result = DBQueryToValue($query);
+		$result = $database->DBQueryToValue($query);
 
 		if ($result <= 0) {
 			$query = sprintf(
 				"INSERT INTO uo_userproperties (userid, name, value) VALUES ('%s', 'userrole', '%s')",
-				mysql_real_escape_string($userid),
-				mysql_real_escape_string($role)
+				$database->RealEscapeString($userid),
+				$database->RealEscapeString($role)
 			);
-			$result = DBQuery($query);
-			Log1("security", "add", $userid, $seasonId, $role);
-			AddEditSeason($userid, $seasonId);
+			$result = $database->DBQuery($query);
+			Log1($database, "security", "add", $userid, $seasonId, $role);
+			AddEditSeason($database, $userid, $seasonId);
 
 			if ($userid == $_SESSION['uid']) {
-				SetUserSessionData($userid);
+				SetUserSessionData($database, $userid);
 			}
 			return true;
 		} else {
@@ -1033,59 +1034,59 @@ function AddSeasonUserRole($userid, $role, $seasonId)
 	}
 }
 
-function RemoveSeasonUserRole($userid, $role, $seasonId)
+function RemoveSeasonUserRole($database, $userid, $role, $seasonId)
 {
 	if (hasEditUsersRight() || isSeasonAdmin($seasonId)) {
 		$query = sprintf(
 			"DELETE FROM uo_userproperties WHERE userid='%s' AND name='userrole' AND value='%s'",
-			mysql_real_escape_string($userid),
-			mysql_real_escape_string($role)
+			$database->RealEscapeString($userid),
+			$database->RealEscapeString($role)
 		);
-		$result = DBQuery($query);
+		$result = $database->DBQuery($query);
 	} else {
 		die('Insufficient rights to change user info');
 	}
 }
 
-function GetTeamAdmins($teamId)
+function GetTeamAdmins($database, $teamId)
 {
-	$seasonrights = getEditSeasons($_SESSION['uid']);
-	$season = TeamSeason($teamId);
+	$seasonrights = getEditSeasons($database, $_SESSION['uid']);
+	$season = TeamSeason($database, $teamId);
 
 	if (isSuperAdmin() || isset($seasonrights[$season])) {
 		$query = sprintf(
 			"SELECT pu.userid, pu.name, pu.email FROM uo_userproperties pup
 				LEFT JOIN uo_users pu ON(pup.userid=pu.userid)
 				WHERE pup.value='%s' ORDER BY pu.name ASC",
-			mysql_real_escape_string('teamadmin:' . $teamId)
+			$database->RealEscapeString('teamadmin:' . $teamId)
 		);
-		return DBQueryToArray($query);
+		return $database->DBQueryToArray($query);
 	} else {
 		die('Insufficient rights to access user info');
 	}
 }
 
-function DeleteUser($userid)
+function DeleteUser($database, $userid)
 {
 	if ($userid != "anonymous") {
 		if (hasEditUsersRight()) {
 			$query = sprintf(
 				"DELETE FROM uo_userproperties WHERE userid='%s'",
-				mysql_real_escape_string($userid)
+				$database->RealEscapeString($userid)
 			);
-			$result = mysql_query($query);
+			$result = $database->DBQuery($query);
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . $database->GetConnection()->error);
 			}
 			$query = sprintf(
 				"DELETE FROM uo_users WHERE userid='%s'",
-				mysql_real_escape_string($userid)
+				$database->RealEscapeString($userid)
 			);
-			$result = mysql_query($query);
+			$result = $database->DBQuery($query);
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . $database->GetConnection()->error);
 			}
-			Log1("security", "delete", $userid, "", "user");
+			Log1($database, "security", "delete", $userid, "", "user");
 		} else {
 			die('Insufficient rights to delete user');
 		}
@@ -1094,18 +1095,18 @@ function DeleteUser($userid)
 	}
 }
 
-function DeleteRegisterRequest($userid)
+function DeleteRegisterRequest($database, $userid)
 {
 	if ($userid != "anonymous") {
 		if (hasEditUsersRight()) {
-			Log1("security", "delete", $userid, "", "RegisterRequest");
+			Log1($database, "security", "delete", $userid, "", "RegisterRequest");
 			$query = sprintf(
 				"DELETE FROM uo_registerrequest WHERE userid='%s'",
-				mysql_real_escape_string($userid)
+				$database->RealEscapeString($userid)
 			);
-			$result = mysql_query($query);
+			$result = $database->DBQuery($query);
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . $database->GetConnection()->error);
 			}
 		} else {
 			die('Insufficient rights to delete user');
@@ -1115,21 +1116,21 @@ function DeleteRegisterRequest($userid)
 	}
 }
 
-function AddRegisterRequest($newUsername, $newPassword, $newName, $newEmail, $message = 'register.txt')
+function AddRegisterRequest($database, $newUsername, $newPassword, $newName, $newEmail, $message = 'register.txt')
 {
-	Log1("user", "add", $newUsername, "", "register request");
+	Log1($database, "user", "add", $newUsername, "", "register request");
 	$token = uuidSecure();
 	$query = sprintf(
 		"INSERT INTO uo_registerrequest (userid, password, name, email, token) VALUES ('%s', MD5('%s'), '%s', '%s', '%s')",
-		mysql_real_escape_string($newUsername),
-		mysql_real_escape_string($newPassword),
-		mysql_real_escape_string($newName),
-		mysql_real_escape_string($newEmail),
-		mysql_real_escape_string($token)
+		$database->RealEscapeString($newUsername),
+		$database->RealEscapeString($newPassword),
+		$database->RealEscapeString($newName),
+		$database->RealEscapeString($newEmail),
+		$database->RealEscapeString($token)
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
 	$message = file_get_contents('locale/' . GetSessionLocale() . '/LC_MESSAGES/' . $message);
 
@@ -1150,11 +1151,11 @@ function AddRegisterRequest($newUsername, $newPassword, $newName, $newEmail, $me
 	if (!mail($newEmail, _("Confirm your account to ultiorganizer"), $message, $headers)) {
 		$query = sprintf(
 			"DELETE FROM uo_registerrequest WHERE userid='%s'",
-			mysql_real_escape_string($newUsername)
+			$database->RealEscapeString($newUsername)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
 		return false;
 	} else {
@@ -1163,40 +1164,40 @@ function AddRegisterRequest($newUsername, $newPassword, $newName, $newEmail, $me
 }
 
 
-function emailUsed($email)
+function emailUsed($database, $email)
 {
 	$query = sprintf(
 		"select email from uo_users where LOWER(email)='%s' 
 		union all select email from uo_extraemail where LOWER(email)='%s' 
 		union all select email from uo_extraemailrequest where LOWER(email)='%s'",
-		mysql_real_escape_string(strtolower($email)),
-		mysql_real_escape_string(strtolower($email)),
-		mysql_real_escape_string(strtolower($email))
+		$database->RealEscapeString(strtolower($email)),
+		$database->RealEscapeString(strtolower($email)),
+		$database->RealEscapeString(strtolower($email))
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
-	if ($row = mysql_fetch_row($result)) {
+	if ($row = $result->fetch_row()) {
 		return true;
 	} else {
 		return false;
 	}
 }
 
-function AddExtraEmailRequest($userid, $extraEmail, $message = 'verify_email.txt')
+function AddExtraEmailRequest($database, $userid, $extraEmail, $message = 'verify_email.txt')
 {
-	Log1("user", "add", $userid, "", "extra email request");
+	Log1($database, "user", "add", $userid, "", "extra email request");
 	$token = uuidSecure();
 	$query = sprintf(
 		"INSERT INTO uo_extraemailrequest (userid, email, token) VALUES ('%s', '%s', '%s')",
-		mysql_real_escape_string($userid),
-		mysql_real_escape_string($extraEmail),
-		mysql_real_escape_string($token)
+		$database->RealEscapeString($userid),
+		$database->RealEscapeString($extraEmail),
+		$database->RealEscapeString($token)
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
 	$message = file_get_contents('locale/' . GetSessionLocale() . '/LC_MESSAGES/' . $message);
 
@@ -1217,11 +1218,11 @@ function AddExtraEmailRequest($userid, $extraEmail, $message = 'verify_email.txt
 	if (!mail($extraEmail, _("Confirm extra email address for ultiorganizer"), $message, $headers)) {
 		$query = sprintf(
 			"DELETE FROM uo_extraemailrequest WHERE token='%s'",
-			mysql_real_escape_string($token)
+			$database->RealEscapeString($token)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
 		return false;
 	} else {
@@ -1229,92 +1230,92 @@ function AddExtraEmailRequest($userid, $extraEmail, $message = 'verify_email.txt
 	}
 }
 
-function RegisterUIDByToken($token)
+function RegisterUIDByToken($database, $token)
 {
 	$query = sprintf(
 		"SELECT userid FROM uo_registerrequest WHERE token='%s'",
-		mysql_real_escape_string($token)
+		$database->RealEscapeString($token)
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
-	if ($row = mysql_fetch_assoc($result)) {
+	if ($row = $database->FetchAssoc($result)) {
 		return $row['userid'];
 	}
 	return false;
 }
 
-function ConfirmRegister($token)
+function ConfirmRegister($database, $token)
 {
 	$query = sprintf(
 		"SELECT userid, password, name, email FROM uo_registerrequest WHERE token='%s'",
-		mysql_real_escape_string($token)
+		$database->RealEscapeString($token)
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
-	if ($row = mysql_fetch_assoc($result)) {
+	if ($row = $database->FetchAssoc($result)) {
 		$query = sprintf(
 			"INSERT INTO uo_users (name, userid, password, email) VALUES ('%s', '%s', '%s', '%s')",
-			mysql_real_escape_string($row['name']),
-			mysql_real_escape_string($row['userid']),
-			mysql_real_escape_string($row['password']),
-			mysql_real_escape_string($row['email'])
+			$database->RealEscapeString($row['name']),
+			$database->RealEscapeString($row['userid']),
+			$database->RealEscapeString($row['password']),
+			$database->RealEscapeString($row['email'])
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
 		$query = sprintf(
 			"DELETE FROM uo_registerrequest WHERE token='%s'",
-			mysql_real_escape_string($token)
+			$database->RealEscapeString($token)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
-		FinalizeNewUser($row['userid'], $row['email']);
-		Log1("user", "add", $row['userid'], "", "confirm register request");
+		FinalizeNewUser($database, $row['userid'], $row['email']);
+		Log1($database, "user", "add", $row['userid'], "", "confirm register request");
 		return true;
 	} else return false;
 }
 
 
-function ConfirmRegisterUID($userid)
+function ConfirmRegisterUID($database, $userid)
 {
 	if (isSuperAdmin()) {
 		$query = sprintf(
 			"SELECT userid, password, name, email FROM uo_registerrequest WHERE userid='%s'",
-			mysql_real_escape_string($userid)
+			$database->RealEscapeString($userid)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
-		if ($row = mysql_fetch_assoc($result)) {
+		if ($row = $database->FetchAssoc($result)) {
 			$query = sprintf(
 				"INSERT INTO uo_users (name, userid, password, email) VALUES ('%s', '%s', '%s', '%s')",
-				mysql_real_escape_string($row['name']),
-				mysql_real_escape_string($row['userid']),
-				mysql_real_escape_string($row['password']),
-				mysql_real_escape_string($row['email'])
+				$database->RealEscapeString($row['name']),
+				$database->RealEscapeString($row['userid']),
+				$database->RealEscapeString($row['password']),
+				$database->RealEscapeString($row['email'])
 			);
-			$result = mysql_query($query);
+			$result = $database->DBQuery($query);
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . $database->GetConnection()->error);
 			}
 			$query = sprintf(
 				"DELETE FROM uo_registerrequest WHERE userid='%s'",
-				mysql_real_escape_string($userid)
+				$database->RealEscapeString($userid)
 			);
-			$result = mysql_query($query);
+			$result = $database->DBQuery($query);
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . $database->GetConnection()->error);
 			}
-			FinalizeNewUser($row['userid'], $row['email']);
-			Log1("user", "add", $row['userid'], "", "added by administrator");
+			FinalizeNewUser($database, $row['userid'], $row['email']);
+			Log1($database, "user", "add", $row['userid'], "", "added by administrator");
 			return true;
 		} else return false;
 	} else {
@@ -1322,89 +1323,89 @@ function ConfirmRegisterUID($userid)
 	}
 }
 
-function FinalizeNewUser($userid, $email)
+function FinalizeNewUser($database, $userid, $email)
 {
 	$query = sprintf(
 		"INSERT INTO uo_userproperties (userid, name, value) VALUES ('%s', 'poolselector', 'currentseason')",
-		mysql_real_escape_string($userid)
+		$database->RealEscapeString($userid)
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
 
 	$query = sprintf(
 		"SELECT DISTINCT profile_id FROM uo_player_profile WHERE LOWER(email)='%s'",
-		mysql_real_escape_string(strtolower($email))
+		$database->RealEscapeString(strtolower($email))
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
-	while ($accreditation = mysql_fetch_row($result)) {
+	while ($accreditation = $result->fetch_row()) {
 		$query = sprintf(
 			"INSERT INTO uo_userproperties (userid, name, value) VALUES ('%s', 'userrole', 'playeradmin:%s')",
-			mysql_real_escape_string($userid),
-			mysql_real_escape_string($accreditation[0])
+			$database->RealEscapeString($userid),
+			$database->RealEscapeString($accreditation[0])
 		);
-		$result1 = mysql_query($query);
+		$result1 = $database->DBQuery($query);
 		if (!$result1) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
 	}
 }
 
-function ConfirmEmail($token)
+function ConfirmEmail($database, $token)
 {
 	$query = sprintf(
 		"SELECT userid, email FROM uo_extraemailrequest WHERE token='%s'",
-		mysql_real_escape_string($token)
+		$database->RealEscapeString($token)
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
-	if ($row = mysql_fetch_assoc($result)) {
+	if ($row = $database->FetchAssoc($result)) {
 		$query = sprintf(
 			"INSERT INTO uo_extraemail (userid, email) VALUES ('%s', '%s')",
-			mysql_real_escape_string($row['userid']),
-			mysql_real_escape_string($row['email'])
+			$database->RealEscapeString($row['userid']),
+			$database->RealEscapeString($row['email'])
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
 		$query = sprintf(
 			"DELETE FROM uo_extraemailrequest WHERE token='%s'",
-			mysql_real_escape_string($token)
+			$database->RealEscapeString($token)
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
 
 		$query = sprintf(
 			"SELECT DISTINCT profile_id FROM uo_player_profile WHERE LOWER(email)='%s'",
-			mysql_real_escape_string(strtolower($row['email']))
+			$database->RealEscapeString(strtolower($row['email']))
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
-		while ($accreditation = mysql_fetch_row($result)) {
+		while ($accreditation = $result->fetch_row()) {
 			$query = sprintf(
 				"INSERT INTO uo_userproperties (userid, name, value) VALUES ('%s', 'userrole', 'playeradmin:%s')",
-				mysql_real_escape_string($row['userid']),
-				mysql_real_escape_string($accreditation[0])
+				$database->RealEscapeString($row['userid']),
+				$database->RealEscapeString($accreditation[0])
 			);
-			$result1 = mysql_query($query);
+			$result1 = $database->DBQuery($query);
 			if (!$result1) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . $database->GetConnection()->error);
 			}
 		}
 
 
-		Log1("user", "add", $row['userid'], "", "confirm extra email");
+		Log1($database, "user", "add", $row['userid'], "", "confirm extra email");
 		return true;
 	} else return false;
 }
@@ -1459,9 +1460,9 @@ function uuidSecure()
 	);
 }
 
-function TeamResponsibilities($userid, $season)
+function TeamResponsibilities($database, $userid, $season)
 {
-	$teams = SeasonTeams($season);
+	$teams = SeasonTeams($database, $season);
 	$seasonTeamAdmin = array();
 	foreach ($teams as $team) {
 		if (isset($_SESSION['userproperties']['userrole']['teamadmin'][$team['team_id']])) {
@@ -1471,7 +1472,7 @@ function TeamResponsibilities($userid, $season)
 	return $seasonTeamAdmin;
 }
 
-function GameResponsibilities($season)
+function GameResponsibilities($database, $season)
 {
 	$query = sprintf("SELECT DISTINCT game_id FROM uo_game WHERE ");
 	$criteria = "";
@@ -1480,11 +1481,11 @@ function GameResponsibilities($season)
 			" pool IN 
 		(SELECT pool_id FROM uo_pool WHERE series IN 
 			(SELECT series_id FROM uo_series WHERE season='%s'))",
-			mysql_real_escape_string($season)
+			$database->RealEscapeString($season)
 		);
 	} else {
 		// SeriesAdmin
-		$seriesResult = SeasonSeries($season);
+		$seriesResult = SeasonSeries($database, $season);
 		$seasonSeriesAdmin = array();
 		foreach ($seriesResult as $row) {
 			if (isset($_SESSION['userproperties']['userrole']['seriesadmin'][$row['series_id']])) {
@@ -1496,7 +1497,7 @@ function GameResponsibilities($season)
 		}
 
 		// TeamAdmin
-		$teams = SeasonTeams($season);
+		$teams = SeasonTeams($database, $season);
 		$seasonTeamAdmin = array();
 		foreach ($teams as $team) {
 			if (isset($_SESSION['userproperties']['userrole']['teamadmin'][$team['team_id']])) {
@@ -1514,7 +1515,7 @@ function GameResponsibilities($season)
 			$respGames = $_SESSION['userproperties']['userrole']['gameadmin'];
 			$seasonGames = array();
 			foreach ($respGames as $gameId => $propId) {
-				if (GameSeason($gameId) == $season) {
+				if (GameSeason($database, $gameId) == $season) {
 					$seasonGames[] = $gameId;
 				}
 			}
@@ -1530,7 +1531,7 @@ function GameResponsibilities($season)
 			$respResvs = $_SESSION['userproperties']['userrole']['resgameadmin'];
 			$seasonResvs = array();
 			foreach ($respResvs as $resId => $propId) {
-				foreach (ReservationSeasons($resId) as $resSeason) {
+				foreach (ReservationSeasons($database, $resId) as $resSeason) {
 					if ($resSeason == $season) {
 						$seasonResvs[] = $resId;
 						break;
@@ -1550,20 +1551,20 @@ function GameResponsibilities($season)
 	} else {
 		$ret = array();
 		$query .= $criteria;
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
-		while ($row = mysql_fetch_row($result)) {
+		while ($row = $result->fetch_row()) {
 			$ret[] = $row[0];
 		}
 		return $ret;
 	}
 }
 
-function GameResponsibilityArray($season, $series = null)
+function GameResponsibilityArray($database, $season, $series = null)
 {
-	$gameResponsibilities = GameResponsibilities($season);
+	$gameResponsibilities = GameResponsibilities($database, $season);
 	if (!$gameResponsibilities) {
 		return array();
 	}
@@ -1590,12 +1591,12 @@ function GameResponsibilityArray($season, $series = null)
 		$series ? (int)$series : 0
 	);
 
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
 	$ret = array();
-	while ($row = mysql_fetch_assoc($result)) {
+	while ($row = $database->FetchAssoc($result)) {
 		if (!isset($ret[$row['reservationgroup']])) {
 			$ret[$row['reservationgroup']] = array();
 		}
@@ -1611,19 +1612,19 @@ function GameResponsibilityArray($season, $series = null)
 	return  $ret;
 }
 
-function UserResetPassword($userId)
+function UserResetPassword($database, $userId)
 {
-	Log1("user", "change", $userId, "", "reset password");
+	Log1($database, "user", "change", $userId, "", "reset password");
 
 	$query = sprintf(
 		"SELECT email FROM uo_users WHERE userid='%s'",
-		mysql_real_escape_string($userId)
+		$database->RealEscapeString($userId)
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
-	$row = mysql_fetch_assoc($result);
+	$row = $database->FetchAssoc($result);
 
 	$email = $row['email'];
 	if (!empty($email)) {
@@ -1645,12 +1646,12 @@ function UserResetPassword($userId)
 		if (mail($email, _("New password to ultiorganizer"), $message, $headers)) {
 			$query = sprintf(
 				"UPDATE uo_users SET password=MD5('%s') WHERE userid='%s'",
-				mysql_real_escape_string($password),
-				mysql_real_escape_string($userId)
+				$database->RealEscapeString($password),
+				$database->RealEscapeString($userId)
 			);
-			$result = mysql_query($query);
+			$result = $database->DBQuery($query);
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . $database->GetConnection()->error);
 			}
 			return true;
 		} else {
@@ -1672,22 +1673,22 @@ function CreateRandomPassword()
 	return $password;
 }
 
-function CreateNewUsername($firstname, $lastname, $email)
+function CreateNewUsername($database, $firstname, $lastname, $email)
 {
 	$firstname = strtolower($firstname);
 	$lastname = strtolower($lastname);
 	$emailSplitted = explode("@", strtolower($email));
 	$emailStart = $emailSplitted[0];
 	$try = substr($firstname, 0, 1) . $lastname;
-	if (!isRegistered($try)) return $try;
-	if (!isRegistered($emailStart)) return $emailStart;
-	if (!isRegistered($firstname . "." . $lastname)) return $firstname . "." . $lastname;
+	if (!isRegistered($database, $try)) return $try;
+	if (!isRegistered($database, $emailStart)) return $emailStart;
+	if (!isRegistered($database, $firstname . "." . $lastname)) return $firstname . "." . $lastname;
 	$extra = 0;
 	while (true) {
 		$extra++;
-		if (!isRegistered($try . $extra)) return $try . $extra;
-		if (!isRegistered($emailStart . $extra)) return $emailStart . $extra;
-		if (!isRegistered($firstname . "." . $lastname . $extra)) return $firstname . "." . $lastname . $extra;
+		if (!isRegistered($database, $try . $extra)) return $try . $extra;
+		if (!isRegistered($database, $emailStart . $extra)) return $emailStart . $extra;
+		if (!isRegistered($database, $firstname . "." . $lastname . $extra)) return $firstname . "." . $lastname . $extra;
 	}
 }
 

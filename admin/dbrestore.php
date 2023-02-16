@@ -25,7 +25,7 @@ if (ENABLE_ADMIN_DB_ACCESS != "enabled") {
 
 				$templine .= $line;
 				if (substr(trim($line), -1, 1) == ';') {
-					mysql_query($templine) or $html .= "<p>" . $templine . ": " . mysql_error() . "</p>";
+					$database->DBQuery($templine) or $html .= "<p>" . $templine . ": " . $database->GetConnection()->error() . "</p>";
 					$templine = '';
 				}
 			}
@@ -73,7 +73,7 @@ $LAYOUT_ID = DBRESTORE;
 pageTopHeadOpen($title);
 include 'script/common.js.inc';
 pageTopHeadClose($title, false);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 echo $html;
 

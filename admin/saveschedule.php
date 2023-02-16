@@ -17,13 +17,13 @@ foreach ($places as $placeGameStr) {
   $games = explode(":", $placeGameStr);
   if (intval($games[0]) != 0) {
 
-    ClearReservation($games[0]);
-    $resInfo = ReservationInfo($games[0]);
+    ClearReservation($database, $games[0]);
+    $resInfo = ReservationInfo($database, $games[0]);
     $firstStart = strtotime($resInfo['starttime']);
     $resEnd = strtotime($resInfo['endtime']);
     for ($i = 1; $i < count($games); $i++) {
       $gameArr = explode("/", $games[$i]);
-      $gameInfo = GameInfo($gameArr[0]);
+      $gameInfo = GameInfo($database, $gameArr[0]);
       $season = $gameInfo['season'];
       $time = $firstStart + (60 * $gameArr[1]);
       if (!empty($gameInfo['gametimeslot'])) {
@@ -32,37 +32,37 @@ foreach ($places as $placeGameStr) {
         $gameEnd = $time + ($gameInfo['timeslot'] * 60);
       }
       if ($gameEnd > $resEnd) {
-        $response .= "<p>" . sprintf(_("Game %s exceeds reserved time %s."), GameName($gameInfo), ShortTimeFormat($resInfo['endtime'])) . "</p>";
+        $response .= "<p>" . sprintf(_("Game %s exceeds reserved time %s."), GameName($database, $gameInfo), ShortTimeFormat($resInfo['endtime'])) . "</p>";
       }
-      ScheduleGame($gameArr[0], $time, $games[0]);
+      ScheduleGame($database, $gameArr[0], $time, $games[0]);
     }
   } else {
     for ($i = 1; $i < count($games); $i++) {
       $gameArr = explode("/", $games[$i]);
-      $gameInfo = GameInfo($gameArr[0]);
+      $gameInfo = GameInfo($database, $gameArr[0]);
       $season = $gameInfo['season'];
-      UnScheduleGame($gameArr[0]);
+      UnScheduleGame($database, $gameArr[0]);
     }
   }
 }
 
 if ($season) {
 
-  $movetimes = TimetableMoveTimes($season);
+  $movetimes = TimetableMoveTimes($database, $season);
   $conflicts = TimetableIntraPoolConflicts($season);
 
   foreach ($conflicts as $conflict) {
     if (!empty($conflict['time2']) && !empty($conflict['time1'])) {
       if (strtotime($conflict['time1']) + $conflict['slot1'] * 60 + TimetableMoveTime($movetimes, $conflict['location1'], $conflict['field1'], $conflict['location2'], $conflict['field2']) > strtotime($conflict['time2'])) {
-        $game1 = GameInfo($conflict['game1']);
-        $game2 = GameInfo($conflict['game2']);
+        $game1 = GameInfo($database, $conflict['game1']);
+        $game2 = GameInfo($database, $conflict['game2']);
         $response .= "<p>" .
           sprintf(
             _("Warning: Game %s (%d, pool %d) has a scheduling conflict with %s (%d, pool %d)."),
-            utf8entities(GameName($game2)),
+            utf8entities(GameName($database, $game2)),
             (int) $game2['game_id'],
             (int) $game2['pool'],
-            utf8entities(GameName($game1)),
+            utf8entities(GameName($database, $game1)),
             (int) $game1['game_id'],
             (int) $game1['pool']
           ) . "</p>";
@@ -77,12 +77,12 @@ if ($season) {
     foreach ($conflicts as $conflict) {
       if (!empty($conflict['time2']) && !empty($conflict['time1'])) {
         if (strtotime($conflict['time1']) + $conflict['slot1'] * 60 + TimetableMoveTime($movetimes, $conflict['location1'], $conflict['field1'], $conflict['location2'], $conflict['field2']) > strtotime($conflict['time2'])) {
-          $game1 = GameInfo($conflict['game1']);
-          $game2 = GameInfo($conflict['game2']);
+          $game1 = GameInfo($database, $conflict['game1']);
+          $game2 = GameInfo($database, $conflict['game2']);
           $response .= "<p>" . sprintf(
             _("Warning: Game %s has a scheduling conflict with %s."),
-            utf8entities(GameName($game2)),
-            utf8entities(GameName($game1))
+            utf8entities(GameName($database, $game2)),
+            utf8entities(GameName($database, $game1))
           ) . "</p>";
           break;
         }

@@ -6,7 +6,7 @@ include_once 'lib/player.functions.php';
 $html = "";
 
 $gameId = intval(iget("game"));
-$game_result = GameResult($gameId);
+$game_result = GameResult($database, $gameId);
 
 if (isset($_POST['save'])) {
 	$time = "0.0";
@@ -17,7 +17,7 @@ if (isset($_POST['save'])) {
 
 	$time = str_replace($time_delim, ".", $time);
 	$htime = TimeToSec($time);
-	GameSetHalftime($gameId, $htime);
+	GameSetHalftime($database, $gameId, $htime);
 
 	header("location:?view=mobile/addscoresheet&game=" . $gameId);
 }

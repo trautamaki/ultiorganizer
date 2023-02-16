@@ -9,7 +9,7 @@ $html = "";
 if (isset($_GET['season'])) {
   $season = $_GET['season'];
 } else {
-  $season = CurrentSeason();
+  $season = CurrentSeason($database);
 }
 
 if (isset($_GET['list'])) {
@@ -22,22 +22,22 @@ $url = "?view=admin/accreditation&amp;season=" . $season . "&amp;list=" . $view;
 if (isset($_POST['acknowledge'])) {
   foreach ($_POST['acknowledged'] as $playerGame) {
     $playerGameArr = explode("_", $playerGame);
-    AcknowledgeUnaccredited($playerGameArr[0], $playerGameArr[1], "accreditation");
+    AcknowledgeUnaccredited($database, $playerGameArr[0], $playerGameArr[1], "accreditation");
   }
 }
 if (isset($_POST['remacknowledge']) && isset($_POST['deleteAckId'])) {
   $playerGameArr = explode("_", $_POST['deleteAckId']);
-  UnAcknowledgeUnaccredited($playerGameArr[0], $playerGameArr[1], "accreditation");
+  UnAcknowledgeUnaccredited($database, $playerGameArr[0], $playerGameArr[1], "accreditation");
 }
 
 if (isset($_POST['accredit']) && isset($_POST['series'])) {
   $accrIds = explode("\n", $_POST['accrIds']);
   foreach ($accrIds as $accrId) {
-    AccreditPlayerByAccrId(trim($accrId), $_POST['series'], "accreditation");
+    AccreditPlayerByAccrId($database, trim($accrId), $_POST['series'], "accreditation");
   }
 }
 
-$unAccredited = SeasonUnaccredited($season);
+$unAccredited = SeasonUnaccredited($database, $season);
 
 //common page
 pageTopHeadOpen($title);
@@ -53,7 +53,7 @@ pageTopHeadOpen($title);
 </script>
 <?php
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 $html .= "[<a href='?view=admin/accreditation&amp;season=" . $season . "&amp;list=acc'>" . _("Accreditation") . "</a>]";
@@ -91,13 +91,13 @@ if ($view == "acclog") {
   echo "<table class='infotable'><tr><th>" . _("Player") . "</th><th>" . _("Team") . "</th><th>" . _("Game") . "</th><th>" . _("Acknowledged") . "</th></tr>\n";
   $acknowledged = array();
 
-  while ($row = mysql_fetch_assoc($unAccredited)) {
-    if (hasAccredidationRight($row['team'])) {
+  while ($row = $database->FetchAssoc($unAccredited)) {
+    if (hasAccredidationRight($database, $row['team'])) {
       if (!$row['acknowledged']) {
         echo "<tr>";
         echo "<td>" . utf8entities($row['firstname']) . " " . utf8entities($row['lastname']) . "</td>";
         echo "<td>" . utf8entities($row['teamname']) . "</td>";
-        echo "<td>" . utf8entities(GameName($row)) . "</td>";
+        echo "<td>" . utf8entities(GameName($database, $row)) . "</td>";
         echo "<td style='text-align:center'><input type='checkbox' name='acknowledged[]' ";
         echo "value='" . utf8entities($row['player_id']) . "_" . $row['game_id'] . "'/></td></tr>\n";
       } else {
@@ -111,11 +111,11 @@ if ($view == "acclog") {
   echo "<h3>" . _("Acknowledged") . "</h3>";
   echo "<table class='infotable'><tr><th>" . _("Player") . "</th><th>" . _("Team") . "</th><th>" . _("Game") . "</th><th>" . _("Acknowledged") . "</th></tr>\n";
   foreach ($acknowledged as $row) {
-    if (hasAccredidationRight($row['team'])) {
+    if (hasAccredidationRight($database, $row['team'])) {
       echo "<tr>";
       echo "<td>" . utf8entities($row['firstname']) . " " . utf8entities($row['lastname']) . "</td>";
       echo "<td>" . utf8entities($row['teamname']) . "</td>";
-      echo "<td>" . utf8entities(GameName($row)) . "</td>";
+      echo "<td>" . utf8entities(GameName($database, $row)) . "</td>";
       echo "<td style='text-align:center'><input class='deletebutton' type='image' src='images/remove.png' name='remacknowledge' ";
       echo "value='X' alt='X' onclick='setId(\"" . $row['player_id'] . "_" . $row['game_id'] . "\", \"deleteAckId\");'/>";
       echo "</td></tr>\n";
@@ -131,9 +131,9 @@ if ($view == "accevents") {
   echo "<table class='infotable'><tr><th>" . _("Event") . "</th><th>" . _("Time") . "</th><th>" . _("Player") . "</th>";
   echo "<th>" . _("Team") . "</th><th>" . _("Game") . "</th><th>" . _("Value") . "</th>";
   echo "<th>" . _("User") . "</th><th>" . _("Source") . "</th></tr>\n";
-  $logResult = SeasonAccreditationLog($season);
-  while ($row = mysql_fetch_assoc($logResult)) {
-    if (hasAccredidationRight($row['team'])) {
+  $logResult = SeasonAccreditationLog($database, $season);
+  while ($row = $database->FetchAssoc($logResult)) {
+    if (hasAccredidationRight($database, $row['team'])) {
       if ($row['value']) {
         echo "<tr class='posvalue'>";
       } else {
@@ -148,7 +148,7 @@ if ($view == "accevents") {
       echo "<td>" . utf8entities($row['firstname']) . " " . utf8entities($row['lastname']) . "</td>";
       echo "<td>" . utf8entities($row['teamname']) . "</td>";
       if (!empty($row['game'])) {
-        echo "<td>" . utf8entities(GameName($row)) . "</td>";
+        echo "<td>" . utf8entities(GameName($database, $row)) . "</td>";
       } else {
         echo  "<td>&nbsp;</td>";
       }
@@ -171,10 +171,10 @@ if ($view == "accevents") {
 
 if ($view == "accId") {
   echo "<h3>" . _("Players without membership Id") . "</h3>";
-  $players = SeasonAllPlayers($season);
+  $players = SeasonAllPlayers($database, $season);
   echo "<table class='infotable'>";
   foreach ($players as $player) {
-    $playerinfo = PlayerInfo($player['player_id']);
+    $playerinfo = PlayerInfo($database, $player['player_id']);
     if (empty($playerinfo['accreditation_id'])) {
       echo "<tr><td>";
       echo utf8entities($playerinfo['seriesname']);
@@ -188,10 +188,10 @@ if ($view == "accId") {
   echo "</table>";
 
   echo "<h3>" . _("Players not accredited") . "</h3>";
-  $players = SeasonAllPlayers($season);
+  $players = SeasonAllPlayers($database, $season);
   echo "<table class='infotable'>";
   foreach ($players as $player) {
-    $playerinfo = PlayerInfo($player['player_id']);
+    $playerinfo = PlayerInfo($database, $player['player_id']);
     if (empty($playerinfo['accredited'])) {
       echo "<tr><td>";
       echo utf8entities($playerinfo['seriesname']);

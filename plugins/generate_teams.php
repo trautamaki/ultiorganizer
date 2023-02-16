@@ -34,12 +34,12 @@ if (isset($_POST['generate'])) {
 
 	$seriesId = $_POST['seriesid'];
 	$amount = intval($_POST['amount']) + 1;
-	$countries = CountryList(true);
+	$countries = CountryList($database, true);
 	$max = count($countries) - 1;
 
 	for ($i = 1; $i < $amount; $i++) {
-		$id = AddSeriesEnrolledTeam($seriesId, $_SESSION['uid'], "Team $i", "Club $i", $countries[rand(0, $max)]['name']);
-		ConfirmEnrolledTeam($seriesId, $id);
+		$id = AddSeriesEnrolledTeam($database, $seriesId, $_SESSION['uid'], "Team $i", "Club $i", $countries[rand(0, $max)]['name']);
+		ConfirmEnrolledTeam($database, $seriesId, $id);
 	}
 }
 
@@ -49,9 +49,9 @@ $html .= "<form method='post' enctype='multipart/form-data' action='?view=plugin
 if (empty($seasonId)) {
 	$html .= "<p>" . ("Select event") . ": <select class='dropdown' name='season'>\n";
 
-	$seasons = Seasons();
+	$seasons = Seasons($database);
 
-	while ($row = mysql_fetch_assoc($seasons)) {
+	while ($row = $database->FetchAssoc($seasons)) {
 		$html .= "<option class='dropdown' value='" . utf8entities($row['season_id']) . "'>" . utf8entities($row['name']) . "</option>";
 	}
 
@@ -60,7 +60,7 @@ if (empty($seasonId)) {
 } else {
 
 	$html .= "<p>" . ("Select division") . ":	<select class='dropdown' name='seriesid'>\n";
-	$series = SeasonSeries($seasonId);
+	$series = SeasonSeries($database, $seasonId);
 	foreach ($series as $row) {
 		$html .= "<option class='dropdown' value='" . utf8entities($row['series_id']) . "'>" . utf8entities($row['name']) . "</option>";
 	}
@@ -77,5 +77,5 @@ if (empty($seasonId)) {
 
 $html .= "</form>";
 
-showPage($title, $html);
+showPage($database, $title, $html);
 ?>

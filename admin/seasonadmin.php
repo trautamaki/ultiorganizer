@@ -6,7 +6,7 @@ include_once 'lib/common.functions.php';
 include_once 'lib/configuration.functions.php';
 
 $LAYOUT_ID = SEASONADMIN;
-$info = SeasonInfo($_GET["season"]);
+$info = SeasonInfo($database, $_GET["season"]);
 
 $title = _("Event") . ": " . utf8entities(U_($info['name']));
 $html = "";
@@ -14,7 +14,7 @@ $html = "";
 //common page
 pageTopHeadOpen($title);
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 $html .=  "<h2>" . utf8entities(U_($info['name'])) . "</h2>\n";
@@ -30,7 +30,7 @@ $html .=  "<tr><td><b>" . _("Organizer") . "</b></td><td>" . U_($info['organizer
 
 $spirit = _("not given");
 if ($info['spiritmode'] > 0) {
-	$spiritmode = SpiritMode($info['spiritmode']);
+	$spiritmode = SpiritMode($database, $info['spiritmode']);
 	$spirit = utf8entities(_($spiritmode['name'])) . " / <em>" . (intval($info['showspiritpoints']) ? _("visible") : _("not visible")) . "</em>";
 }
 $html .=  "<tr><td><b>" . _("Spirit points") . "</b></td><td>" . $spirit . "</td></tr>\n";
@@ -54,32 +54,32 @@ $html .=  "</table>";
 $html .=  "</td><td style='width:300px; vertical-align:text-top;'>";
 
 $html .=  "<table style='white-space: nowrap;' border='0'>\n";
-$series = SeasonSeries($info['season_id']);
+$series = SeasonSeries($database, $info['season_id']);
 $html .=  "<tr><td style='width:80%;'><a href='?view=admin/seasonseries&amp;season=" . $info['season_id'] . "'>" . _("Divisions") . "</a></td>";
 $html .=  "<td class='right'>" . count($series) . "</td>";
 $html .=  "</tr>\n";
 
-$pools = SeasonPools($info['season_id']);
+$pools = SeasonPools($database, $info['season_id']);
 $html .=  "<tr><td><a href='?view=admin/seasonpools&amp;season=" . $info['season_id'] . "'>" . _("Pools") . "</a></td>";
 $html .=  "<td class='right'>" . count($pools) . "</td>";
 $html .=  "</tr>\n";
 
-$teams = SeasonTeams($info['season_id']);
+$teams = SeasonTeams($database, $info['season_id']);
 $html .=  "<tr><td><a href='?view=admin/seasonteams&amp;season=" . $info['season_id'] . "'>" . _("Teams") . "</a></td>";
 $html .=  "<td class='right'>" . count($teams) . "</td>";
 $html .=  "</tr>\n";
 
-$players = SeasonAllPlayers($info['season_id']);
+$players = SeasonAllPlayers($database, $info['season_id']);
 $html .=  "<tr><td><a href='?view=admin/accreditation&amp;season=" . $info['season_id'] . "'>" . _("Players") . "</a></td>";
 $html .=  "<td class='right'>" . count($players) . "</td>";
 $html .=  "</tr>\n";
 
-$reservations = SeasonReservations($info['season_id']);
+$reservations = SeasonReservations($database, $info['season_id']);
 $html .=  "<tr><td><a href='?view=admin/reservations&amp;season=" . $info['season_id'] . "'>" . _("Reservations") . "</a></td>";
 $html .=  "<td class='right'>" . count($reservations) . "</td>";
 $html .=  "</tr>\n";
 
-$games = SeasonAllGames($info['season_id']);
+$games = SeasonAllGames($database, $info['season_id']);
 $html .=  "<tr><td><a href='?view=admin/seasongames&amp;season=" . $info['season_id'] . "'>" . _("Games") . "</a></td>";
 $html .=  "<td class='right'>" . count($games) . "</td>";
 $html .=  "</tr>\n";
@@ -87,7 +87,7 @@ $html .=  "</tr>\n";
 $html .=  "</table>";
 $html .=  "</td></tr></table>\n\n";
 
-$html .= "<b>" . _("Comment") . ":</b> " . CommentHTML(1, $info['season_id']);
+$html .= "<b>" . _("Comment") . ":</b> " . CommentHTML($database, 1, $info['season_id']);
 
 $html .=  "<p>";
 $html .=  "<a href='?view=admin/addseasons&amp;season=" . $info['season_id'] . "'>&raquo; " . _("Change event properties") . "</a><br/>";
@@ -97,7 +97,7 @@ if (IsTwitterEnabled()) {
 	$html .=  "<a href='?view=admin/twitterconf&amp;season=" . $info['season_id'] . "'>&raquo; " . _("Configure Twitter") . "</a><br/>";
 }
 
-if (IsSeasonStatsCalculated($info['season_id'])) {
+if (IsSeasonStatsCalculated($database, $info['season_id'])) {
 	$html .=  "<a href='?view=admin/stats&amp;season=" . $info['season_id'] . "'>&raquo; " . _("Re-archive statistics") . "</a><br/>";
 } else {
 	$html .=  "<a href='?view=admin/stats&amp;season=" . $info['season_id'] . "'>&raquo; " . _("Archive statistics") . "</a><br/>";

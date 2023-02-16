@@ -13,10 +13,10 @@ $teams = array();
 
 if (!empty($_POST['calc'])) {
     set_time_limit(120);
-    CalcSeasonStats($season);
-    CalcSeriesStats($season);
-    CalcTeamStats($season);
-    CalcPlayerStats($season);
+    CalcSeasonStats($database, $season);
+    CalcSeriesStats($database, $season);
+    CalcTeamStats($database, $season);
+    CalcPlayerStats($database, $season);
 }
 
 //common page
@@ -57,17 +57,17 @@ include_once 'lib/yui.functions.php';
 echo yuiLoad(array("animation", "dragdrop", "connection"));
 
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 $html .= "<form method='post' action='?view=admin/stats&amp;season=$season'>\n";
 $html .= "<p>" . _("Calculation of statistics takes some time; please wait without closing browser.") . "</p>\n";
 
-if (!IsSeasonStatsCalculated($season)) {
+if (!IsSeasonStatsCalculated($database, $season)) {
     $html .= "<p><input class='button' name='calc' type='submit' value='" . _("Calculate") . "'/></p>\n";
 } else {
-    $seasons = SeasonStatistics($season);
-    $series = SeriesStatistics($season);
-    $teams = SeasonTeamStatistics($season);
+    $seasons = SeasonStatistics($database, $season);
+    $series = SeriesStatistics($database, $season);
+    $teams = SeasonTeamStatistics($database, $season);
 
     $html .= "<ul>";
     $html .= "<li>" . _("Teams") . ": " . $seasons['teams'] . "</li>\n";

@@ -3,6 +3,8 @@ include_once 'lib/season.functions.php';
 include_once 'lib/series.functions.php';
 include_once 'lib/team.functions.php';
 
+$database = new Database();
+
 $poolId = 0;
 $poolIds = array();
 $seriesId = 0;
@@ -15,19 +17,19 @@ $title = _("Defenseboard");
 
 if (iget("pool")) {
   $poolId = intval(iget("pool"));
-  $title = $title . ": " . utf8entities(U_(PoolName($poolId)));
+  $title = $title . ": " . utf8entities(U_(PoolName($database, $poolId)));
 }
 if (iget("pools")) {
   $poolIds = explode(",", iget("pools"));
-  $title = $title . ": " . utf8entities(U_(PoolName($poolId)));
+  $title = $title . ": " . utf8entities(U_(PoolName($database, $poolId)));
 }
 if (iget("series")) {
   $seriesId = intval(iget("series"));
-  $title = $title . ": " . utf8entities(U_(SeriesName($seriesId)));
+  $title = $title . ": " . utf8entities(U_(SeriesName($database, $seriesId)));
 }
 if (iget("team")) {
   $teamId = intval(iget("team"));
-  $title = $title . ": " . utf8entities(TeamName($teamId));
+  $title = $title . ": " . utf8entities(TeamName($database, $teamId));
 }
 if (iget("sort")) {
   $sort = iget("sort");
@@ -77,24 +79,24 @@ $html .= "</tr>";
 
 if ($teamId) {
   if (count($poolIds)) {
-    //$scores = TeamScoreBoard($teamId, $poolIds, $sort, 0);
-    $defenses = TeamScoreBoardWithDefenses($teamId, $poolIds, $sort, 0);
+    //$scores = TeamScoreBoard($database, $teamId, $poolIds, $sort, 0);
+    $defenses = TeamScoreBoardWithDefenses($database, $teamId, $poolIds, $sort, 0);
   } else {
-    //$scores = TeamScoreBoard($teamId, $poolId, $sort, 0);
-    $defenses = TeamScoreBoardWithDefenses($teamId, $poolId, $sort, 0);
+    //$scores = TeamScoreBoard($database, $teamId, $poolId, $sort, 0);
+    $defenses = TeamScoreBoardWithDefenses($database, $teamId, $poolId, $sort, 0);
   }
 } elseif ($poolId) {
-  //$scores = PoolScoreBoard($poolId, $sort, 0);
-  $defenses = PoolScoreBoardWithDefenses($poolId, $sort, 0);
+  //$scores = PoolScoreBoard($database, $poolId, $sort, 0);
+  $defenses = PoolScoreBoardWithDefenses($database, $poolId, $sort, 0);
 } elseif (count($poolIds)) {
-  //$scores = PoolsScoreBoard($poolIds, $sort, 0);
-  $defenses = PoolScoreBoardWithDefenses($poolIds, $sort, 0);
+  //$scores = PoolsScoreBoard($database, $poolIds, $sort, 0);
+  $defenses = PoolScoreBoardWithDefenses($database, $poolIds, $sort, 0);
 } elseif ($seriesId) {
-  //$scores = SeriesScoreBoard($seriesId, $sort, 0);
-  $defenses = SeriesDefenseBoard($seriesId, $sort, 0);
+  //$scores = SeriesScoreBoard($database, $seriesId, $sort, 0);
+  $defenses = SeriesDefenseBoard($database, $seriesId, $sort, 0);
 }
 $i = 1;
-while ($row = mysql_fetch_assoc($defenses)) {
+while ($row = $database->FetchAssoc($defenses)) {
   $html .= "<tr>";
   $html .= "<td>" . $i++ . "</td>";
   if ($sort == "name") {
@@ -123,4 +125,4 @@ while ($row = mysql_fetch_assoc($defenses)) {
 }
 $html .= "</table>";
 
-showPage($title, $html);
+showPage($database, $title, $html);

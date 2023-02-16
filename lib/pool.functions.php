@@ -8,20 +8,20 @@ include_once $include_prefix . 'lib/swissdraw.functions.php';
  * @param array $filter
  * @param array $ordering
  */
-function Pools($filter = null, $ordering = null)
+function Pools($database, $filter = null, $ordering = null)
 {
   if (!isset($ordering)) {
     $ordering = array("season.starttime" => "ASC", "series.ordering" => "ASC", "pool.ordering" => "ASC");
   }
   $tables = array("uo_pool" => "pool", "uo_series" => "series", "uo_season" => "season");
-  $orderby = CreateOrdering($tables, $ordering);
-  $where = CreateFilter($tables, $filter);
+  $orderby = CreateOrdering($database, $tables, $ordering);
+  $where = CreateFilter($database, $tables, $filter);
   $query = "SELECT pool_id, pool.name, pool.type, pool.series
     FROM uo_pool pool LEFT JOIN uo_series series ON (pool.series=series.series_id)
     LEFT JOIN uo_season season ON (series.season=season.season_id)
     $where
     $orderby";
-  return DBQuery(trim($query));
+  return $database->DBQuery(trim($query));
 }
 
 /**
@@ -30,7 +30,7 @@ function Pools($filter = null, $ordering = null)
  * @param int $poolId uo_pool.pool_id
  * @return php array of pool information.
  */
-function PoolInfo($poolId)
+function PoolInfo($database, $poolId)
 {
   $query = sprintf(
     "SELECT pool.*, ser.name AS seriesname, ser.season FROM uo_pool pool
@@ -38,7 +38,7 @@ function PoolInfo($poolId)
         WHERE pool.pool_id=%d",
     (int)$poolId
   );
-  return DBQueryToRow($query, true);
+  return $database->DBQueryToRow($query, true);
 }
 
 /**
@@ -46,18 +46,18 @@ function PoolInfo($poolId)
  * @param int $poolId uo_pool.pool_id
  * @return php array of pool followers.
  */
-function PoolFollowersArray($poolId)
+function PoolFollowersArray($database, $poolId)
 {
   $ids = array();
   $query = sprintf(
     "SELECT topool FROM uo_moveteams WHERE frompool=%d GROUP BY topool",
     (int)$poolId
   );
-  $followers = DBQueryToArray($query);
+  $followers = $database->DBQueryToArray($query);
 
   foreach ($followers as $follower) {
     $ids[] = $follower['topool'];
-    $ids = array_merge($ids, PoolFollowersArray($follower['topool']));
+    $ids = array_merge($ids, PoolFollowersArray($database, $follower['topool']));
   }
   return $ids;
 }
@@ -67,7 +67,7 @@ function PoolFollowersArray($poolId)
  * @param int $poolId uo_pool.pool_id
  * @return php array of pool followers.
  */
-function PoolPlayoffFollowersArray($poolId)
+function PoolPlayoffFollowersArray($database, $poolId)
 {
   $ids = array();
 
@@ -75,11 +75,11 @@ function PoolPlayoffFollowersArray($poolId)
     "SELECT follower FROM uo_pool WHERE pool_id=%d AND follower IS NOT NULL",
     (int)$poolId
   );
-  $followers = DBQueryToArray($query);
+  $followers = $database->DBQueryToArray($query);
 
   foreach ($followers as $follower) {
     $ids[] = $follower['follower'];
-    $ids = array_merge($ids, PoolPlayoffFollowersArray($follower['follower']));
+    $ids = array_merge($ids, PoolPlayoffFollowersArray($database, $follower['follower']));
   }
   return $ids;
 }
@@ -89,7 +89,7 @@ function PoolPlayoffFollowersArray($poolId)
  * @param int $poolId uo_pool.pool_id
  * @return root pool id.
  */
-function PoolPlayoffRoot($poolId)
+function PoolPlayoffRoot($database, $poolId)
 {
   $ids = array();
 
@@ -97,10 +97,10 @@ function PoolPlayoffRoot($poolId)
     "SELECT pool_id FROM uo_pool WHERE follower=%d",
     (int)$poolId
   );
-  $root = DBQueryToValue($query);
+  $root = $database->DBQueryToValue($query);
 
   if ($root > 0) {
-    $poolId = PoolPlayoffRoot($root);
+    $poolId = PoolPlayoffRoot($database, $root);
   }
 
   return $poolId;
@@ -112,13 +112,13 @@ function PoolPlayoffRoot($poolId)
  * @param int $poolId uo_pooltemplate.template_id
  * @return php array of pool template information.
  */
-function PoolTemplateInfo($poolId)
+function PoolTemplateInfo($database, $poolId)
 {
   $query = sprintf(
     "SELECT * FROM uo_pooltemplate WHERE template_id=%d",
     (int)$poolId
   );
-  return DBQueryToRow($query);
+  return $database->DBQueryToRow($query);
 }
 
 /**
@@ -126,10 +126,10 @@ function PoolTemplateInfo($poolId)
  *
  * @return php array of pool template information.
  */
-function PoolTemplates()
+function PoolTemplates($database)
 {
   $query = "SELECT * FROM uo_pooltemplate ORDER BY name ASC";
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -137,9 +137,9 @@ function PoolTemplates()
  * @param int $poolId uo_pool.pool_id
  * @return short name.
  */
-function PoolShortName($poolId)
+function PoolShortName($database, $poolId)
 {
-  $poolname = PoolName($poolId);
+  $poolname = PoolName($database, $poolId);
   $forbiddenwords = array("Playoff", "Playout", "Swissdraw");
   foreach ($forbiddenwords as $word) {
     $newname = str_replace($word, "", $poolname);
@@ -159,7 +159,7 @@ function PoolShortName($poolId)
  * @param int $poolId uo_pool.pool_id
  * @return Pool name.
  */
-function PoolName($poolId)
+function PoolName($database, $poolId)
 {
   $query = sprintf(
     "SELECT pool.name FROM uo_pool pool
@@ -167,7 +167,7 @@ function PoolName($poolId)
     (int)$poolId
   );
 
-  return U_(DBQueryToValue($query));
+  return U_($database->DBQueryToValue($query));
 }
 
 /**
@@ -175,7 +175,7 @@ function PoolName($poolId)
  * @param int $poolId uo_pool.pool_id
  * @return Division name.
  */
-function PoolSeriesName($poolId)
+function PoolSeriesName($database, $poolId)
 {
   $query = sprintf(
     "SELECT ser.name FROM uo_pool pool
@@ -184,7 +184,7 @@ function PoolSeriesName($poolId)
     (int)$poolId
   );
 
-  return U_(DBQueryToValue($query));
+  return U_($database->DBQueryToValue($query));
 }
 
 /**
@@ -192,14 +192,14 @@ function PoolSeriesName($poolId)
  *
  * @return mysql array of pools
  */
-function PoolListAll()
+function PoolListAll($database)
 {
   $query = sprintf("SELECT pool.pool_id, pool.name, ser.name AS seriesname, season.name AS seasonname
     FROM uo_pool pool
     LEFT JOIN uo_series ser ON (pool.series=ser.series_id)
     LEFT JOIN uo_season season ON (ser.season=season.season_id)
     ORDER BY pool.name, ser.name, season.name");
-  return DBQuery($query);
+  return $database->DBQuery($query);
 }
 
 /**
@@ -223,7 +223,7 @@ function PoolTypes()
  * @param string $order Order by "seed", "name", "rank". Default is "rank".
  * @return php array of teams
  */
-function PoolTeams($poolId, $order = "rank")
+function PoolTeams($database, $poolId, $order = "rank")
 {
   $query = sprintf(
     "SELECT uo_team.team_id, uo_team.name, uo_team.club, club.name AS clubname,
@@ -252,7 +252,7 @@ function PoolTeams($poolId, $order = "rank")
       break;
   }
 
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -263,25 +263,25 @@ function PoolTeams($poolId, $order = "rank")
  * @param boolean $ordinal TRUE if ordinal string
  * @return name of position
  */
-function PoolPlacementString($poolId, $pos, $ordinal = true)
+function PoolPlacementString($database, $poolId, $pos, $ordinal = true)
 {
   $ret = _("Unknown");
-  $info = PoolInfo($poolId);
+  $info = PoolInfo($database, $poolId);
   if (intval($info['placementpool'])) {
-    $ppools = SeriesPlacementPoolIds($info['series']);
+    $ppools = SeriesPlacementPoolIds($database, $info['series']);
     $placementfrom = 1;
     foreach ($ppools as $ppool) {
-      $teams = PoolSchedulingTeams($ppool['pool_id']);
+      $teams = PoolSchedulingTeams($database, $ppool['pool_id']);
       if ($info['pool_id'] != $ppool['pool_id']) {
         for ($i = 1; $i <= count($teams); $i++) {
-          $moved = PoolMoveExist($ppool['pool_id'], $i);
+          $moved = PoolMoveExist($database, $ppool['pool_id'], $i);
           if (!$moved) {
             $placementfrom++;
           }
         }
       } else {
         for ($i = 1; $i <= count($teams) && $i < $pos; $i++) {
-          $moved = PoolMoveExist($ppool['pool_id'], $i);
+          $moved = PoolMoveExist($database, $ppool['pool_id'], $i);
           if (!$moved) {
             $placementfrom++;
           }
@@ -315,7 +315,7 @@ function PoolPlacementString($poolId, $pos, $ordinal = true)
  * @param int $poolId uo_pool.pool_id
  * @return php array of scheduling teams
  */
-function PoolSchedulingTeams($poolId)
+function PoolSchedulingTeams($database, $poolId)
 {
   $query = sprintf(
     "SELECT s.name, s.scheduling_id
@@ -326,7 +326,7 @@ function PoolSchedulingTeams($poolId)
     (int)$poolId
   );
 
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -337,7 +337,7 @@ function PoolSchedulingTeams($poolId)
  * @param int $limit Numbers of rows returned, 0 if unlimited
  * @return mysql array of players.
  */
-function PoolScoreBoard($poolId, $sorting, $limit)
+function PoolScoreBoard($database, $sorting, $limit)
 {
   $query = sprintf(
     "
@@ -410,7 +410,7 @@ function PoolScoreBoard($poolId, $sorting, $limit)
     $query .= " limit $limit";
   }
 
-  return DBQuery($query);
+  return $database->DBQuery($query);
 }
 
 /**
@@ -421,10 +421,10 @@ function PoolScoreBoard($poolId, $sorting, $limit)
  * @param int $limit Numbers of rows returned, 0 if unlimited
  * @return mysql array of players.
  */
-function PoolsScoreBoard($pools, $sorting, $limit)
+function PoolsScoreBoard($databasesorting, $limit)
 {
 
-  $poolIds = mysql_real_escape_string(implode(",", $pools));
+  $poolIds = $database->RealEscapeString(implode(",", $pools));
 
   $query = " SELECT p.player_id, p.firstname, p.lastname, j.name AS teamname, COALESCE(t.done,0) AS done,
         COALESCE(t1.callahan,0) AS callahan, COALESCE(s.fedin,0) AS fedin, (COALESCE(t.done,0) + COALESCE(s.fedin,0)) AS total, pel.games
@@ -487,7 +487,7 @@ function PoolsScoreBoard($pools, $sorting, $limit)
     $query .= " limit $limit";
   }
 
-  return DBQuery($query);
+  return $database->DBQuery($query);
 }
 
 /**
@@ -498,9 +498,9 @@ function PoolsScoreBoard($pools, $sorting, $limit)
  * @param int $limit Numbers of rows returned, 0 if unlimited
  * @return mysql array of players.
  */
-function PoolsScoreBoardWithDefenses($pools, $sorting, $limit)
+function PoolsScoreBoardWithDefenses($database, $pools, $sorting, $limit)
 {
-  $poolIds = mysql_real_escape_string(implode(",", $pools));
+  $poolIds = $database->RealEscapeString(implode(",", $pools));
 
   $query = "
         SELECT p.player_id, p.firstname, p.lastname, j.name AS teamname, COALESCE(t.done,0) AS done,
@@ -573,7 +573,7 @@ function PoolsScoreBoardWithDefenses($pools, $sorting, $limit)
     $query .= " limit $limit";
   }
 
-  return DBQuery($query);
+  return $database->DBQuery($query);
 }
 
 /**
@@ -584,7 +584,7 @@ function PoolsScoreBoardWithDefenses($pools, $sorting, $limit)
  * @param int $limit Numbers of rows returned, 0 if unlimited
  * @return mysql array of players.
  */
-function PoolScoreBoardWithDefenses($poolId, $sorting, $limit)
+function PoolScoreBoardWithDefenses($database, $poolId, $sorting, $limit)
 {
 
   $query = sprintf(
@@ -665,11 +665,11 @@ function PoolScoreBoardWithDefenses($poolId, $sorting, $limit)
     $query .= " limit $limit";
   }
 
-  return DBQuery($query);
+  return $database->DBQuery($query);
 }
 
 
-function PoolDependsOn($topool)
+function PoolDependsOn($database, $topool)
 {
   $query = sprintf(
     "SELECT pmt.frompool, ps.name
@@ -680,7 +680,7 @@ function PoolDependsOn($topool)
         ORDER BY pmt.torank ASC",
     (int)$topool
   );
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -689,7 +689,7 @@ function PoolDependsOn($topool)
  * @param int $poolId uo_pool.pool_id
  * @return PHP array of moves
  */
-function PoolMovingsToPool($poolId)
+function PoolMovingsToPool($database, $poolId)
 {
   $query = sprintf(
     "SELECT pmt.*, ps.name, sn.name AS sname
@@ -700,10 +700,10 @@ function PoolMovingsToPool($poolId)
         ORDER BY pmt.torank ASC",
     (int)$poolId
   );
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
-function PoolGetMoveByTeam($toPool, $team)
+function PoolGetMoveByTeam($database, $toPool, $team)
 {
   $query = sprintf(
     "SELECT mv.* FROM uo_moveteams AS mv
@@ -713,7 +713,7 @@ function PoolGetMoveByTeam($toPool, $team)
     (int) $toPool,
     (int) $team
   );
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -722,7 +722,7 @@ function PoolGetMoveByTeam($toPool, $team)
  * @param int $poolId uo_pool.pool_id
  * @return PHP array of moves
  */
-function PoolMovingsFromPool($poolId)
+function PoolMovingsFromPool($database, $poolId)
 {
   $query = sprintf(
     "SELECT pmt.*, ps.name, sn.name AS sname
@@ -734,7 +734,7 @@ function PoolMovingsFromPool($poolId)
     (int)$poolId
   );
 
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -743,7 +743,7 @@ function PoolMovingsFromPool($poolId)
  * @param int $poolId uo_pool.pool_id
  * @return PHP array of teams
  */
-function PoolMovingsFromPoolWithTeams($poolId)
+function PoolMovingsFromPoolWithTeams($database, $poolId)
 {
   $query = sprintf(
     "SELECT pmt.*,tp.team as team_id,t.name as teamname
@@ -755,7 +755,7 @@ function PoolMovingsFromPoolWithTeams($poolId)
     (int)$poolId
   );
 
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -765,7 +765,7 @@ function PoolMovingsFromPoolWithTeams($poolId)
  * @param int $fromrank position to move
  * @return PHP array row
  */
-function PoolGetMoveToPool($poolId, $fromrank)
+function PoolGetMoveToPool($database, $poolId, $fromrank)
 {
   $query = sprintf(
     "SELECT m.topool, m.torank, m.ismoved, m.scheduling_id, pool.name, pool.color, pool.visible
@@ -776,7 +776,7 @@ function PoolGetMoveToPool($poolId, $fromrank)
     (int) $fromrank
   );
 
-  return DBQueryToRow($query);
+  return $database->DBQueryToRow($query);
 }
 
 /**
@@ -786,7 +786,7 @@ function PoolGetMoveToPool($poolId, $fromrank)
  * @param int $topos move to position
  * @return PHP array row
  */
-function PoolGetMoveFrom($topool, $torank)
+function PoolGetMoveFrom($database, $topool, $torank)
 {
   $query = sprintf(
     "SELECT m.frompool, m.fromplacing, m.scheduling_id
@@ -796,7 +796,7 @@ function PoolGetMoveFrom($topool, $torank)
     (int) $torank
   );
 
-  return DBQueryToRow($query);
+  return $database->DBQueryToRow($query);
 }
 
 /**
@@ -805,7 +805,7 @@ function PoolGetMoveFrom($topool, $torank)
  * @param int $schedulingId
  * @return uo_moveteams.frompool
  */
-function PoolGetFromPoolBySchedulingId($schedulingId)
+function PoolGetFromPoolBySchedulingId($database, $schedulingId)
 {
   $query = sprintf(
     "SELECT m.frompool
@@ -814,7 +814,7 @@ function PoolGetFromPoolBySchedulingId($schedulingId)
     (int) $schedulingId
   );
 
-  return DBQueryToValue($query);
+  return $database->DBQueryToValue($query);
 }
 
 /**
@@ -824,7 +824,7 @@ function PoolGetFromPoolBySchedulingId($schedulingId)
  * @param int $teamId
  * @return uo_moveteams.frompool
  */
-function PoolGetFromPoolByTeamId($poolId, $teamId)
+function PoolGetFromPoolByTeamId($database, $poolId, $teamId)
 {
   $query = sprintf(
     "SELECT m.frompool
@@ -835,7 +835,7 @@ function PoolGetFromPoolByTeamId($poolId, $teamId)
     (int) $teamId
   );
 
-  return DBQueryToValue($query);
+  return $database->DBQueryToValue($query);
 }
 
 /**
@@ -848,7 +848,7 @@ function PoolGetFromPoolByTeamId($poolId, $teamId)
  * @param boolean $countbye
  * @return PHP array row
  */
-function PoolTeamFromStandings($poolId, $activerank, $countbye = true)
+function PoolTeamFromStandings($database, $poolId, $activerank, $countbye = true)
 {
   if ($countbye) {
     $query = sprintf(
@@ -877,7 +877,7 @@ function PoolTeamFromStandings($poolId, $activerank, $countbye = true)
       (int)$activerank
     );
   }
-  return DBQueryToRow($query);
+  return $database->DBQueryToRow($query);
 }
 
 /**
@@ -890,7 +890,7 @@ function PoolTeamFromStandings($poolId, $activerank, $countbye = true)
  * @param boolean $countbye
  * @return PHP array row
  */
-function PoolTeamFromInitialRank($poolId, $rank, $countbye = true)
+function PoolTeamFromInitialRank($database, $poolId, $rank, $countbye = true)
 {
   if ($countbye) {
     $query = sprintf(
@@ -922,7 +922,7 @@ function PoolTeamFromInitialRank($poolId, $rank, $countbye = true)
     );
   }
 
-  return DBQueryToRow($query);
+  return $database->DBQueryToRow($query);
 }
 
 /**
@@ -932,7 +932,7 @@ function PoolTeamFromInitialRank($poolId, $rank, $countbye = true)
  * @param int $fromplacing
  * @return 1 if exist, 0 otherwise
  */
-function PoolIsMoved($frompool, $fromplacing)
+function PoolIsMoved($database, $frompool, $fromplacing)
 {
   $query = sprintf(
     "SELECT frompool
@@ -942,7 +942,7 @@ function PoolIsMoved($frompool, $fromplacing)
     (int)$fromplacing
   );
 
-  return DBQueryRowCount($query);
+  return $database->DBQueryRowCount($query);
 }
 
 /**
@@ -951,7 +951,7 @@ function PoolIsMoved($frompool, $fromplacing)
  * @param int $topool
  * @return true if played, false otherwise
  */
-function PoolIsMoveFromPoolsPlayed($topool)
+function PoolIsMoveFromPoolsPlayed($database, $topool)
 {
   $query = sprintf(
     "SELECT m.frompool, p.played
@@ -961,7 +961,7 @@ function PoolIsMoveFromPoolsPlayed($topool)
     (int)$topool
   );
 
-  return DBQueryRowCount($query) ? false : true;
+  return $database->DBQueryRowCount($query) ? false : true;
 }
 
 /**
@@ -971,7 +971,7 @@ function PoolIsMoveFromPoolsPlayed($topool)
  * @param int $fromplacing
  * @return 0 if move doesn't exist. 1 if exist.
  */
-function PoolMoveExist($frompool, $fromplacing)
+function PoolMoveExist($database, $frompool, $fromplacing)
 {
   $query = sprintf(
     "SELECT frompool
@@ -981,7 +981,7 @@ function PoolMoveExist($frompool, $fromplacing)
     (int)$fromplacing
   );
 
-  return DBQueryRowCount($query);
+  return $database->DBQueryRowCount($query);
 }
 
 /**
@@ -990,7 +990,7 @@ function PoolMoveExist($frompool, $fromplacing)
  * @param int $topool
  * @return true if no moves
  */
-function PoolIsAllMoved($topool)
+function PoolIsAllMoved($database, $topool)
 {
   $query = sprintf(
     "SELECT topool
@@ -999,7 +999,7 @@ function PoolIsAllMoved($topool)
     (int)$topool
   );
 
-  return (DBQueryRowCount($query) == 0);
+  return ($database->DBQueryRowCount($query) == 0);
 }
 
 /**
@@ -1009,16 +1009,16 @@ function PoolIsAllMoved($topool)
  * @param int $mvgames: 0 - all, 1 - nothing, 2 - mutual
  * @return PHP array of game ids to move
  */
-function PoolGetGamesToMove($poolId, $mvgames)
+function PoolGetGamesToMove($database, $poolId, $mvgames)
 {
   $games = array();
-  $moves = PoolMovingsToPool($poolId);
+  $moves = PoolMovingsToPool($database, $poolId);
   foreach ($moves as $row) {
-    $team = PoolTeamFromStandings($row['frompool'], $row['fromplacing']);
+    $team = PoolTeamFromStandings($database, $row['frompool'], $row['fromplacing']);
     if ($mvgames == 0) {
-      $teamgames = TeamPoolGames($team['team_id'], $row['frompool']);
-      if (mysql_num_rows($teamgames)) {
-        while ($game = mysql_fetch_assoc($teamgames)) {
+      $teamgames = TeamPoolGames($database, $team['team_id'], $row['frompool']);
+      if ($database->NumRows($teamgames)) {
+        while ($game = $database->FetchAssoc($teamgames)) {
           $found = false;
           foreach ($games as $id) {
             if ($game['game_id'] == $id) {
@@ -1031,13 +1031,13 @@ function PoolGetGamesToMove($poolId, $mvgames)
         }
       }
     } else if ($mvgames == 2) {
-      $moves2 = PoolMovingsToPool($poolId);
+      $moves2 = PoolMovingsToPool($database, $poolId);
       foreach ($moves2 as $row2) {
-        $team2 = PoolTeamFromStandings($row2['frompool'], $row2['fromplacing']);
+        $team2 = PoolTeamFromStandings($database, $row2['frompool'], $row2['fromplacing']);
         if ($row2['frompool'] == $row2['frompool']) {
-          $teamgames = TeamPoolGamesAgainst($team['team_id'], $team2['team_id'], $row['frompool']);
-          if (mysql_num_rows($teamgames)) {
-            while ($game = mysql_fetch_assoc($teamgames)) {
+          $teamgames = TeamPoolGamesAgainst($database, $team['team_id'], $team2['team_id'], $row['frompool']);
+          if ($database->NumRows($teamgames)) {
+            while ($game = $database->FetchAssoc($teamgames)) {
               $found = false;
               foreach ($games as $id) {
                 if ($game['game_id'] == $id) {
@@ -1057,13 +1057,13 @@ function PoolGetGamesToMove($poolId, $mvgames)
   return $games;
 }
 
-function PoolCountGames($poolId)
+function PoolCountGames($database, $poolId)
 {
-  $games = DBQuery("SELECT game_id
+  $games = $database->DBQuery("SELECT game_id
       FROM uo_game game
       LEFT JOIN uo_pool p ON (p.pool_id=game.pool)
       WHERE p.pool_id=$poolId");
-  return mysql_num_rows($games);
+  return $database->NumRows($games);
 }
 
 /**
@@ -1073,7 +1073,7 @@ function PoolCountGames($poolId)
  * @param int $fieldId - limits games to given field
  * @return PHP array of games
  */
-function PoolGames($poolId, $fieldId = null)
+function PoolGames($database, $poolId, $fieldId = null)
 {
 
   $query = sprintf(
@@ -1099,7 +1099,7 @@ function PoolGames($poolId, $fieldId = null)
   }
   $query .= " ORDER BY time ASC ";
 
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -1108,7 +1108,7 @@ function PoolGames($poolId, $fieldId = null)
  * @param int $poolId
  * @return PHP array of games
  */
-function PoolGamesNotScheduled($poolId)
+function PoolGamesNotScheduled($database, $poolId)
 {
   $query = sprintf(
     "SELECT home.name AS hometeamname, visitor.name AS visitorteamname, p.hometeam, p.visitorteam,
@@ -1126,7 +1126,7 @@ function PoolGamesNotScheduled($poolId)
     (int)$poolId
   );
 
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 
@@ -1136,7 +1136,7 @@ function PoolGamesNotScheduled($poolId)
  * @param int $poolId
  * @return PHP array of games
  */
-function PoolMovedGames($poolId)
+function PoolMovedGames($database, $poolId)
 {
   $query = sprintf(
     "SELECT pp.game_id, pp.time, pp.hometeam, pp.visitorteam, pp.homescore,
@@ -1166,7 +1166,7 @@ function PoolMovedGames($poolId)
     (int)$poolId
   );
 
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -1175,7 +1175,7 @@ function PoolMovedGames($poolId)
  * @param int $poolId
  * @return Number of games played
  */
-function PoolTotalPlayedGames($poolId)
+function PoolTotalPlayedGames($database, $poolId)
 {
   $query = sprintf(
     "SELECT pp.game_id, pp.hometeam, pp.visitorteam, pp.time
@@ -1187,7 +1187,7 @@ function PoolTotalPlayedGames($poolId)
     (int)$poolId
   );
 
-  return DBQueryRowCount($query);
+  return $database->DBQueryRowCount($query);
 }
 
 /**
@@ -1195,21 +1195,21 @@ function PoolTotalPlayedGames($poolId)
  *
  * @param int $poolId
  */
-function PoolResolvePlayed($poolId)
+function PoolResolvePlayed($database, $poolId)
 {
   $poolId = intval($poolId);
-  $games = DBQuery("SELECT game_id
+  $games = $database->DBQuery("SELECT game_id
             FROM uo_game game
             LEFT JOIN uo_pool p ON (p.pool_id=game.pool)
             WHERE p.pool_id=$poolId");
-  $played = DBQuery("SELECT game_id
+  $played = $database->DBQuery("SELECT game_id
             FROM uo_game game
             LEFT JOIN uo_pool p ON (p.pool_id=game.pool)
             WHERE p.pool_id=$poolId AND game.hasstarted AND game.isongoing=0");
-  if (mysql_num_rows($games) == mysql_num_rows($played)) {
-    DBQuery("UPDATE uo_pool SET played=1 WHERE pool_id=$poolId");
+  if ($database->NumRows($games) == $database->NumRows($played)) {
+    $database->DBQuery("UPDATE uo_pool SET played=1 WHERE pool_id=$poolId");
   } else {
-    DBQuery("UPDATE uo_pool SET played=0 WHERE pool_id=$poolId");
+    $database->DBQuery("UPDATE uo_pool SET played=0 WHERE pool_id=$poolId");
   }
 }
 
@@ -1219,7 +1219,7 @@ function PoolResolvePlayed($poolId)
  * @param int $poolId
  * @return true if pool started.
  */
-function IsPoolStarted($poolId)
+function IsPoolStarted($database, $poolId)
 {
 
   $query = sprintf(
@@ -1229,12 +1229,12 @@ function IsPoolStarted($poolId)
             WHERE pool.pool_id=$poolId AND (pp.hasstarted>0)",
     (int)$poolId
   );
-  return DBQueryRowCount($query) ? true : false;
+  return $database->DBQueryRowCount($query) ? true : false;
 }
 
 function IsPoolLocked($poolId)
 {
-  $poolinfo = PoolInfo($poolId);
+  $poolinfo = PoolInfo($database, $poolId);
   return $poolinfo['played'];
 }
 
@@ -1243,9 +1243,9 @@ function IsPoolLocked($poolId)
  *
  * @param uo_pooltemplate $params
  */
-function AddPoolTemplate($params)
+function AddPoolTemplate($database, $params)
 {
-  if (hasCurrentSeasonsEditRight()) {
+  if (hasCurrentSeasonsEditRight($database)) {
     $query = sprintf(
       "INSERT INTO uo_pooltemplate
             (name, timeoutlen, halftime, winningscore, drawsallowed, timecap, scorecap, addscore, halftimescore, timeouts,
@@ -1253,31 +1253,31 @@ function AddPoolTemplate($params)
             ordering, teams, timeslot, forfeitagainst, forfeitscore)
             VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s',
             '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
-      mysql_real_escape_string($params['name']),
-      mysql_real_escape_string($params['timeoutlen']),
-      mysql_real_escape_string($params['halftime']),
-      mysql_real_escape_string($params['winningscore']),
-      mysql_real_escape_string($params['drawsallowed']),
-      mysql_real_escape_string($params['timecap']),
-      mysql_real_escape_string($params['scorecap']),
-      mysql_real_escape_string($params['addscore']),
-      mysql_real_escape_string($params['halftimescore']),
-      mysql_real_escape_string($params['timeouts']),
-      mysql_real_escape_string($params['timeoutsper']),
-      mysql_real_escape_string($params['timeoutsovertime']),
-      mysql_real_escape_string($params['timeoutstimecap']),
-      mysql_real_escape_string($params['betweenpointslen']),
-      mysql_real_escape_string($params['continuingpool']),
-      mysql_real_escape_string($params['mvgames']),
-      mysql_real_escape_string($params['type']),
-      mysql_real_escape_string($params['ordering']),
-      mysql_real_escape_string($params['teams']),
-      mysql_real_escape_string($params['timeslot']),
-      mysql_real_escape_string($params['forfeitagainst']),
-      mysql_real_escape_string($params['forfeitscore'])
+      $database->RealEscapeString($params['name']),
+      $database->RealEscapeString($params['timeoutlen']),
+      $database->RealEscapeString($params['halftime']),
+      $database->RealEscapeString($params['winningscore']),
+      $database->RealEscapeString($params['drawsallowed']),
+      $database->RealEscapeString($params['timecap']),
+      $database->RealEscapeString($params['scorecap']),
+      $database->RealEscapeString($params['addscore']),
+      $database->RealEscapeString($params['halftimescore']),
+      $database->RealEscapeString($params['timeouts']),
+      $database->RealEscapeString($params['timeoutsper']),
+      $database->RealEscapeString($params['timeoutsovertime']),
+      $database->RealEscapeString($params['timeoutstimecap']),
+      $database->RealEscapeString($params['betweenpointslen']),
+      $database->RealEscapeString($params['continuingpool']),
+      $database->RealEscapeString($params['mvgames']),
+      $database->RealEscapeString($params['type']),
+      $database->RealEscapeString($params['ordering']),
+      $database->RealEscapeString($params['teams']),
+      $database->RealEscapeString($params['timeslot']),
+      $database->RealEscapeString($params['forfeitagainst']),
+      $database->RealEscapeString($params['forfeitscore'])
     );
 
-    return DBQueryInsert($query);
+    return $database->DBQueryInsert($query);
   } else {
     die('Insufficient rights to add pool template.');
   }
@@ -1289,9 +1289,9 @@ function AddPoolTemplate($params)
  * @param int $poolId
  * @param uo_pooltemplate $params
  */
-function SetPoolTemplate($poolId, $params)
+function SetPoolTemplate($database, $poolId, $params)
 {
-  if (hasCurrentSeasonsEditRight()) {
+  if (hasCurrentSeasonsEditRight($database)) {
     $query = sprintf(
       "UPDATE uo_pooltemplate SET
             name='%s', timeoutlen='%s', halftime='%s', winningscore='%s', drawsallowed='%s', timecap='%s', scorecap='%s',
@@ -1299,32 +1299,32 @@ function SetPoolTemplate($poolId, $params)
             timeoutstimecap='%s', betweenpointslen='%s', continuingpool='%s', mvgames='%s', type='%s', ordering='%s',
             teams='%s', timeslot='%s', forfeitagainst='%s', forfeitscore='%s'
             WHERE template_id='%s'",
-      mysql_real_escape_string($params['name']),
-      mysql_real_escape_string($params['timeoutlen']),
-      mysql_real_escape_string($params['halftime']),
-      mysql_real_escape_string($params['winningscore']),
-      mysql_real_escape_string($params['drawsallowed']),
-      mysql_real_escape_string($params['timecap']),
-      mysql_real_escape_string($params['scorecap']),
-      mysql_real_escape_string($params['addscore']),
-      mysql_real_escape_string($params['halftimescore']),
-      mysql_real_escape_string($params['timeouts']),
-      mysql_real_escape_string($params['timeoutsper']),
-      mysql_real_escape_string($params['timeoutsovertime']),
-      mysql_real_escape_string($params['timeoutstimecap']),
-      mysql_real_escape_string($params['betweenpointslen']),
-      mysql_real_escape_string($params['continuingpool']),
-      mysql_real_escape_string($params['mvgames']),
-      mysql_real_escape_string($params['type']),
-      mysql_real_escape_string($params['ordering']),
-      mysql_real_escape_string($params['teams']),
-      mysql_real_escape_string($params['timeslot']),
-      mysql_real_escape_string($params['forfeitagainst']),
-      mysql_real_escape_string($params['forfeitscore']),
-      mysql_real_escape_string($poolId)
+      $database->RealEscapeString($params['name']),
+      $database->RealEscapeString($params['timeoutlen']),
+      $database->RealEscapeString($params['halftime']),
+      $database->RealEscapeString($params['winningscore']),
+      $database->RealEscapeString($params['drawsallowed']),
+      $database->RealEscapeString($params['timecap']),
+      $database->RealEscapeString($params['scorecap']),
+      $database->RealEscapeString($params['addscore']),
+      $database->RealEscapeString($params['halftimescore']),
+      $database->RealEscapeString($params['timeouts']),
+      $database->RealEscapeString($params['timeoutsper']),
+      $database->RealEscapeString($params['timeoutsovertime']),
+      $database->RealEscapeString($params['timeoutstimecap']),
+      $database->RealEscapeString($params['betweenpointslen']),
+      $database->RealEscapeString($params['continuingpool']),
+      $database->RealEscapeString($params['mvgames']),
+      $database->RealEscapeString($params['type']),
+      $database->RealEscapeString($params['ordering']),
+      $database->RealEscapeString($params['teams']),
+      $database->RealEscapeString($params['timeslot']),
+      $database->RealEscapeString($params['forfeitagainst']),
+      $database->RealEscapeString($params['forfeitscore']),
+      $database->RealEscapeString($poolId)
     );
 
-    return DBQuery($query);
+    return $database->DBQuery($query);
   } else {
     die('Insufficient rights to edit pool template.');
   }
@@ -1335,17 +1335,17 @@ function SetPoolTemplate($poolId, $params)
  *
  * @param int $poolId
  */
-function DeletePool($poolId)
+function DeletePool($database, $poolId)
 {
-  $poolInfo = PoolInfo($poolId);
+  $poolInfo = PoolInfo($database, $poolId);
   if (hasEditSeasonSeriesRight($poolInfo['season'])) {
-    Log2("pool", "delete", PoolName($poolId));
+    Log2($database, "pool", "delete", PoolName($database, $poolId));
     $query = sprintf(
       "DELETE FROM uo_pool WHERE pool_id=%d",
       (int)$poolId
     );
 
-    DBQuery($query);
+    $database->DBQuery($query);
 
     $query = sprintf(
       "DELETE FROM uo_moveteams WHERE frompool=%d OR topool=%d",
@@ -1353,7 +1353,7 @@ function DeletePool($poolId)
       (int)$poolId
     );
 
-    DBQuery($query);
+    $database->DBQuery($query);
   } else {
     die('Insufficient rights to delete pool');
   }
@@ -1364,16 +1364,16 @@ function DeletePool($poolId)
  *
  * @param int $poolId
  */
-function DeletePoolTemplate($poolId)
+function DeletePoolTemplate($database, $poolId)
 {
-  $poolInfo = PoolInfo($poolId);
+  $poolInfo = PoolInfo($database, $poolId);
   if (hasEditSeasonSeriesRight($poolInfo['season'])) {
     $query = sprintf(
       "DELETE FROM uo_pooltemplate WHERE template_id=%d",
       (int)$poolId
     );
 
-    DBQuery($query);
+    $database->DBQuery($query);
   } else {
     die('Insufficient rights to delete pool template');
   }
@@ -1388,9 +1388,9 @@ function DeletePoolTemplate($poolId)
  * @param int $poolTemplateId - Pool template
  * @return id to created pool.
  */
-function PoolFromPoolTemplate($seriesId, $name, $ordering, $poolTemplateId)
+function PoolFromPoolTemplate($database, $seriesId, $name, $ordering, $poolTemplateId)
 {
-  $seriesinfo = SeriesInfo($seriesId);
+  $seriesinfo = SeriesInfo($database, $seriesId);
   if (hasEditSeasonSeriesRight($seriesinfo['season'])) {
     $colors = array(
       "F0F8FF", "FAEBD7", "00FFFF", "7FFFD4", "F0FFFF", "F5F5DC", "FFE4C4", "0000FF", "8A2BE2", "DEB887", "FFFF00", "5F9EA0",
@@ -1414,19 +1414,19 @@ function PoolFromPoolTemplate($seriesId, $name, $ordering, $poolTemplateId)
             timeoutsper, timeoutsovertime, timeoutstimecap,betweenpointslen, continuingpool, forfeitagainst, forfeitscore, 0, 0,
             mvgames, '%s', teams, timeslot, '%s', %d
             FROM uo_pooltemplate WHERE template_id=%d",
-      mysql_real_escape_string($ordering),
-      mysql_real_escape_string($name),
+      $database->RealEscapeString($ordering),
+      $database->RealEscapeString($name),
       (int)$seriesId,
       (int)$poolTemplateId
     );
 
-    $newId = DBQueryInsert($query);
+    $newId = $database->DBQueryInsert($query);
     $color = $colors[$newId % count($colors)];
     $query = "UPDATE uo_pool SET color='" . $color . "' WHERE pool_id=" . $newId;
 
-    DBQuery($query);
+    $database->DBQuery($query);
 
-    Log1("pool", "add", $newId);
+    Log1($database, "pool", "add", $newId);
     return $newId;
   } else {
     die('Insufficient privileges to add pool');
@@ -1442,9 +1442,9 @@ function PoolFromPoolTemplate($seriesId, $name, $ordering, $poolTemplateId)
  * @param int $poolId - pool to copy
  * @param boolean $follower - new pool is follower for copied pool (used with playoff pools)
  */
-function PoolFromAnotherPool($seriesId, $name, $ordering, $poolId, $follower = false)
+function PoolFromAnotherPool($database, $seriesId, $name, $ordering, $poolId, $follower = false)
 {
-  $seriesinfo = SeriesInfo($seriesId);
+  $seriesinfo = SeriesInfo($database, $seriesId);
   if (hasEditSeasonSeriesRight($seriesinfo['season'])) {
     $colors = array(
       "F0F8FF", "FAEBD7", "00FFFF", "7FFFD4", "F0FFFF", "F5F5DC", "FFE4C4", "0000FF", "8A2BE2", "DEB887", "FFFF00", "5F9EA0",
@@ -1468,24 +1468,24 @@ function PoolFromAnotherPool($seriesId, $name, $ordering, $poolId, $follower = f
             timeoutsper, timeoutsovertime, timeoutstimecap,betweenpointslen, continuingpool, forfeitagainst, forfeitscore, 0, 0,
             mvgames, '%s', teams, timeslot, '%s', %d
             FROM uo_pool WHERE pool_id=%d",
-      mysql_real_escape_string($ordering),
-      mysql_real_escape_string($name),
+      $database->RealEscapeString($ordering),
+      $database->RealEscapeString($name),
       (int)$seriesId,
       (int)$poolId
     );
 
-    $newId = DBQueryInsert($query);
+    $newId = $database->DBQueryInsert($query);
 
     $color = $colors[$newId % count($colors)];
     $query = "UPDATE uo_pool SET color='" . $color . "' WHERE pool_id=" . $newId;
-    DBQuery($query);
+    $database->DBQuery($query);
 
     if ($follower) {
       $query = "UPDATE uo_pool SET follower='" . $newId . "' WHERE pool_id=" . $poolId;
-      DBQuery($query);
+      $database->DBQuery($query);
     }
 
-    Log1("pool", "add", $newId);
+    Log1($database, "pool", "add", $newId);
     return $newId;
   } else {
     die('Insufficient privileges to add pool');
@@ -1498,13 +1498,13 @@ function PoolFromAnotherPool($seriesId, $name, $ordering, $poolId, $follower = f
  * @param int $poolId
  * @param uo_pool $params
  */
-function SetPoolDetails($poolId, $params, $comment = null)
+function SetPoolDetails($database, $poolId, $params, $comment = null)
 {
-  $poolinfo = PoolInfo($poolId);
+  $poolinfo = PoolInfo($database, $poolId);
   if (hasEditSeasonSeriesRight($poolinfo['season'])) {
-    $result = DBSetRow("uo_pool", $params, "pool_id=$poolId");
+    $result = $database->DBSetRow("uo_pool", $params, "pool_id=$poolId");
     if ($result && isset($comment)) {
-      SetComment(3, $poolId, $comment);
+      SetComment($database, 3, $poolId, $comment);
     }
   } else {
     die('Insufficient rights to edit pool');
@@ -1517,23 +1517,23 @@ function SetPoolDetails($poolId, $params, $comment = null)
  * @param int $poolId
  * @param uo_pool $params
  */
-function SetPool($poolId, $params)
+function SetPool($database, $poolId, $params)
 {
-  $poolinfo = PoolInfo($poolId);
+  $poolinfo = PoolInfo($database, $poolId);
   if (hasEditSeasonSeriesRight($poolinfo['season'])) {
     $query = sprintf(
       "UPDATE uo_pool SET name='%s', continuingpool='%s', placementpool='%s',
             visible='%s', type='%s', ordering='%s' WHERE pool_id='%s'",
-      mysql_real_escape_string($params['name']),
-      mysql_real_escape_string($params['continuingpool']),
-      mysql_real_escape_string($params['placementpool']),
-      mysql_real_escape_string($params['visible']),
-      mysql_real_escape_string($params['type']),
-      mysql_real_escape_string($params['ordering']),
-      mysql_real_escape_string($poolId)
+      $database->RealEscapeString($params['name']),
+      $database->RealEscapeString($params['continuingpool']),
+      $database->RealEscapeString($params['placementpool']),
+      $database->RealEscapeString($params['visible']),
+      $database->RealEscapeString($params['type']),
+      $database->RealEscapeString($params['ordering']),
+      $database->RealEscapeString($poolId)
     );
 
-    DBQuery($query);
+    $database->DBQuery($query);
   } else {
     die('Insufficient rights to edit pool');
   }
@@ -1544,13 +1544,13 @@ function SetPool($poolId, $params)
  * @param int $poolId
  * @param int $visible: 0 hidden, 1 visible
  */
-function SetPoolVisibility($poolId, $visible)
+function SetPoolVisibility($database, $poolId, $visible)
 {
-  $poolinfo = PoolInfo($poolId);
+  $poolinfo = PoolInfo($database, $poolId);
   $query = sprintf("UPDATE uo_pool SET visible=%d
             WHERE pool_id=%d", (int) $visible, (int) $poolId);
 
-  return DBQuery($query);
+  return $database->DBQuery($query);
 }
 
 /**
@@ -1559,19 +1559,19 @@ function SetPoolVisibility($poolId, $visible)
  * @param int $poolId
  * @param string $name
  */
-function SetPoolName($poolId, $name)
+function SetPoolName($database, $poolId, $name)
 {
-  $poolinfo = PoolInfo($poolId);
+  $poolinfo = PoolInfo($database, $poolId);
   if (hasEditSeasonSeriesRight($poolinfo['season'])) {
     $query = sprintf(
       "UPDATE uo_pool SET
             name='%s'
             WHERE pool_id=%d",
-      mysql_real_escape_string($name),
+      $database->RealEscapeString($name),
       (int)$poolId
     );
 
-    return DBQuery($query);
+    return $database->DBQuery($query);
   } else {
     die('Insufficient rights to edit pool');
   }
@@ -1583,10 +1583,10 @@ function SetPoolName($poolId, $name)
  * @param int $poolId
  * @param int $teamId - team to remove
  */
-function PoolDeleteTeam($poolId, $teamId, $checkrights = true)
+function PoolDeleteTeam($database, $poolId, $teamId, $checkrights = true)
 {
-  $poolInfo = PoolInfo($poolId);
-  if (!$checkrights || hasEditTeamsRight($poolInfo['series'])) {
+  $poolInfo = PoolInfo($database, $poolId);
+  if (!$checkrights || hasEditTeamsRight($database, $poolInfo['series'])) {
 
     $query = sprintf(
       "DELETE FROM uo_team_pool WHERE pool=%d AND team=%d",
@@ -1594,15 +1594,15 @@ function PoolDeleteTeam($poolId, $teamId, $checkrights = true)
       (int)$teamId
     );
 
-    DBQuery($query);
+    $database->DBQuery($query);
 
-    $teaminfo = TeamInfo($teamId);
+    $teaminfo = TeamInfo($database, $teamId);
     if ($teaminfo['pool'] == $poolId) {
       $query = sprintf(
         "UPDATE uo_team SET pool=NULL WHERE team_id=%d",
         (int)$teamId
       );
-      DBQuery($query);
+      $database->DBQuery($query);
     }
   } else {
     die('PDT: Insufficient rights to edit pool teams');
@@ -1617,16 +1617,16 @@ function PoolDeleteTeam($poolId, $teamId, $checkrights = true)
  * @param int $rank - rank in new pool
  * @param int $newpool - new pool
  */
-function PoolSetTeam($curpool, $teamId, $rank, $newpool)
+function PoolSetTeam($database, $curpool, $teamId, $rank, $newpool)
 {
   if ($newpool > 0) {
-    $poolInfo = PoolInfo($newpool);
-    if (!hasEditTeamsRight($poolInfo['series']))
+    $poolInfo = PoolInfo($database, $newpool);
+    if (!hasEditTeamsRight($database, $poolInfo['series']))
       die('PST: Insufficient rights to edit pool teams');
   }
   if ($curpool > 0) {
-    $poolInfo = PoolInfo($curpool);
-    if (!hasEditTeamsRight($poolInfo['series']))
+    $poolInfo = PoolInfo($database, $curpool);
+    if (!hasEditTeamsRight($database, $poolInfo['series']))
       die('PST: Insufficient rights to edit pool teams');
   }
 
@@ -1640,7 +1640,7 @@ function PoolSetTeam($curpool, $teamId, $rank, $newpool)
       (int) $curpool,
       (int) $teamId
     );
-    DBQuery($query);
+    $database->DBQuery($query);
   } else {
     $query = sprintf(
       "DELETE FROM uo_team_pool
@@ -1648,14 +1648,14 @@ function PoolSetTeam($curpool, $teamId, $rank, $newpool)
       (int) $curpool,
       (int) $teamId
     );
-    DBQuery($query);
+    $database->DBQuery($query);
   }
 
-  $teaminfo = TeamInfo($teamId);
+  $teaminfo = TeamInfo($database, $teamId);
   if ($teaminfo['pool'] == $curpool) {
     $query = sprintf("UPDATE uo_team SET pool=%d WHERE team_id=%d", (int) $newpool, (int) $teamId);
 
-    DBQuery($query);
+    $database->DBQuery($query);
   }
 }
 
@@ -1667,11 +1667,11 @@ function PoolSetTeam($curpool, $teamId, $rank, $newpool)
  * @param int $rank - team rank in pool
  * @param int $updaterank - if activerank is updated
  */
-function PoolAddTeam($poolId, $teamId, $rank, $updaterank = false, $checkrights = true)
+function PoolAddTeam($database, $poolId, $teamId, $rank, $updaterank = false, $checkrights = true)
 {
-  $poolInfo = PoolInfo($poolId);
+  $poolInfo = PoolInfo($database, $poolId);
 
-  if (!$checkrights || hasEditTeamsRight($poolInfo['series'])) {
+  if (!$checkrights || hasEditTeamsRight($database, $poolInfo['series'])) {
 
     if ($updaterank) {
       $query = sprintf(
@@ -1693,7 +1693,7 @@ function PoolAddTeam($poolId, $teamId, $rank, $updaterank = false, $checkrights 
         (int)$rank
       );
     }
-    DBQuery($query);
+    $database->DBQuery($query);
 
     //update team pool
     /*
@@ -1702,7 +1702,7 @@ function PoolAddTeam($poolId, $teamId, $rank, $updaterank = false, $checkrights 
     (int)$poolId,
     (int)$teamId);
     */
-    DBQuery($query);
+    $database->DBQuery($query);
   } else {
     die('PAT: Insufficient rights to edit pool teams');
   }
@@ -1716,30 +1716,30 @@ function PoolAddTeam($poolId, $teamId, $rank, $updaterank = false, $checkrights 
  * @param int $torank
  * @param string $pteamname
  */
-function AddSpecialRankingRule($frompool, $fromplacing, $torank, $pteamname)
+function AddSpecialRankingRule($database, $frompool, $fromplacing, $torank, $pteamname)
 {
-  $poolInfo = PoolInfo($frompool);
-  if (hasEditTeamsRight($poolInfo['series'])) {
+  $poolInfo = PoolInfo($database, $frompool);
+  if (hasEditTeamsRight($database, $poolInfo['series'])) {
 
     $query = sprintf(
       "INSERT INTO uo_scheduling_name
                 (name) VALUES ('%s')",
-      mysql_real_escape_string($pteamname)
+      $database->RealEscapeString($pteamname)
     );
 
-    $pteam = DBQueryInsert($query);
+    $pteam = $database->DBQueryInsert($query);
 
     $query = sprintf(
       "INSERT INTO uo_specialranking
                 (frompool, fromplacing, torank, scheduling_id)
                 VALUES ('%s','%s','%s', %d)",
-      mysql_real_escape_string($frompool),
-      mysql_real_escape_string($fromplacing),
-      mysql_real_escape_string($torank),
+      $database->RealEscapeString($frompool),
+      $database->RealEscapeString($fromplacing),
+      $database->RealEscapeString($torank),
       (int) $pteam
     );
 
-    return DBQueryInsert($query);
+    return $database->DBQueryInsert($query);
   } else {
     die('Insufficient rights to add pool moves');
   }
@@ -1754,18 +1754,18 @@ function AddSpecialRankingRule($frompool, $fromplacing, $torank, $pteamname)
  * @param int $torank - to position to move
  * @param string $pteamname - team scheduling name in new pool (f.ex. A1)
  */
-function PoolAddMove($frompool, $topool, $fromplacing, $torank, $pteamname)
+function PoolAddMove($database, $frompool, $topool, $fromplacing, $torank, $pteamname)
 {
-  $poolInfo = PoolInfo($topool);
-  if (hasEditTeamsRight($poolInfo['series'])) {
+  $poolInfo = PoolInfo($database, $topool);
+  if (hasEditTeamsRight($database, $poolInfo['series'])) {
 
     $query = sprintf(
       "INSERT INTO uo_scheduling_name
                 (name) VALUES ('%s')",
-      mysql_real_escape_string($pteamname)
+      $database->RealEscapeString($pteamname)
     );
 
-    $pteam = DBQueryInsert($query);
+    $pteam = $database->DBQueryInsert($query);
 
     $query = sprintf(
       "INSERT INTO uo_moveteams
@@ -1778,7 +1778,7 @@ function PoolAddMove($frompool, $topool, $fromplacing, $torank, $pteamname)
       (int)$pteam
     );
 
-    return DBQueryInsert($query);
+    return $database->DBQueryInsert($query);
   } else {
     die('Insufficient rights to add pool moves');
   }
@@ -1792,10 +1792,10 @@ function PoolAddMove($frompool, $topool, $fromplacing, $torank, $pteamname)
  * @param int $fromplacing - new from placing value
  * @param int $torank - new to rank value
  */
-function PoolSetMove($frompool, $oldfpos, $fromplacing, $torank)
+function PoolSetMove($database, $frompool, $oldfpos, $fromplacing, $torank)
 {
-  $poolInfo = PoolInfo($frompool);
-  if (hasEditTeamsRight($poolInfo['series'])) {
+  $poolInfo = PoolInfo($database, $frompool);
+  if (hasEditTeamsRight($database, $poolInfo['series'])) {
 
     $query = sprintf(
       "UPDATE uo_moveteams SET fromplacing=%d, torank=%d
@@ -1806,7 +1806,7 @@ function PoolSetMove($frompool, $oldfpos, $fromplacing, $torank)
       (int)$oldfpos
     );
 
-    return DBQuery($query);
+    return $database->DBQuery($query);
   } else {
     die('Insufficient rights to add pool moves');
   }
@@ -1818,13 +1818,13 @@ function PoolSetMove($frompool, $oldfpos, $fromplacing, $torank)
  *
  * @param int $poolId - pool to moves are done.
  */
-function PoolMakeMoves($poolId)
+function PoolMakeMoves($database, $poolId)
 {
-  $poolInfo = PoolInfo($poolId);
-  if (hasEditTeamsRight($poolInfo['series'])) {
+  $poolInfo = PoolInfo($database, $poolId);
+  if (hasEditTeamsRight($database, $poolInfo['series'])) {
     //move teams
-    LogPoolUpdate($poolId, "Teams moved");
-    $moves = PoolMovingsToPool($poolId);
+    LogPoolUpdate($database, $poolId, "Teams moved");
+    $moves = PoolMovingsToPool($database, $poolId);
     $topool = 0;
     foreach ($moves as $row) {
       //store target pool
@@ -1833,8 +1833,8 @@ function PoolMakeMoves($poolId)
       }
 
       //add team to target pool
-      $team = PoolTeamFromStandings($row['frompool'], $row['fromplacing'], $poolInfo['type'] != 2); // do not count BYE team if we are moving to a playoff pool
-      PoolAddTeam($row['topool'], $team['team_id'], $row['torank'], true);
+      $team = PoolTeamFromStandings($database, $row['frompool'], $row['fromplacing'], $poolInfo['type'] != 2); // do not count BYE team if we are moving to a playoff pool
+      PoolAddTeam($database, $row['topool'], $team['team_id'], $row['torank'], true);
 
       //replace pseudo team with real team in games
       if (isRespTeamHomeTeam()) {
@@ -1854,7 +1854,7 @@ function PoolMakeMoves($poolId)
         );
       }
 
-      DBQuery($query);
+      $database->DBQuery($query);
 
       $query = sprintf(
         "UPDATE uo_game SET visitorteam=%d WHERE scheduling_name_visitor=%d AND scheduling_name_visitor!=0",
@@ -1862,7 +1862,7 @@ function PoolMakeMoves($poolId)
         (int)$row['scheduling_id']
       );
 
-      DBQuery($query);
+      $database->DBQuery($query);
 
       //set move done
       $query = sprintf(
@@ -1871,13 +1871,13 @@ function PoolMakeMoves($poolId)
         (int)$row['fromplacing']
       );
 
-      DBQuery($query);
+      $database->DBQuery($query);
     }
 
     //games to move
-    $poolinfo = PoolInfo($poolId);
+    $poolinfo = PoolInfo($database, $poolId);
     $mvgames = intval($poolinfo['mvgames']);
-    $games = PoolGetGamesToMove($poolId, $mvgames);
+    $games = PoolGetGamesToMove($database, $poolId, $mvgames);
     foreach ($games as $id) {
       $query = sprintf(
         "INSERT IGNORE INTO uo_game_pool
@@ -1887,9 +1887,9 @@ function PoolMakeMoves($poolId)
         (int)$topool
       );
 
-      $result = mysql_query($query);
+      $result = $database->DBQuery($query);
       if (!$result) {
-        die('Invalid query: ' . mysql_error());
+        die('Invalid query: ' . $database->GetConnection()->error());
       }
     }
   } else {
@@ -1904,10 +1904,10 @@ function PoolMakeMoves($poolId)
  * @param int $fromplacing - position from move.
  * @param boolean $checkrights check edit teams privilege, defaults to true
  */
-function PoolMakeMove($frompool, $fromplacing, $checkrights = true)
+function PoolMakeMove($database, $frompool, $fromplacing, $checkrights = true)
 {
-  $poolInfo = PoolInfo($frompool);
-  if (!$checkrights || hasEditTeamsRight($poolInfo['series'])) {
+  $poolInfo = PoolInfo($database, $frompool);
+  if (!$checkrights || hasEditTeamsRight($database, $poolInfo['series'])) {
     //move teams
     $query = sprintf(
       "SELECT pmt.*, ps.name, sn.name AS sname
@@ -1919,18 +1919,18 @@ function PoolMakeMove($frompool, $fromplacing, $checkrights = true)
       (int)$frompool,
       (int)$fromplacing
     );
-    $row = DBQueryToRow($query);
-    LogPoolUpdate($row['frompool'], "Teams moved");
+    $row = $database->DBQueryToRow($query);
+    LogPoolUpdate($database, $row['frompool'], "Teams moved");
     // add team to target pool
-    $team = PoolTeamFromStandings($row['frompool'], $row['fromplacing'], $poolInfo['type'] != 2); // do not count BYE team if we are moving to a playoff pool
+    $team = PoolTeamFromStandings($database, $row['frompool'], $row['fromplacing'], $poolInfo['type'] != 2); // do not count BYE team if we are moving to a playoff pool
 
     // delete previously moved team
-    $previous = PoolTeamFromInitialRank($row['topool'], $row['torank']);
-    if (!empty($previous) && CanDeleteTeamFromPool($row['topool'], $previous['team_id'])) {
-      PoolDeleteTeam($row['topool'], $previous['team_id'], $checkrights);
+    $previous = PoolTeamFromInitialRank($database, $row['topool'], $row['torank']);
+    if (!empty($previous) && CanDeleteTeamFromPool($database, $row['topool'], $previous['team_id'])) {
+      PoolDeleteTeam($database, $row['topool'], $previous['team_id'], $checkrights);
     }
 
-    PoolAddTeam($row['topool'], $team['team_id'], $row['torank'], true, $checkrights);
+    PoolAddTeam($database, $row['topool'], $team['team_id'], $row['torank'], true, $checkrights);
 
     // replace pseudo team with real team in games
     if (isRespTeamHomeTeam()) {
@@ -1950,7 +1950,7 @@ function PoolMakeMove($frompool, $fromplacing, $checkrights = true)
       );
     }
 
-    DBQuery($query);
+    $database->DBQuery($query);
 
     $query = sprintf(
       "UPDATE uo_game SET visitorteam=%d WHERE scheduling_name_visitor=%d AND scheduling_name_visitor!=0",
@@ -1958,7 +1958,7 @@ function PoolMakeMove($frompool, $fromplacing, $checkrights = true)
       (int) $row['scheduling_id']
     );
 
-    DBQuery($query);
+    $database->DBQuery($query);
 
     // set move done
     $query = sprintf(
@@ -1967,7 +1967,7 @@ function PoolMakeMove($frompool, $fromplacing, $checkrights = true)
       (int) $row['fromplacing']
     );
 
-    DBQuery($query);
+    $database->DBQuery($query);
   } else {
     die('Insufficient rights to move teams');
   }
@@ -1978,17 +1978,17 @@ function PoolMakeMove($frompool, $fromplacing, $checkrights = true)
  * @param int $frompool - move is from pool
  * @param int $fromplacing - move is from position
  */
-function PoolDeleteMove($frompool, $fromplacing)
+function PoolDeleteMove($database, $frompool, $fromplacing)
 {
-  $poolInfo = PoolInfo($frompool);
-  if (hasEditTeamsRight($poolInfo['series'])) {
+  $poolInfo = PoolInfo($database, $frompool);
+  if (hasEditTeamsRight($database, $poolInfo['series'])) {
     $query = sprintf(
       "DELETE FROM uo_moveteams WHERE frompool=%d AND fromplacing=%d",
       (int)$frompool,
       (int)$fromplacing
     );
 
-    DBQuery($query);
+    $database->DBQuery($query);
   } else {
     die('Insufficient rights to move teams');
   }
@@ -2001,17 +2001,17 @@ function PoolDeleteMove($frompool, $fromplacing)
  * @param int $fromplacing - move is from position
  * @param int $topool - move is to pool
  */
-function PoolUndoMove($frompool, $fromplacing, $topool)
+function PoolUndoMove($database, $frompool, $fromplacing, $topool)
 {
-  $poolInfo = PoolInfo($frompool);
-  if (hasEditTeamsRight($poolInfo['series'])) {
+  $poolInfo = PoolInfo($database, $frompool);
+  if (hasEditTeamsRight($database, $poolInfo['series'])) {
 
     // delete moved games
     $query = sprintf(
       "DELETE FROM uo_game_pool WHERE pool=%d AND timetable=0",
       (int)$topool
     );
-    DBQuery($query);
+    $database->DBQuery($query);
 
     $query = sprintf(
       "UPDATE uo_moveteams SET ismoved=0 WHERE frompool=%d AND fromplacing=%d",
@@ -2019,7 +2019,7 @@ function PoolUndoMove($frompool, $fromplacing, $topool)
       (int)$fromplacing
     );
 
-    DBQuery($query);
+    $database->DBQuery($query);
 
     $query = sprintf(
       "SELECT scheduling_id FROM uo_moveteams WHERE frompool=%d AND fromplacing=%d",
@@ -2027,7 +2027,7 @@ function PoolUndoMove($frompool, $fromplacing, $topool)
       (int)$fromplacing
     );
 
-    $result = DBQueryToRow($query);
+    $result = $database->DBQueryToRow($query);
     $homesched = $result['scheduling_id'];
 
     //replace real team with pseudo team in games
@@ -2037,7 +2037,7 @@ function PoolUndoMove($frompool, $fromplacing, $topool)
       (int)$result['scheduling_id']
     ); // FIXME set respteam to scheduling_team
 
-    DBQuery($query);
+    $database->DBQuery($query);
     $vissched = $result['scheduling_id'];
 
     $query = sprintf(
@@ -2046,18 +2046,18 @@ function PoolUndoMove($frompool, $fromplacing, $topool)
       (int)$result['scheduling_id']
     );
 
-    DBQuery($query);
+    $database->DBQuery($query);
 
-    $team = PoolTeamFromStandings($frompool, $fromplacing, $poolInfo['type'] != 2); // do not count BYE team if we are moving to a playoff pool
+    $team = PoolTeamFromStandings($database, $frompool, $fromplacing, $poolInfo['type'] != 2); // do not count BYE team if we are moving to a playoff pool
 
-    PoolDeleteTeam($topool, $team['team_id']);
+    PoolDeleteTeam($database, $topool, $team['team_id']);
 
 
     //     $query = sprintf("DELETE FROM uo_team_pool WHERE
     //                 team=%d AND pool=%d",
     //     (int)$team['team_id'],
     //     (int)$topool);
-    //     DBQuery($query);
+    //     $database->DBQuery($query);
 
     //     //update team pool
     //     $query = sprintf("UPDATE uo_team SET
@@ -2065,27 +2065,27 @@ function PoolUndoMove($frompool, $fromplacing, $topool)
     //     (int)$frompool,
     //     (int)$team['team_id']);
 
-    //     DBQuery($query);
+    //     $database->DBQuery($query);
 
   } else {
     die('Insufficient rights to move teams');
   }
 }
 
-function PoolConfirmMoves($poolId, $visible = null)
+function PoolConfirmMoves($database, $poolId, $visible = null)
 {
-  PoolMakeMoves($poolId);
+  PoolMakeMoves($database, $poolId);
   // Check if a BYE team has been scheduled. If so, fill in standard result
-  $changes = CheckBYE($poolId);
+  $changes = CheckBYE($database, $poolId);
   if ($changes > 0) {
     // check if the game with the BYE team is scheduled. If so, exchange it with the game that is not scheduled.
-    CheckBYESchedule($poolId);
+    CheckBYESchedule($database, $poolId);
   }
 
-  ResolvePoolStandings($poolId);
+  ResolvePoolStandings($database, $poolId);
 
   if (isset($visible)) {
-    SetPoolVisibility($poolId, $visible);
+    SetPoolVisibility($database, $poolId, $visible);
   }
 }
 
@@ -2096,16 +2096,16 @@ function PoolConfirmMoves($poolId, $visible = null)
  * @param string $name
  * @param string $season
  */
-function PoolSetSchedulingName($scheduling_id, $name, $season)
+function PoolSetSchedulingName($database, $scheduling_id, $name, $season)
 {
   if (isSeasonAdmin($season)) {
     $query = sprintf(
       "UPDATE uo_scheduling_name SET name='%s' WHERE scheduling_id=%d",
-      mysql_real_escape_string($name),
+      $database->RealEscapeString($name),
       (int)$scheduling_id
     );
 
-    DBQuery($query);
+    $database->DBQuery($query);
   } else {
     die('Insufficient rights to change scheduling names');
   }
@@ -2117,17 +2117,17 @@ function PoolSetSchedulingName($scheduling_id, $name, $season)
  * @param int $poolId
  * @return true if games can be generated.
  */
-function CanGenerateGames($poolId)
+function CanGenerateGames($database, $poolId)
 {
   $query = sprintf(
     "SELECT count(*) FROM uo_game WHERE pool=%d",
     (int)$poolId
   );
-  $result = mysql_query($query);
+  $result = $database->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . $database->GetConnection()->error());
   }
-  if (!$row = mysql_fetch_row($result)) return false;
+  if (!$row = $result->fetch_row()) return false;
   return $row[0] == 0;
 }
 
@@ -2137,13 +2137,13 @@ function CanGenerateGames($poolId)
  * @param int $poolId
  * @return true if there is no real teams in pool.
  */
-function PseudoTeamsOnly($poolId)
+function PseudoTeamsOnly($database, $poolId)
 {
   $query = sprintf(
     "SELECT count(*) FROM uo_moveteams WHERE topool=%d AND ismoved=0 AND scheduling_id IS NOT NULL",
     (int)$poolId
   );
-  $result = DBQueryToValue($query);
+  $result = $database->DBQueryToValue($query);
   if ($result > 0) {
     return true;
   } else return false;
@@ -2154,37 +2154,37 @@ function PseudoTeamsOnly($poolId)
  *
  * @param int $poolId
  */
-function CanDeletePool($poolId)
+function CanDeletePool($database, $poolId)
 {
   $query = sprintf(
     "SELECT count(*) FROM uo_team WHERE pool=%d",
     (int)$poolId
   );
-  $result = mysql_query($query);
+  $result = $database->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . $database->GetConnection()->error());
   }
-  if (!$row = mysql_fetch_row($result)) return false;
+  if (!$row = $result->fetch_row()) return false;
   if ($row[0] == 0) {
     $query = sprintf(
       "SELECT count(*) FROM uo_game WHERE pool=%d",
       (int)$poolId
     );
-    $result = mysql_query($query);
+    $result = $database->DBQuery($query);
     if (!$result) {
-      die('Invalid query: ' . mysql_error());
+      die('Invalid query: ' . $database->GetConnection()->error());
     }
-    if (!$row = mysql_fetch_row($result)) return false;
+    if (!$row = $result->fetch_row()) return false;
     if ($row[0] == 0) {
       $query = sprintf(
         "SELECT count(*) FROM uo_game_pool WHERE pool=%d",
         (int)$poolId
       );
-      $result = mysql_query($query);
+      $result = $database->DBQuery($query);
       if (!$result) {
-        die('Invalid query: ' . mysql_error());
+        die('Invalid query: ' . $database->GetConnection()->error());
       }
-      if (!$row = mysql_fetch_row($result)) return false;
+      if (!$row = $result->fetch_row()) return false;
       return $row[0] == 0;
     } else return false;
   } else return false;
@@ -2196,7 +2196,7 @@ function CanDeletePool($poolId)
  * @param int $poolId
  * @param int $teamId
  */
-function CanDeleteTeamFromPool($poolId, $teamId)
+function CanDeleteTeamFromPool($database, $poolId, $teamId)
 {
   $query = sprintf(
     "SELECT count(*) FROM uo_game WHERE pool=%d AND ((hometeam='%s' OR visitorteam='%s') AND (homescore>0 OR visitorscore>0 OR hasstarted>0))",
@@ -2204,11 +2204,11 @@ function CanDeleteTeamFromPool($poolId, $teamId)
     (int)$teamId,
     (int)$teamId
   );
-  $result = mysql_query($query);
+  $result = $database->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . $database->GetConnection()->error());
   }
-  if (!$row = mysql_fetch_row($result)) return false;
+  if (!$row = $result->fetch_row()) return false;
   if ($row[0] == 0) {
     $query = sprintf(
       "SELECT count(*) FROM uo_game_pool
@@ -2219,11 +2219,11 @@ function CanDeleteTeamFromPool($poolId, $teamId)
       (int)$teamId,
       (int)$teamId
     );
-    $result = mysql_query($query);
+    $result = $database->DBQuery($query);
     if (!$result) {
-      die('Invalid query: ' . mysql_error());
+      die('Invalid query: ' . $database->GetConnection()->error());
     }
-    if (!$row = mysql_fetch_row($result)) return false;
+    if (!$row = $result->fetch_row()) return false;
     if ($row[0] == 0) {
       return true;
     }
@@ -2240,10 +2240,10 @@ function CanDeleteTeamFromPool($poolId, $teamId)
  * @param boolean $psudoteams - true if scheduling ids used instead of team ids
  * @param boolean $homeresp - true if home team is responsible of game's score sheet
  */
-function PoolAddGame($poolId, $home, $away, $psudoteams = false, $homeresp = false)
+function PoolAddGame($database, $poolId, $home, $away, $psudoteams = false, $homeresp = false)
 {
-  $poolInfo = PoolInfo($poolId);
-  if (hasEditTeamsRight($poolInfo['series'])) {
+  $poolInfo = PoolInfo($database, $poolId);
+  if (hasEditTeamsRight($database, $poolInfo['series'])) {
 
     if ($psudoteams) {
       $hometeam = "scheduling_name_home";
@@ -2271,14 +2271,14 @@ function PoolAddGame($poolId, $home, $away, $psudoteams = false, $homeresp = fal
         (int)$poolId
       );
     }
-    DBQuery($query);
+    $database->DBQuery($query);
     $query = sprintf(
       "INSERT INTO uo_game_pool (game, pool, timetable) VALUES (%d, %d, 1)",
-      mysql_insert_id(),
+      $database->GetConnection()->insert_id,
       (int)$poolId
     );
-    DBQuery($query);
-    LogPoolUpdate($poolId, "Game added");
+    $database->DBQuery($query);
+    LogPoolUpdate($database, $poolId, "Game added");
   } else {
     die('Insufficient rights to add games');
   }
@@ -2291,10 +2291,10 @@ function PoolAddGame($poolId, $home, $away, $psudoteams = false, $homeresp = fal
  * @param int $poolId
  * @param boolean $generate - true if pools are actually generated
  */
-function GeneratePlayoffPools($poolId, $generate = true)
+function GeneratePlayoffPools($database, $poolId, $generate = true)
 {
-  $poolInfo = PoolInfo($poolId);
-  if (hasEditTeamsRight($poolInfo['series'])) {
+  $poolInfo = PoolInfo($database, $poolId);
+  if (hasEditTeamsRight($database, $poolInfo['series'])) {
 
     $pools = array();
 
@@ -2303,9 +2303,9 @@ function GeneratePlayoffPools($poolId, $generate = true)
                 on (tp.team = team.team_id) WHERE tp.pool=%d ORDER BY tp.rank",
       (int)$poolId
     );
-    $result = DBQuery($query);
+    $result = $database->DBQuery($query);
 
-    if (mysql_num_rows($result) == 0) {
+    if ($database->NumRows($result) == 0) {
       $pseudoteams = true;
       $query = sprintf(
         "SELECT pt.scheduling_id AS team_id from uo_scheduling_name pt
@@ -2313,9 +2313,9 @@ function GeneratePlayoffPools($poolId, $generate = true)
                     WHERE mt.topool=%d ORDER BY mt.torank",
         (int)$poolId
       );
-      $result = DBQuery($query);
+      $result = $database->DBQuery($query);
     }
-    $teams = mysql_num_rows($result);
+    $teams = $database->NumRows($result);
 
 
     $rounds = 0;
@@ -2378,9 +2378,9 @@ function GeneratePlayoffPools($poolId, $generate = true)
       if ($generate) {
         //create pool
         $name = $poolname . " " . $name;
-        $id = PoolFromAnotherPool($poolInfo['series'], $name, $poolInfo['ordering'] . $i, $prevpoolId, true);
+        $id = PoolFromAnotherPool($database, $poolInfo['series'], $name, $poolInfo['ordering'] . $i, $prevpoolId, true);
         if ($rounds - $i == 1) {
-          DBQuery("UPDATE uo_pool SET placementpool=1 WHERE pool_id=$id");
+          $database->DBQuery("UPDATE uo_pool SET placementpool=1 WHERE pool_id=$id");
         }
 
         //add moves
@@ -2395,10 +2395,10 @@ function GeneratePlayoffPools($poolId, $generate = true)
             } else {
               $movename = $prevname . " Loser " . ($frompos / 2);
             }
-            PoolAddMove($prevpoolId, $id, $frompos, $j + 1, $movename);
+            PoolAddMove($database, $prevpoolId, $id, $frompos, $j + 1, $movename);
 
             if ($i == $rounds - 1) { // add also the special ranking moves
-              AddSpecialRankingRule($id, $moves[$i][$j], $j + 1, " Rank " . ($j + 1));
+              AddSpecialRankingRule($database, $id, $moves[$i][$j], $j + 1, " Rank " . ($j + 1));
             }
           }
         } else { // do standard moves as before
@@ -2417,14 +2417,14 @@ function GeneratePlayoffPools($poolId, $generate = true)
               $totwinners++;
               $frompos = $j + $k + 1;
               $torank = $j + $winners;
-              PoolAddMove($prevpoolId, $id, $frompos, $torank, "$prevname Winner $totwinners");
+              PoolAddMove($database, $prevpoolId, $id, $frompos, $torank, "$prevname Winner $totwinners");
 
               //losers
               $losers++;
               $totlosers++;
               $frompos = $j + $k + 2;
               $torank = $j + $offset / 2 + $losers;
-              PoolAddMove($prevpoolId, $id, $frompos, $torank, "$prevname Loser $totlosers");
+              PoolAddMove($database, $prevpoolId, $id, $frompos, $torank, "$prevname Loser $totlosers");
             }
           }
           // in case of odd number of teams:
@@ -2432,11 +2432,11 @@ function GeneratePlayoffPools($poolId, $generate = true)
             // echo "adding extra move ".($k+1)."<br>";
             $frompos = $k + 1;
             $torank = $k + 1;
-            PoolAddMove($prevpoolId, $id, $frompos, $torank, "$prevname Team $k");
+            PoolAddMove($database, $prevpoolId, $id, $frompos, $torank, "$prevname Team $k");
           }
         }
 
-        $pools[] = PoolInfo($id);
+        $pools[] = PoolInfo($database, $id);
         $prevpoolId = $id;
       } else {
         $pools[] = $poolInfo;
@@ -2460,11 +2460,11 @@ function GeneratePlayoffPools($poolId, $generate = true)
  * @param boolean $nomutual - true when no mutual games are created in case that teams are moved from same pool.
  * @param boolean $homeresp - true if home team is responsible of score sheet.
  */
-function GenerateGames($poolId, $rounds = 1, $generate = true, $nomutual = false, $homeresp = false)
+function GenerateGames($database, $poolId, $rounds = 1, $generate = true, $nomutual = false, $homeresp = false)
 {
-  $poolInfo = PoolInfo($poolId);
-  if (hasEditTeamsRight($poolInfo['series'])) {
-    if (CanGenerateGames($poolId)) {
+  $poolInfo = PoolInfo($database, $poolId);
+  if (hasEditTeamsRight($database, $poolInfo['series'])) {
+    if (CanGenerateGames($database, $poolId)) {
 
       $pseudoteams = false;
 
@@ -2473,9 +2473,9 @@ function GenerateGames($poolId, $rounds = 1, $generate = true, $nomutual = false
                 on (tp.team = team.team_id) WHERE tp.pool=%d ORDER BY tp.rank",
         (int)$poolId
       );
-      $result = DBQuery($query);
+      $result = $database->DBQuery($query);
 
-      if (mysql_num_rows($result) == 0) {
+      if ($database->NumRows($result) == 0) {
         $pseudoteams = true;
         $query = sprintf(
           "SELECT pt.scheduling_id AS team_id from uo_scheduling_name pt
@@ -2483,11 +2483,11 @@ function GenerateGames($poolId, $rounds = 1, $generate = true, $nomutual = false
                     WHERE mt.topool=%d ORDER BY mt.torank",
           (int)$poolId
         );
-        $result = DBQuery($query);
+        $result = $database->DBQuery($query);
       }
 
       $teams = array();
-      while ($row = mysql_fetch_row($result)) {
+      while ($row = $result->fetch_row()) {
         $teams[] = $row[0];
       }
 
@@ -2502,15 +2502,15 @@ function GenerateGames($poolId, $rounds = 1, $generate = true, $nomutual = false
               //do not generate mutual games if teams are moved from same pools
               if ($nomutual) {
                 if ($pseudoteams) {
-                  $homepool = PoolGetFromPoolBySchedulingId($teams[$i]);
-                  $awaypool = PoolGetFromPoolBySchedulingId($teams[$j]);
+                  $homepool = PoolGetFromPoolBySchedulingId($database, $teams[$i]);
+                  $awaypool = PoolGetFromPoolBySchedulingId($database, $teams[$j]);
                   if ($homepool == $awaypool) {
                     $skipped++;
                     continue;
                   }
                 } else {
-                  $homepool = PoolGetFromPoolByTeamId($poolId, $teams[$i]);
-                  $awaypool = PoolGetFromPoolByTeamId($poolId, $teams[$j]);
+                  $homepool = PoolGetFromPoolByTeamId($database, $poolId, $teams[$i]);
+                  $awaypool = PoolGetFromPoolByTeamId($database, $poolId, $teams[$j]);
                   if ($homepool == $awaypool) {
                     $skipped++;
                     continue;
@@ -2637,17 +2637,17 @@ function GenerateGames($poolId, $rounds = 1, $generate = true, $nomutual = false
               );
             }
           }
-          DBQuery($query);
+          $database->DBQuery($query);
           $query = sprintf(
             "INSERT INTO uo_game_pool (game, pool, timetable) VALUES (%d, %d, 1)",
-            mysql_insert_id(),
+            $database->GetConnection()->insert_id,
             (int)$poolId
           );
-          DBQuery($query);
+          $database->DBQuery($query);
           // check if a game with the BYE team has been added
           // if yes, automatically fill in the score
-          CheckBYE($poolId);
-          LogPoolUpdate($poolId, "Games generated");
+          CheckBYE($database, $poolId);
+          LogPoolUpdate($database, $poolId, "Games generated");
         }
       }
       return $games;
@@ -2680,16 +2680,16 @@ function PoolsToCsv($season, $separator)
 
   $result = array();
 
-  $pools = SeasonPools($season, true, true);
+  $pools = SeasonPools($database, $season, true, true);
   foreach ($pools as $pool) {
-    $poolinfo = PoolInfo($pool['pool_id']);
-    $standings = PoolTeams($poolinfo['pool_id'], "rank");
+    $poolinfo = PoolInfo($database, $pool['pool_id']);
+    $standings = PoolTeams($database, $poolinfo['pool_id'], "rank");
 
 
     foreach ($standings as $row) {
 
-      $stats = TeamStatsByPool($poolinfo['pool_id'], $row['team_id']);
-      $points = TeamPointsByPool($poolinfo['pool_id'], $row['team_id']);
+      $stats = TeamStatsByPool($database, $poolinfo['pool_id'], $row['team_id']);
+      $points = TeamPointsByPool($database, $poolinfo['pool_id'], $row['team_id']);
 
       $poolrow = array(
         "Division" => $poolinfo['seriesname'],
@@ -2711,13 +2711,13 @@ function PoolsToCsv($season, $separator)
   return ArrayToCsv($result, $separator);
 }
 
-function SeriesRanking($series_id)
+function SeriesRanking($database, $series_id)
 {
   $ranking = array();
-  $ppools = SeriesPlacementPoolIds($series_id);
+  $ppools = SeriesPlacementPoolIds($database, $series_id);
   foreach ($ppools as $ppool) {
-    $teams = PoolTeams($ppool['pool_id']);
-    $steams = PoolSchedulingTeams($ppool['pool_id']);
+    $teams = PoolTeams($database, $ppool['pool_id']);
+    $steams = PoolSchedulingTeams($database, $ppool['pool_id']);
     if (count($teams) < count($steams)) {
       $totalteams = count($steams);
     } else {
@@ -2725,11 +2725,11 @@ function SeriesRanking($series_id)
     }
 
     for ($i = 1; $i <= $totalteams; $i++) {
-      $moved = PoolMoveExist($ppool['pool_id'], $i);
+      $moved = PoolMoveExist($database, $ppool['pool_id'], $i);
       if (!$moved) {
-        $team = PoolTeamFromStandings($ppool['pool_id'], $i);
-        $gamesleft = TeamPoolGamesLeft($team['team_id'], $ppool['pool_id']);
-        if ($ppool['played'] || ($ppool['type'] == 2 && mysql_num_rows($gamesleft) == 0)) {
+        $team = PoolTeamFromStandings($database, $ppool['pool_id'], $i);
+        $gamesleft = TeamPoolGamesLeft($database, $team['team_id'], $ppool['pool_id']);
+        if ($ppool['played'] || ($ppool['type'] == 2 && $database->NumRows($gamesleft) == 0)) {
           $team['placement'] = $i;
           $ranking[] = $team;
         } else {

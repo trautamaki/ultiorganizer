@@ -23,14 +23,14 @@ $title = _("SMS handling");
 //	}
 //}elseif(isset($_POST['delete']) && !empty($_POST["event_ids"])){
 //	$ids=$_POST["event_ids"];
-//	ClearEventList($ids);
+//	ClearEventList($database, $ids);
 //}
 
 //common page
 pageTopHeadOpen($title);
 include 'script/common.js.inc';
 pageTopHeadClose($title, false);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 if (!empty($_POST["sms_1"])) {
@@ -56,7 +56,7 @@ if (!empty($_POST["sms_1"])) {
 
 $sms = GetAllSMS();
 
-if (mysql_num_rows($sms)) {
+if ($database->NumRows($sms)) {
 	echo "<table border='0' width='500'><tr>
 			<th>" . _("Msg") . "</th>
 			<th>" . _("To1") . "</th>
@@ -69,7 +69,7 @@ if (mysql_num_rows($sms)) {
 }
 
 $smscount = 0;
-while ($row = mysql_fetch_assoc($sms)) {
+while ($row = $database->FetchAssoc($sms)) {
 
 	echo "<tr>";
 	echo "<td>" . utf8entities($row['msg']) . "</td>";

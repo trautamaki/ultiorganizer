@@ -6,15 +6,15 @@ include_once 'lib/player.functions.php';
 $html = "";
 
 $gameId = intval(iget("game"));
-$game_result = GameResult($gameId);
+$game_result = GameResult($database, $gameId);
 
 if (isset($_POST['save'])) {
 	if (!empty($_POST['starting'])) {
 		$starting = $_POST['starting'];
 		if ($starting == "H") {
-			GameSetStartingTeam($gameId, 1);
+			GameSetStartingTeam($database, $gameId, 1);
 		} elseif ($starting == "V") {
-			GameSetStartingTeam($gameId, 0);
+			GameSetStartingTeam($database, $gameId, 0);
 		}
 	}
 	header("location:?view=mobile/addscoresheet&game=" . $gameId);
@@ -25,7 +25,7 @@ mobilePageTop(_("Score&nbsp;sheet"));
 //starting team
 $hoffence = "";
 $voffence = "";
-$ishome = GameIsFirstOffenceHome($gameId);
+$ishome = GameIsFirstOffenceHome($database, $gameId);
 if ($ishome == 1) {
 	$hoffence = "checked='checked'";
 } elseif ($ishome == 0) {

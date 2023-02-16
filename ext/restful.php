@@ -14,10 +14,10 @@ session_start();
 
 if (!isset($_SESSION['uid'])) {
 	$_SESSION['uid'] = "anonymous";
-	SetUserSessionData("anonymous");
+	SetUserSessionData($database, "anonymous");
 }
 
-setSessionLocale();
+setSessionLocale($database);
 
 if (isset($_SERVER['PATH_INFO'])) {
 	$path = array_filter(explode("/", $_SERVER['PATH_INFO']));
@@ -33,12 +33,12 @@ if (isset($_SERVER['PATH_INFO'])) {
 
 if (isset($_GET['authenticate'])) {
 	if ($_GET['authenticate'] == "logout") {
-		ClearUserSessionData();
+		ClearUserSessionData($database);
 	} elseif ($_GET['authenticate'] == "login") {
 		if (isset($_SERVER["PHP_AUTH_USER"]) && isset($_SERVER["PHP_AUTH_PW"])) {
-			UserAuthenticate($_SERVER["PHP_AUTH_USER"], $_SERVER["PHP_AUTH_PW"], "FailUnauthorized");
+			UserAuthenticate($database, $_SERVER["PHP_AUTH_USER"], $_SERVER["PHP_AUTH_PW"], "FailUnauthorized");
 		} else {
-			ClearUserSessionData();
+			ClearUserSessionData($database);
 			header('WWW-Authenticate: Basic realm="ultiorganizer"');
 			if (strpos("Microsoft", $_SERVER["SERVER_SOFTWARE"])) {
 				header("Status: 401 Unauthorized");
@@ -82,7 +82,7 @@ if (count($path) == 0) {
 	}
 	$output = array();
 	if (isset($_SESSION) && isset($_SESSION['uid']) && $_SESSION['uid'] != "anonymous") {
-		$output["user"]	= UserInfo($_SESSION['uid']);
+		$output["user"]	= UserInfo($database, $_SESSION['uid']);
 		unset($output['user']['password']);
 		$output["user"]["link"] = urlencode(GetURLBase() . "/ext/restful.php/users/" . $_SESSION['uid']);
 	}

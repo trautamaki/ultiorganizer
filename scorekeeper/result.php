@@ -8,17 +8,17 @@ if (!empty($_POST['save'])) {
   $game = intval($_POST['game']);
   $home = intval($_POST['home']);
   $away = intval($_POST['away']);
-  $errors = CheckGameResult($game, $home, $away);
+  $errors = CheckGameResult($database, $game, $home, $away);
   $gameId = (int) substr($game, 0, -1);
 }
 if (!empty($_POST['confirm'])) {
   $game = intval($_POST['game']);
   $home = intval($_POST['home']);
   $away = intval($_POST['away']);
-  $errors = CheckGameResult($game, $home, $away);
+  $errors = CheckGameResult($database, $game, $home, $away);
   if (empty($errors)) {
     $gameId = (int) substr($game, 0, -1);
-    $ok = GameSetResult($gameId, $home, $away, true, false);
+    $ok = GameSetResult($database, $gameId, $home, $away, true, false);
     if ($ok)
       header("location:?view=result&saved=1");
     else
@@ -47,7 +47,7 @@ if (!empty($_POST['save']) && empty($errors)) {
   $html .= "<input class='input' type='hidden' id='game' name='game' value='$game'/> ";
   $html .= "<input class='input' type='hidden' id='home' name='home' value='$home'/> ";
   $html .= "<input class='input' type='hidden' id='away' name='away' value='$away'/> ";
-  $game_result = GameInfo($gameId);
+  $game_result = GameInfo($database, $gameId);
   $html .= "<p>";
   $html .= ShortDate($game_result['time']) . " " . DefHourFormat($game_result['time']) . " ";
   if (!empty($game_result['fieldname'])) {

@@ -5,6 +5,8 @@ include_once 'lib/pool.functions.php';
 include_once 'lib/team.functions.php';
 include_once 'lib/timetable.functions.php';
 
+$database = new Database();
+
 $title = _("Standings") . " ";
 $seriesScoreboard = false;
 $print = 0;
@@ -12,22 +14,22 @@ $html = "";
 $comment = "";
 
 if (iget("season")) {
-  $seasoninfo = SeasonInfo(iget("season"));
-  $pools = SeasonPools($seasoninfo['season_id'], true, true);
+  $seasoninfo = SeasonInfo($database, iget("season"));
+  $pools = SeasonPools($database, $seasoninfo['season_id'], true, true);
   $title .= U_($seasoninfo['name']);
-  $comment = CommentHTML(1, $seasoninfo['season_id']);
+  $comment = CommentHTML($database, 1, $seasoninfo['season_id']);
   $seriesScoreboard = true;
 } else if (iget("series")) {
-  $seriesinfo = SeriesInfo(iget("series"));
-  $pools = SeriesPools($seriesinfo['series_id'], true);
+  $seriesinfo = SeriesInfo($database, iget("series"));
+  $pools = SeriesPools($database, $seriesinfo['series_id'], true);
   $title .= U_($seriesinfo['name']);
-  $comment = CommentHTML(2, $seriesinfo['series_id']);
+  $comment = CommentHTML($database, 2, $seriesinfo['series_id']);
   $seriesScoreboard = true;
-  $seasoninfo = SeasonInfo($seriesinfo['season']);
+  $seasoninfo = SeasonInfo($database, $seriesinfo['season']);
 } else if (iget("pool")) {
 
-  $poolinfo = PoolInfo(iget("pool"));
-  $games = PoolGames($poolinfo['pool_id']);
+  $poolinfo = PoolInfo($database, iget("pool"));
+  $games = PoolGames($database, $poolinfo['pool_id']);
 
 
   //if pool has only one game, show game's schoresheet if exist
@@ -42,7 +44,7 @@ if (iget("season")) {
   );
 
 
-  $seasoninfo = SeasonInfo($poolinfo['season']);
+  $seasoninfo = SeasonInfo($database, $poolinfo['season']);
   $title .= utf8entities(U_($poolinfo['seriesname']) . ", " . U_($poolinfo['name']));
 }
 if (iget("print")) {
@@ -55,12 +57,12 @@ $html .= $comment;
 $prevseries = 0;
 foreach ($pools as $pool) {
 
-  $poolinfo = PoolInfo($pool['pool_id']);
+  $poolinfo = PoolInfo($database, $pool['pool_id']);
 
   if ($prevseries && $prevseries != $poolinfo['series']) {
-    $html .= scoreboard($prevseries, true);
+    $html .= scoreboard($database, $prevseries, true);
     if (ShowDefenseStats()) {
-      $html .= defenseboard($prevseries, true);
+      $html .= defenseboard($database, $prevseries, true);
     }
   }
   $prevseries = $poolinfo['series'];
@@ -68,31 +70,31 @@ foreach ($pools as $pool) {
 
   $html .= "<h2>" . utf8entities($seriesName) . "</h2>";
 
-  $html .= CommentHTML(3, $pool['pool_id']);
+  $html .= CommentRaw($database, 3, $pool['pool_id']);
 
   if ($poolinfo['type'] == 1) {
     // round robin
-    $html .= printRoundRobinPool($seasoninfo, $poolinfo);
+    $html .= printRoundRobinPool($database, $seasoninfo, $poolinfo);
   } elseif ($poolinfo['type'] == 2) {
     // playoff
-    $html .= printPlayoffTree($seasoninfo, $poolinfo);
+    $html .= printPlayoffTree($database, $seasoninfo, $poolinfo);
   } elseif ($poolinfo['type'] == 3) {
     // Swissdraw
-    $html .= printSwissdraw($seasoninfo, $poolinfo);
+    $html .= printSwissdraw($database, $seasoninfo, $poolinfo);
   } elseif ($poolinfo['type'] == 4) {
     // Cross matches
-    $html .= printCrossmatchPool($seasoninfo, $poolinfo);
+    $html .= printCrossmatchPool($database, $seasoninfo, $poolinfo);
   }
 
   if (!$seriesScoreboard && !$print) {
-    $html .= scoreboard($pool['pool_id'], false);
+    $html .= scoreboard($database, $pool['pool_id'], false);
     if (ShowDefenseStats()) {
-      $html .= defenseboard($pool['pool_id'], false);
+      $html .= defenseboard($database, $pool['pool_id'], false);
     }
   }
 }
 if ($seriesScoreboard && !$print) {
-  $html .= scoreboard($prevseries, true);
+  $html .= scoreboard($database, $prevseries, true);
 }
 
 $querystring = $_SERVER['QUERY_STRING'];
@@ -105,12 +107,12 @@ if ($print) {
 }
 
 if ($print) {
-  showPrintablePage($title, $html);
+  showPrintablePage($database, $title, $html);
 } else {
-  showPage($title, $html);
+  showPage($database, $title, $html);
 }
 
-function scoreboard($id, $seriesScoreboard)
+function scoreboard($database, $id, $seriesScoreboard)
 {
 
   $ret = "";
@@ -121,8 +123,8 @@ function scoreboard($id, $seriesScoreboard)
     $ret .= "<tr><th style='width:200px'>" . _("Player") . "</th><th style='width:200px'>" . _("Team") . "</th><th class='center'>" . _("Games") . "</th>
 		<th class='center'>" . _("Assists") . "</th><th class='center'>" . _("Goals") . "</th><th class='center'>" . _("Tot.") . "</th></tr>\n";
 
-    $scores = SeriesScoreBoard($id, "total", 10);
-    while ($row = mysql_fetch_assoc($scores)) {
+    $scores = SeriesScoreBoard($database, $id, "total", 10);
+    while ($row = $database->FetchAssoc($scores)) {
       $ret .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
       $ret .= "<td>" . utf8entities($row['teamname']) . "</td>";
       $ret .= "<td class='center'>" . intval($row['games']) . "</td>";
@@ -139,19 +141,19 @@ function scoreboard($id, $seriesScoreboard)
     $ret .= "<tr><th style='width:200px'>" . _("Player") . "</th><th style='width:200px'>" . _("Team") . "</th><th class='center'>" . _("Games") . "</th>
 		<th class='center'>" . _("Assists") . "</th><th class='center'>" . _("Goals") . "</th><th class='center'>" . _("Tot.") . "</th></tr>\n";
 
-    $poolinfo = PoolInfo($id);
+    $poolinfo = PoolInfo($database, $id);
     $pools = array();
     if ($poolinfo['type'] == 2) {
       //find out sub pools
       $pools[] = $id;
-      $followers = PoolFollowersArray($poolinfo['pool_id']);
+      $followers = PoolFollowersArray($database, $poolinfo['pool_id']);
       $pools = array_merge($pools, $followers);
-      $scores = PoolsScoreBoard($pools, "total", 5);
+      $scores = PoolsScoreBoard($database, $pools, "total", 5);
     } else {
-      $scores = PoolScoreBoard($id, "total", 5);
+      $scores = PoolScoreBoard($database, $id, "total", 5);
     }
 
-    while ($row = mysql_fetch_assoc($scores)) {
+    while ($row = $database->FetchAssoc($scores)) {
       $ret .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
       $ret .= "<td>" . utf8entities($row['teamname']) . "</td>";
       $ret .= "<td class='center'>" . intval($row['games']) . "</td>";
@@ -171,7 +173,7 @@ function scoreboard($id, $seriesScoreboard)
 }
 
 
-function defenseboard($id, $seriesDefenseboard)
+function defenseboard($database, $id, $seriesDefenseboard)
 {
 
   $ret = "";
@@ -182,8 +184,8 @@ function defenseboard($id, $seriesDefenseboard)
     $ret .= "<tr><th style='width:200px'>" . _("Player") . "</th><th style='width:200px'>" . _("Team") . "</th><th class='center'>" . _("Games") . "</th>
 		<th class='center'>" . _("Total defenses") . "</th></tr>\n";
 
-    $defenses = SeriesDefenseBoard($seriesinfo['series_id'], "deftotal", 10);
-    while ($row = mysql_fetch_assoc($defenses)) {
+    $defenses = SeriesDefenseBoard($database, $seriesinfo['series_id'], "deftotal", 10);
+    while ($row = $database->FetchAssoc($defenses)) {
       $ret .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
       $ret .= "<td>" . utf8entities($row['teamname']) . "</td>";
       $ret .= "<td class='center'>" . intval($row['games']) . "</td>";
@@ -198,19 +200,19 @@ function defenseboard($id, $seriesDefenseboard)
     $ret .= "<tr><th style='width:200px'>" . _("Player") . "</th><th style='width:200px'>" . _("Team") . "</th><th class='center'>" . _("Games") . "</th>
 		<th class='center'>" . _("Total defenses") . "</th></tr>\n";
 
-    $poolinfo = PoolInfo($id);
+    $poolinfo = PoolInfo($database, $id);
     $pools = array();
     if ($poolinfo['type'] == 2) {
       //find out sub pools
       $pools[] = $id;
-      $followers = PoolFollowersArray($poolinfo['pool_id']);
+      $followers = PoolFollowersArray($database, $poolinfo['pool_id']);
       $pools = array_merge($pools, $followers);
-      $scores = PoolsScoreBoardWithDefenses($pools, "deftotal", 5);
+      $scores = PoolsScoreBoardWithDefenses($database, $pools, "deftotal", 5);
     } else {
-      $scores = PoolScoreBoardWithDefenses($id, "deftotal", 5);
+      $scores = PoolScoreBoardWithDefenses($database, $id, "deftotal", 5);
     }
 
-    while ($row = mysql_fetch_assoc($scores)) {
+    while ($row = $database->FetchAssoc($scores)) {
       $ret .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
       $ret .= "<td>" . utf8entities($row['teamname']) . "</td>";
       $ret .= "<td class='center'>" . intval($row['games']) . "</td>";
@@ -228,7 +230,7 @@ function defenseboard($id, $seriesDefenseboard)
 }
 
 
-function printSwissdraw($seasoninfo, $poolinfo)
+function printSwissdraw($database, $seasoninfo, $poolinfo)
 {
   // prints Swiss draw standing
 
@@ -247,13 +249,13 @@ function printSwissdraw($seasoninfo, $poolinfo)
   $ret .= "<th class='center'>" . _("Goals") . "</th>";
   $ret .= "</tr>\n";
 
-  $standings = PoolTeams($poolinfo['pool_id'], "rank");
+  $standings = PoolTeams($database, $poolinfo['pool_id'], "rank");
 
   if (count($standings)) {
     foreach ($standings as $row) {
-      //			$stats = TeamStatsByPool($poolinfo['pool_id'], $row['team_id']);
-      $vp = TeamVictoryPointsByPool($poolinfo['pool_id'], $row['team_id']);
-      //			$points=TeamPointsByPool($poolinfo['pool_id'], $row['team_id']);
+      //			$stats = TeamStatsByPool($database, $poolinfo['pool_id'], $row['team_id']);
+      $vp = TeamVictoryPointsByPool($database, $poolinfo['pool_id'], $row['team_id']);
+      //			$points=TeamPointsByPool($database, $poolinfo['pool_id'], $row['team_id']);
       $flag = "";
       if (intval($seasoninfo['isinternational'])) {
         $flag = "<img height='10' src='images/flags/tiny/" . $row['flagfile'] . "' alt=''/> ";
@@ -268,7 +270,7 @@ function printSwissdraw($seasoninfo, $poolinfo)
       $ret .= "</tr>\n";
     }
   } else {
-    $teams = PoolSchedulingTeams($poolinfo['pool_id']);
+    $teams = PoolSchedulingTeams($database, $poolinfo['pool_id']);
     foreach ($teams as $row) {
       $ret .= "<tr><td>-</td>";
       $ret .= "<td>" . utf8entities(U_($row['name'])) . "</td>";
@@ -285,15 +287,15 @@ function printSwissdraw($seasoninfo, $poolinfo)
 
   $ret .= "<table width='100%'>\n";
   if ($poolinfo['mvgames'] == 0 || $poolinfo['mvgames'] == 2) {
-    $mvgames = PoolMovedGames($poolinfo['pool_id']);
+    $mvgames = PoolMovedGames($database, $poolinfo['pool_id']);
     foreach ($mvgames as $game) {
-      $ret .= GameRow($game, false, false, false, false, false, true);
+      $ret .= GameRow($database, $game, false, false, false, false, false, true);
     }
   }
-  $games = TimetableGames($poolinfo['pool_id'], "pool", "all", "series");
-  while ($game = mysql_fetch_assoc($games)) {
-    //function GameRow($game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
-    $ret .= GameRow($game, false, false, false, false, false, true);
+  $games = TimetableGames($database, $poolinfo['pool_id'], "pool", "all", "series");
+  while ($game = $database->FetchAssoc($games)) {
+    //function GameRow($database, $game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
+    $ret .= GameRow($database, $game, false, false, false, false, false, true);
   }
   $ret .= "</table>\n";
 
@@ -302,7 +304,7 @@ function printSwissdraw($seasoninfo, $poolinfo)
 }
 
 
-function printRoundRobinPool($seasoninfo, $poolinfo)
+function printRoundRobinPool($database, $seasoninfo, $poolinfo)
 {
 
   $ret = "";
@@ -323,17 +325,17 @@ function printRoundRobinPool($seasoninfo, $poolinfo)
   $ret .= "<th class='center'>" . _("diff.") . "</th>";
   $ret .= "</tr>\n";
 
-  $standings = PoolTeams($poolinfo['pool_id'], "rank");
-  $teams = PoolSchedulingTeams($poolinfo['pool_id']);
+  $standings = PoolTeams($database, $poolinfo['pool_id'], "rank");
+  $teams = PoolSchedulingTeams($database, $poolinfo['pool_id']);
   $continuationpools = array();
-  $gamesplayed = PoolTotalPlayedGames($poolinfo['pool_id']);
+  $gamesplayed = PoolTotalPlayedGames($database, $poolinfo['pool_id']);
 
   if (!$poolinfo['continuingpool'] || count($standings) >= count($teams)) {
     $i = 1;
     foreach ($standings as $row) {
-      $stats = TeamStatsByPool($poolinfo['pool_id'], $row['team_id']);
-      $points = TeamPointsByPool($poolinfo['pool_id'], $row['team_id']);
-      $movetopool = PoolGetMoveToPool($poolinfo['pool_id'], $i);
+      $stats = TeamStatsByPool($database, $poolinfo['pool_id'], $row['team_id']);
+      $points = TeamPointsByPool($database, $poolinfo['pool_id'], $row['team_id']);
+      $movetopool = PoolGetMoveToPool($database, $poolinfo['pool_id'], $i);
       $flag = "";
       if (intval($seasoninfo['isinternational'])) {
         $flag = "<img height='10' src='images/flags/tiny/" . $row['flagfile'] . "' alt=''/> ";
@@ -369,8 +371,8 @@ function printRoundRobinPool($seasoninfo, $poolinfo)
 
     $i = 1;
     foreach ($teams as $row) {
-      $realteam = PoolTeamFromStandings($poolinfo['pool_id'], $i);
-      $movetopool = PoolGetMoveToPool($poolinfo['pool_id'], $i);
+      $realteam = PoolTeamFromStandings($database, $poolinfo['pool_id'], $i);
+      $movetopool = PoolGetMoveToPool($database, $poolinfo['pool_id'], $i);
       $colorcoding = "";
       if ($movetopool) {
         //$iebackground="background:transparent;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=#FFFFFF,endColorstr=#".$movetopool['color'].");zoom: 1;";
@@ -423,15 +425,15 @@ function printRoundRobinPool($seasoninfo, $poolinfo)
   }
   $ret .= "<table width='100%'>\n";
   if ($poolinfo['mvgames'] == 0 || $poolinfo['mvgames'] == 2) {
-    $mvgames = PoolMovedGames($poolinfo['pool_id']);
+    $mvgames = PoolMovedGames($database, $poolinfo['pool_id']);
     foreach ($mvgames as $game) {
-      $ret .= GameRow($game, false, false, false, false, false, true);
+      $ret .= GameRow($database, $game, false, false, false, false, false, true);
     }
   }
-  $games = TimetableGames($poolinfo['pool_id'], "pool", "all", "series");
-  while ($game = mysql_fetch_assoc($games)) {
-    //function GameRow($game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
-    $ret .= GameRow($game, false, false, false, false, false, true);
+  $games = TimetableGames($database, $poolinfo['pool_id'], "pool", "all", "series");
+  while ($game = $database->FetchAssoc($games)) {
+    //function GameRow($database, $game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
+    $ret .= GameRow($database, $game, false, false, false, false, false, true);
   }
   $ret .= "</table>\n";
 
@@ -439,7 +441,7 @@ function printRoundRobinPool($seasoninfo, $poolinfo)
   return $ret;
 }
 
-function printPlayoffTree($seasoninfo, $poolinfo)
+function printPlayoffTree($database, $seasoninfo, $poolinfo)
 {
 
   $ret = "";
@@ -447,17 +449,17 @@ function printPlayoffTree($seasoninfo, $poolinfo)
   $pools[] = $poolinfo['pool_id'];
 
   //find out total rounds played
-  $followers = PoolPlayoffFollowersArray($poolinfo['pool_id']);
+  $followers = PoolPlayoffFollowersArray($database, $poolinfo['pool_id']);
 
   if (count($followers) == 0) {
-    $followers = PoolFollowersArray($poolinfo['pool_id']);
+    $followers = PoolFollowersArray($database, $poolinfo['pool_id']);
   }
   $pools = array_merge($pools, $followers);
   $rounds = count($pools);
 
   //find out total teams in pool
-  $teams = PoolTeams($poolinfo['pool_id']);
-  $steams = PoolSchedulingTeams($poolinfo['pool_id']);
+  $teams = PoolTeams($database, $poolinfo['pool_id']);
+  $steams = PoolSchedulingTeams($database, $poolinfo['pool_id']);
   if (count($teams) < count($steams)) {
     $teams = $steams;
     $totalteams = count($steams);
@@ -475,7 +477,7 @@ function printPlayoffTree($seasoninfo, $poolinfo)
 
   $round = 0;
   foreach ($pools as $poolId) {
-    $pool = PoolInfo($poolId);
+    $pool = PoolInfo($database, $poolId);
 
     //find out round name
     switch (count($pools) - $round) {
@@ -500,9 +502,9 @@ function printPlayoffTree($seasoninfo, $poolinfo)
         $notemplate .= "<p>???</p>";
       } else {
         $notemplate .= "<table width='100%'>\n";
-        $games = TimetableGames($pool['pool_id'], "pool", "all", "series");
-        while ($game = mysql_fetch_assoc($games)) {
-          $notemplate .= GameRow($game, false, false, false, false, false, true);
+        $games = TimetableGames($database, $pool['pool_id'], "pool", "all", "series");
+        while ($game = $database->FetchAssoc($games)) {
+          $notemplate .= GameRow($database, $game, false, false, false, false, false, true);
         }
         $notemplate .= "</table>\n";
       }
@@ -515,8 +517,8 @@ function printPlayoffTree($seasoninfo, $poolinfo)
     $games = 0;
     for ($i = 1; $i <= $totalteams; $i++) {
 
-      $team = PoolTeamFromInitialRank($pool['pool_id'], $i);
-      $movefrom = PoolGetMoveFrom($pool['pool_id'], $i);
+      $team = PoolTeamFromInitialRank($database, $pool['pool_id'], $i);
+      $movefrom = PoolGetMoveFrom($database, $pool['pool_id'], $i);
 
       $name = "";
       $byeName = "";
@@ -527,24 +529,24 @@ function printPlayoffTree($seasoninfo, $poolinfo)
         }
         $name .= "<a href='?view=teamcard&amp;team=" . $team['team_id'] . "'>" . utf8entities($team['name']) . "</a>";
       } else {
-        $realteam = PoolTeamFromStandings($movefrom['frompool'], $movefrom['fromplacing']);
-        $gamesleft = TeamPoolGamesLeft($realteam['team_id'], $movefrom['frompool']);
-        $frompoolinfo = PoolInfo($movefrom['frompool']);
+        $realteam = PoolTeamFromStandings($database, $movefrom['frompool'], $movefrom['fromplacing']);
+        $gamesleft = TeamPoolGamesLeft($database, $realteam['team_id'], $movefrom['frompool']);
+        $frompoolinfo = PoolInfo($database, $movefrom['frompool']);
         $isodd = is_odd($totalteams) && $i == $totalteams;
-        if ($realteam['team_id'] && $frompoolinfo['played'] && mysql_num_rows($gamesleft) == 0 && !$isodd) {
+        if ($realteam['team_id'] && $frompoolinfo['played'] && $database->NumRows($gamesleft) == 0 && !$isodd) {
           if (intval($seasoninfo['isinternational']) && !empty($realteam['flagfile'])) {
             $name .= "<img height='10' src='images/flags/tiny/" . $realteam['flagfile'] . "' alt=''/> ";
           }
           $name .= "<i>" . utf8entities($realteam['name']) . "</i>";
         } else {
-          $sname = SchedulingNameByMoveTo($pool['pool_id'], $i);
+          $sname = SchedulingNameByMoveTo($database, $pool['pool_id'], $i);
           $name .= utf8entities(U_($sname['name']));
         }
       }
 
       if ($team['team_id']) {
-        $gamesinpool = TeamPoolGames($team['team_id'], $pool['pool_id']);
-        if (mysql_num_rows($gamesinpool) == 0) { // that's the BYE team
+        $gamesinpool = TeamPoolGames($database, $team['team_id'], $pool['pool_id']);
+        if ($database->NumRows($gamesinpool) == 0) { // that's the BYE team
           $byeName = $name; // save its name
           //$ret .= $round." ".$name." ".$pool['pool_id']." ".$team['team_id']."<br>";
         }
@@ -572,10 +574,10 @@ function printPlayoffTree($seasoninfo, $poolinfo)
         $games++;
         $game = "";
         if ($team['team_id']) {
-          $results = GameHomeTeamResults($team['team_id'], $pool['pool_id']);
+          $results = GameHomeTeamResults($database, $team['team_id'], $pool['pool_id']);
           $reverse = false;
           if (!$results) {
-            $results = GameVisitorTeamResults($team['team_id'], $pool['pool_id']);
+            $results = GameVisitorTeamResults($database, $team['team_id'], $pool['pool_id']);
             $reverse = true;
           }
           foreach ($results as $res) {
@@ -595,7 +597,7 @@ function printPlayoffTree($seasoninfo, $poolinfo)
           }
         }
         if (empty($game) && isset($sname['scheduling_id'])) {
-          $results = GameHomePseudoTeamResults($sname['scheduling_id'], $pool['pool_id']);
+          $results = GameHomePseudoTeamResults($database, $sname['scheduling_id'], $pool['pool_id']);
           foreach ($results as $res) {
             if (!empty($res['gamename'])) {
               $game .= "<span class='lowlight'>" . utf8entities(U_($res['gamename'])) . "</span>";
@@ -626,14 +628,14 @@ function printPlayoffTree($seasoninfo, $poolinfo)
     if (empty($pool))
       $gamesleft = -1;
     else {
-      $team = PoolTeamFromStandings($pool['pool_id'], $i);
-      $gamesleft = mysql_num_rows(TeamPoolGamesLeft($team['team_id'], $pool['pool_id']));
+      $team = PoolTeamFromStandings($database, $pool['pool_id'], $i);
+      $gamesleft = $database->NumRows(TeamPoolGamesLeft($database, $team['team_id'], $pool['pool_id']));
     }
     $teampart = "";
     $unknown = "";
 
-    if (!PoolMoveExist($pool['pool_id'], $i)) {
-      $placement = PoolPlacementString($pool['pool_id'], $i);
+    if (!PoolMoveExist($database, $pool['pool_id'], $i)) {
+      $placement = PoolPlacementString($database, $pool['pool_id'], $i);
       $placementname = "<b>" . U_($placement) . "</b> ";
       if ($gamesleft == 0) {
         if (intval($seasoninfo['isinternational']) && !empty($team['flagfile'])) {
@@ -644,7 +646,7 @@ function printPlayoffTree($seasoninfo, $poolinfo)
         $unknown = "<i>" . _("???") . "</i>";
       }
     } else {
-      $movetopool = PoolGetMoveToPool($pool['pool_id'], $i);
+      $movetopool = PoolGetMoveToPool($database, $pool['pool_id'], $i);
       $placementname .= "<a href='?view=poolstatus&amp;pool=" . $movetopool['topool'] . "'>&raquo; " . utf8entities(U_($movetopool['name'])) . "</a>&nbsp; ";
 
       if ($gamesleft == 0) {
@@ -674,7 +676,7 @@ function printPlayoffTree($seasoninfo, $poolinfo)
   return $ret;
 }
 
-function printCrossmatchPool($seasoninfo, $poolinfo)
+function printCrossmatchPool($database, $seasoninfo, $poolinfo)
 {
 
   $ret = "";
@@ -686,20 +688,19 @@ function printCrossmatchPool($seasoninfo, $poolinfo)
 
   $ret .= "<table $style width='100%'>\n";
 
-
-  $games = TimetableGames($poolinfo['pool_id'], "pool", "all", "crossmatch");
+  $games = TimetableGames($database, $poolinfo['pool_id'], "pool", "all", "crossmatch");
   $i = 0;
   $pos = 1;
   $winnerpools = array();
   $loserpools = array();
 
-  while ($game = mysql_fetch_assoc($games)) {
+  while ($game = $database->FetchAssoc($games)) {
     $i++;
-    $winnerspool = PoolGetMoveToPool($poolinfo['pool_id'], $pos);
+    $winnerspool = PoolGetMoveToPool($database, $poolinfo['pool_id'], $pos);
     $winnerpoolstyle = "background-color:#" . $winnerspool['color'] . ";background-color:" . RGBtoRGBa($winnerspool['color'], 0.3) . ";color:#" . textColor($winnerspool['color']);
     $winnerpools[$winnerspool['topool']] = $winnerspool['color'];
 
-    $loserspool = PoolGetMoveToPool($poolinfo['pool_id'], $pos + 1);
+    $loserspool = PoolGetMoveToPool($database, $poolinfo['pool_id'], $pos + 1);
     $loserpoolstyle = "background-color:#" . $loserspool['color'] . ";background-color:" . RGBtoRGBa($loserspool['color'], 0.3) . ";color:#" . textColor($loserspool['color']);
     $loserspools[$loserspool['topool']] = $loserspool['color'];
 
@@ -776,9 +777,9 @@ function printCrossmatchPool($seasoninfo, $poolinfo)
   foreach ($winnerpools as $winnerId => $color) {
     $ret .= "<td style='background-color:#" . $color . ";background-color:" . RGBtoRGBa($color, 0.3) . ";color:#" . textColor($color) . ";width:" . (50 / count($winnerpools)) . "%'>";
     if ($winnerspool['visible']) {
-      $ret .= "<a href='?view=poolstatus&amp;pool=" . $winnerId . "'>" . utf8entities(U_(PoolName($winnerId))) . "</a>";
+      $ret .= "<a href='?view=poolstatus&amp;pool=" . $winnerId . "'>" . utf8entities(U_(PoolName($database, $winnerId))) . "</a>";
     } else {
-      $ret .= utf8entities(U_(PoolName($winnerId)));
+      $ret .= utf8entities(U_(PoolName($database, $winnerId)));
     }
     $ret .= "</td>";
   }
@@ -787,9 +788,9 @@ function printCrossmatchPool($seasoninfo, $poolinfo)
   foreach ($loserspools as $loserId => $color) {
     $ret .= "<td style='background-color:#" . $color . ";background-color:" . RGBtoRGBa($color, 0.3) . ";color:#" . textColor($color) . ";width:" . (50 / count($loserspools)) . "%'>";
     if ($loserspool['visible']) {
-      $ret .= "<a href='?view=poolstatus&amp;pool=" . $loserId . "'>" . utf8entities(PoolName($loserId)) . "</a>";
+      $ret .= "<a href='?view=poolstatus&amp;pool=" . $loserId . "'>" . utf8entities(PoolName($database, $loserId)) . "</a>";
     } else {
-      $ret .= utf8entities(PoolName($loserId));
+      $ret .= utf8entities(PoolName($database, $loserId));
     }
     $ret .= "</td>";
   }

@@ -7,14 +7,14 @@ $html = "";
 $maxtimeouts = 6;
 
 $gameId = intval(iget("game"));
-$game_result = GameResult($gameId);
+$game_result = GameResult($database, $gameId);
 
 if (isset($_POST['save'])) {
 	$time = "0.0";
 	$time_delim = array(",", ";", ":", "#", "*");
 
 	//remove all old timeouts (if any)
-	GameRemoveAllTimeouts($gameId);
+	GameRemoveAllTimeouts($database, $gameId);
 
 	//insert home timeouts
 	$j = 0;
@@ -24,7 +24,7 @@ if (isset($_POST['save'])) {
 
 		if (!empty($time)) {
 			$j++;
-			GameAddTimeout($gameId, $j, TimeToSec($time), 1);
+			GameAddTimeout($database, $gameId, $j, TimeToSec($time), 1);
 		}
 	}
 
@@ -36,7 +36,7 @@ if (isset($_POST['save'])) {
 
 		if (!empty($time)) {
 			$j++;
-			GameAddTimeout($gameId, $j, TimeToSec($time), 0);
+			GameAddTimeout($database, $gameId, $j, TimeToSec($time), 0);
 		}
 	}
 
@@ -52,8 +52,8 @@ $html .= "<b>" . utf8entities($game_result['hometeamname']) . "</b> " . _("time 
 $html .= "</td></tr><tr><td>\n";
 //used timeouts
 $i = 0;
-$timeouts = GameTimeouts($gameId);
-while ($timeout = mysql_fetch_assoc($timeouts)) {
+$timeouts = GameTimeouts($database, $gameId);
+while ($timeout = $database->FetchAssoc($timeouts)) {
 	if (intval($timeout['ishome'])) {
 		$html .= "<input class='input' type='text' size='5' maxlength='8' id='hto$i' name='hto$i' value='" . SecToMin($timeout['time']) . "' /> ";
 		$i++;
@@ -74,8 +74,8 @@ $html .= "</td></tr><tr><td>\n";
 
 //used timeouts
 $i = 0;
-$timeouts = GameTimeouts($gameId);
-while ($timeout = mysql_fetch_assoc($timeouts)) {
+$timeouts = GameTimeouts($database, $gameId);
+while ($timeout = $database->FetchAssoc($timeouts)) {
 	if (intval(!$timeout['ishome'])) {
 		$html .= "<input class='input' type='text' size='5' maxlength='8' id='ato$i' name='ato$i' value='" . SecToMin($timeout['time']) . "' /> ";
 		$i++;

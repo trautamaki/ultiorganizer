@@ -7,8 +7,10 @@ $html = "";
 $template = 0;
 $addmore = false;
 
+$database = new Database();
+
 $poolId = intval($_GET["pool"]);
-$info = PoolInfo($poolId);
+$info = PoolInfo($database, $poolId);
 $season = $info['season'];
 $seriesId = $info['series'];
 
@@ -52,7 +54,7 @@ if (!empty($_POST['add'])) {
 			$ordering = $_POST['ordering'];
 		}
 		$template = $_POST['template'];
-		$poolId = PoolFromPoolTemplate($seriesId, $_POST['name'], $ordering, $template);
+		$poolId = PoolFromPoolTemplate($database, $seriesId, $_POST['name'], $ordering, $template);
 		$html .= "<p>" . _("Pool added") . ": " . utf8entities(U_($_POST['name'])) . "</p>";
 		$html .= "<hr/>";
 		$addmore = true;
@@ -117,13 +119,13 @@ if (!empty($_POST['save'])) {
 		$pp['drawsallowed'] = 0;
 
 	if ($ok) {
-		SetPoolDetails($poolId, $pp, $comment);
+		SetPoolDetails($database, $poolId, $pp, $comment);
 		session_write_close();
 		header("location:?view=admin/seasonpools&season=$season");
 	}
 }
 if ($poolId) {
-	$info = PoolInfo($poolId);
+	$info = PoolInfo($database, $poolId);
 
 	$pp['name'] = $info['name'];
 	$pp['teams'] = $info['teams'];
@@ -221,7 +223,7 @@ echo yuiLoad(array("utilities", "slider", "colorpicker", "datasource", "autocomp
 $setFocus = "onload=\"document.getElementById('name').focus();\"";
 pageTopHeadClose($title, false, $setFocus);
 
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 echo $html;
@@ -243,7 +245,7 @@ if (!$poolId || $addmore) {
 			<td class='infocell'>" . _("Template") . ":</td>
 			<td><select class='dropdown' name='template'>";
 
-	$templates = PoolTemplates();
+	$templates = PoolTemplates($database);
 
 	foreach ($templates as $row) {
 		if ($template == $row['template_id']) {
@@ -269,7 +271,7 @@ if (!$poolId || $addmore) {
 			<td>" . TranslatedField("name", $pp['name']) . "</td>
 		</tr>\n";
 
-	$seriesname = SeriesName($pp['series']);
+	$seriesname = SeriesName($database, $pp['series']);
 	echo "<tr><td class='infocell'>" . _("Division") . ":</td>
 			<td><input class='input' id='series' name='series' disabled='disabled' value='" . utf8entities($seriesname) . "'/></td>
 			<td></td></tr>";
@@ -331,8 +333,8 @@ if (!$poolId || $addmore) {
 
 	echo "<tr><td class='infocell'>" . _("Visible") . ":</td>";
 
-	$frompool = PoolGetMoveFrom($info['pool_id'], 1);
-	$frompoolinfo = PoolInfo($frompool['frompool']);
+	$frompool = PoolGetMoveFrom($database, $info['pool_id'], 1);
+	$frompoolinfo = PoolInfo($database, $frompool['frompool']);
 	// CS: Sometimes you want to change the visibility setting in Swissdraw
 	if (rtrim($frompoolinfo['ordering'], "0..9") == rtrim($pp['ordering'], "0..9")) { // Playoff or Swissdraw
 		echo "<td><input class='input' disabled='disabled' type='checkbox' id='visible' name='visible'/></td>";
@@ -381,7 +383,7 @@ if (!$poolId || $addmore) {
 	echo "<button type='button' id='showcolor' class='button' style='background-color:#" . $pp['color'] . "'>" . _("Select") . "</button></td>";
 	echo "<td></td></tr>";
 
-	$comment = CommentRaw(3, $poolId);
+	$comment = CommentRaw($database, 3, $poolId);
 	echo "<tr><td class='infocell' style='vertical-align:top'>" . htmlentities(_("Comment (you can use <b>, <em>, and <br /> tags)")) . ":</td>
 		<td><textarea class='input' rows='10' cols='70' id='comment' name='comment'>" . htmlentities($comment) . "</textarea></td></tr>";
 
@@ -392,7 +394,7 @@ if (!$poolId || $addmore) {
 	echo "<h2>" . _("Teams") . ":</h2>";
 
 
-	$teams = PoolTeams($poolId);
+	$teams = PoolTeams($database, $poolId);
 	if (count($teams)) {
 		echo "<table width='75%' cellpadding='4'><tr><th>" . _("Name") . "</th><th>" . _("Club") . "</th></tr>\n";
 

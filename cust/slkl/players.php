@@ -27,7 +27,7 @@ session_start();
 
 $database = new Database();
 
-if (hasEditPlayersRight($teamId)) {
+if (hasEditPlayersRight($database, $teamId)) {
 
 	$query = sprintf(
 		"SELECT pp.profile_id, pp.accreditation_id, pp.firstname, pp.lastname, pp.birthdate, pp.gender, pp.email,
@@ -43,12 +43,12 @@ if (hasEditPlayersRight($teamId)) {
 			LEFT JOIN uo_player AS p1 ON (p1.profile_id=pp.profile_id)
 			WHERE l.firstname like '%%%s%%' and l.lastname like '%%%s%%'
 			GROUP BY pp.profile_id ORDER BY pp.lastname, pp.firstname",
-		mysql_real_escape_string($firstname),
-		mysql_real_escape_string($lastname)
+		$database->RealEscapeString($firstname),
+		$database->RealEscapeString($lastname)
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error());
 	}
 
 	// for php 5 onwards
@@ -57,7 +57,7 @@ if (hasEditPlayersRight($teamId)) {
 		$node = $dom->createElement("MemberSet");
 		$parnode = $dom->appendChild($node);
 
-		while ($row = mysql_fetch_assoc($result)) {
+		while ($row = $database->FetchAssoc($result)) {
 			$node = $dom->createElement("Member");
 			$newNode = $parnode->appendChild($node);
 
@@ -121,7 +121,7 @@ if (hasEditPlayersRight($teamId)) {
 		echo "<MemberSet>\n";
 
 		// Iterate through the rows, adding XML nodes for each
-		while ($row = mysql_fetch_assoc($result)) {
+		while ($row = $database->FetchAssoc($result)) {
 			echo "<Member>\n";
 			echo "<AccreditationId>" . $row['accreditation_id'] . "</AccreditationId>\n";
 			echo "<ProfileId>" . $row['profile_id'] . "</ProfileId>\n";

@@ -4,6 +4,8 @@ include_once $include_prefix . 'lib/player.functions.php';
 include_once $include_prefix . 'lib/common.functions.php';
 include_once $include_prefix . 'lib/accreditation.functions.php';
 
+$database = new Database();
+
 $LAYOUT_ID = TEAMPLAYERS;
 $teamId = 0;
 $gameId = 0;
@@ -11,18 +13,18 @@ $title = _("Roster");
 
 
 $teamId = iget("team");
-$teaminfo = TeamInfo($teamId);
+$teaminfo = TeamInfo($database, $teamId);
 
 if (!empty($_POST['remove_x'])) {
   $id = $_POST['hiddenDeleteId'];
-  $games = PlayerSeasonPlayedGames($id, $teaminfo['season']);
+  $games = PlayerSeasonPlayedGames($database, $id, $teaminfo['season']);
   if ($games) {
-    $playerInfo = PlayerInfo($id);
+    $playerInfo = PlayerInfo($database, $id);
     echo "<div style='width:100%'>
 			<p class='warning'><i>" . utf8entities($playerInfo['firstname'] . " " . $playerInfo['lastname']) . "</i> " . _("can not be removed from the roster") . ".
 			" . _("Games played in the team:") . " " . $games . "</p></div>";
   } else {
-    RemovePlayer($id);
+    RemovePlayer($database, $id);
   }
 } elseif (!empty($_POST['add'])) {
   //add new player when accreditation id is known
@@ -37,7 +39,7 @@ if (!empty($_POST['remove_x'])) {
       $num = intval($_POST["number0"]);
     }
 
-    AddPlayer($teamId, trim($_POST["firstname0"]), trim($_POST["lastname0"]), $_POST["profileId0"], $num);
+    AddPlayer($database, $teamId, trim($_POST["firstname0"]), trim($_POST["lastname0"]), $_POST["profileId0"], $num);
     //add new player when accreditation id is NOT known
   } else {
     if (isset($_POST["number0"])) {
@@ -45,14 +47,14 @@ if (!empty($_POST['remove_x'])) {
     } else {
       $num = -1;
     }
-    $playerid = AddPlayer($teamId, trim($_POST["firstname0"]), trim($_POST["lastname0"]), 0, $num);
+    $playerid = AddPlayer($database, $teamId, trim($_POST["firstname0"]), trim($_POST["lastname0"]), 0, $num);
   }
   header("location:?view=user/teamplayers&team=$teamId");
 } elseif (!empty($_POST['save'])) {
   for ($i = 0; $i < count($_POST['playerEdited']); $i++) {
     if ($_POST['playerEdited'][$i] == "yes") {
       $id = $_POST['playerId'][$i];
-      $playerInfo = PlayerInfo($_POST['playerId'][$i]);
+      $playerInfo = PlayerInfo($database, $_POST['playerId'][$i]);
       if (isset($_POST["number$id"])) {
         $playerInfo['num'] = $_POST["number$id"];
       }
@@ -65,7 +67,7 @@ if (!empty($_POST['remove_x'])) {
 
       if (isset($_POST["accrId$id"])) {
         if ($playerInfo['accreditation_id'] != $_POST["accrId$id"]) {
-          DeAccreditPlayer($id, "teamplayers");
+          DeAccreditPlayer($database, $id, "teamplayers");
         }
         $accId = 0;
         if (!empty($_POST["accrId$id"])) {
@@ -78,20 +80,20 @@ if (!empty($_POST['remove_x'])) {
         $playerInfo['profile_id'] = $_POST["profileId$id"];
       }
 
-      SetPlayer($_POST['playerId'][$i], $playerInfo['num'], $playerInfo['firstname'], $playerInfo['lastname'], $playerInfo['accreditation_id'], $playerInfo['profile_id']);
+      SetPlayer($database, $_POST['playerId'][$i], $playerInfo['num'], $playerInfo['firstname'], $playerInfo['lastname'], $playerInfo['accreditation_id'], $playerInfo['profile_id']);
 
-      if (hasAccredidationRight($playerInfo['team'])) {
+      if (hasAccredidationRight($database, $playerInfo['team'])) {
         if (isset($_POST["accredits$id"])) {
-          AccreditPlayer($id, "teamplayers");
+          AccreditPlayer($database, $id, "teamplayers");
         } else {
-          DeAccreditPlayer($id, "teamplayers");
+          DeAccreditPlayer($database, $id, "teamplayers");
         }
       }
     }
   }
   header("location:?view=user/teamplayers&team=$teamId");
 } elseif (!empty($_POST['copy'])) {
-  TeamCopyRoster($_POST["copyroster"], $teamId);
+  TeamCopyRoster($database, $_POST["copyroster"], $teamId);
   header("location:?view=user/teamplayers&team=$teamId");
 }
 
@@ -125,7 +127,7 @@ include_once 'script/disable_enter.js.inc';
 include_once 'cust/default/teamplayers.functions.php';
 //}
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 $menutabs[_("Roster")] = "?view=user/teamplayers&team=$teamId";
@@ -171,15 +173,15 @@ if (CUSTOMIZATIONS == "slkl") {
 echo "</tr>\n";
 
 
-$team_players = TeamPlayerList($teamId);
+$team_players = TeamPlayerList($database, $teamId);
 
-if (mysql_num_rows($team_players) == 0 && (hasAccredidationRight($teamId) || hasEditPlayersRight($teamId))) {
-  $teams = TeamGetTeamsByName($teaminfo['name']);
+if ($database->NumRows($team_players) == 0 && (hasAccredidationRight($database, $teamId) || hasEditPlayersRight($database, $teamId))) {
+  $teams = TeamGetTeamsByName($database, $teaminfo['name']);
   if (count($teams)) {
     echo "<p>" . _("Copy team roster from:") . " ";
     echo "<select class='dropdown' name='copyroster'>\n";
     foreach ($teams as $team) {
-      $oldteaminfo = TeamInfo($team['team_id']);
+      $oldteaminfo = TeamInfo($database, $team['team_id']);
       if ($oldteaminfo['type'] == $teaminfo['type'] && $oldteaminfo['season'] != $teaminfo['season']) {
         echo "<option class='dropdown' value='" . utf8entities($team['team_id']) . "'>" . utf8entities($oldteaminfo['seasonname'] . " " . $oldteaminfo['name']) . "</option>";
       }
@@ -190,8 +192,8 @@ if (mysql_num_rows($team_players) == 0 && (hasAccredidationRight($teamId) || has
   }
 }
 
-while ($player = mysql_fetch_assoc($team_players)) {
-  $playerInfo = PlayerInfo($player['player_id']);
+while ($player = $database->FetchAssoc($team_players)) {
+  $playerInfo = PlayerInfo($database, $player['player_id']);
 
   echo "<tr>";
   echo "<td class='center'><input class='input' size='3' maxlength='3' onkeypress=\"ChgPlayer(" . $player['player_id'] . ");\" onkeyup=\"validNumber(this);\" name='number" . $player['player_id'] . "' id='number" . $player['player_id'] . "' value='" . utf8entities($playerInfo['num']) . "'/></td>";
@@ -209,7 +211,7 @@ while ($player = mysql_fetch_assoc($team_players)) {
   } else {
     echo "<td  class='center'>";
   }
-  if (hasAccredidationRight($teamId)) {
+  if (hasAccredidationRight($database, $teamId)) {
     echo "<input type='checkbox' name='accredits" . $player['player_id'] . "' onclick=\"ChgPlayer(" . $player['player_id'] . ");\" value='" . utf8entities($player['player_id']) . "'";
     if ($playerInfo['accredited']) echo " checked='checked'";
     echo "/>\n";
@@ -227,7 +229,7 @@ while ($player = mysql_fetch_assoc($team_players)) {
     }
 
     $query = sprintf("SELECT membership, license, external_type, external_validity FROM uo_license WHERE accreditation_id=%d", (int)$playerInfo['accreditation_id']);
-    $row = DBQueryToRow($query);
+    $row = $database->DBQueryToRow($query);
     if (!empty($row['membership'])) {
       echo "<td class='center' style='white-space: nowrap'>" . $row['membership'] . "</td>";
     } else {
@@ -242,13 +244,13 @@ while ($player = mysql_fetch_assoc($team_players)) {
   } else {
     echo "<td class='center'><a id='showAccrId" . $player['player_id'] . "' onclick=\"ChgPlayer(" . $player['player_id'] . ");\" href='javascript:checkProfileId(\"" . $player['player_id'] . "\");'>" . $player['profile_id'] . " </a></td>\n";
   }
-  if (CanDeletePlayer($player['player_id'])) {
+  if (CanDeletePlayer($database, $player['player_id'])) {
     echo "<td class='center'><input class='deletebutton' type='image' src='images/remove.png' name='remove' value='X' alt='X' onclick=\"setId(" . $player['player_id'] . ");\"/></td>";
   }
   echo "</tr>\n";
 }
 
-if (hasAccredidationRight($teamId) || hasEditPlayersRight($teamId)) {
+if (hasAccredidationRight($database, $teamId) || hasEditPlayersRight($database, $teamId)) {
   echo "<tr>";
   echo "<td class='center'><input class='input' size='3' maxlength='3' name='number0' id='number0'/></td>";
   echo "<td><input class='input' size='20' maxlength='20' name='firstname0' id='firstname0' value=''/></td>";
@@ -264,10 +266,10 @@ echo "</table>\n";
 
 
 echo "<p><input type='hidden' id='hiddenDeleteId' name='hiddenDeleteId'/>";
-if (hasAccredidationRight($teamId) || hasEditPlayersRight($teamId)) {
+if (hasAccredidationRight($database, $teamId) || hasEditPlayersRight($database, $teamId)) {
   echo "<input disabled='disabled' id='save' class='button' name='save' type='submit' value='" . _("Save") . "'/>";
   echo "<input disabled='disabled' id='cancel' class='button' name='cancel' type='submit' value='" . _("Cancel") . "'/>";
-  $playerArray = TeamPlayerArray($teamId);
+  $playerArray = TeamPlayerArray($database, $teamId);
   foreach ($playerArray as $playerId => $name) {
     echo "<input type='hidden' id='playerEdited" . $playerId . "' name='playerEdited[]' value='no'/>\n";
     echo "<input type='hidden' name='playerId[]' value='" . utf8entities($playerId) . "'/>\n";

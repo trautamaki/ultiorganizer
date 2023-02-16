@@ -2,7 +2,9 @@
 $title = _("Logout");
 $html = "";
 
-ClearUserSessionData();
+$database = new Database();
+
+ClearUserSessionData($database);
 
 $html .= "<h1>" . _("You have logged out") . "</h1>";
 
@@ -10,7 +12,7 @@ if (IsFacebookEnabled()) {
 	$html .= "<script type=\"text/javascript\">
 <!--
 window.onload = function() {
-	FB.getLoginStatus(function(response) {
+	FB.getLoginStatus($database, function(response) {
 	  	if (response.session) {
 	  		FB.logout(function(loresp) {});
 		}
@@ -20,4 +22,4 @@ window.onload = function() {
 </script>";
 }
 
-showPage($title, $html);
+showPage($database, $title, $html);

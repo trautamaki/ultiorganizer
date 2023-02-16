@@ -8,7 +8,7 @@ $title = _("Translations");
 //process itself if remove button was pressed
 if (!empty($_POST['remove_x'])) {
 	$key = $_POST['hiddenDeleteKey'];
-	RemoveTranslation($key);
+	RemoveTranslation($database, $key);
 }
 
 //process itself if add button was pressed
@@ -23,8 +23,8 @@ if (!empty($_POST['add'])) {
 				$translations[$locale] = '';
 			}
 		}
-		AddTranslation($_POST['addkey'], $translations);
-		loadDBTranslations(getSessionLocale());
+		AddTranslation($database, $_POST['addkey'], $translations);
+		loadDBTranslations($database, getSessionLocale());
 	}
 }
 
@@ -41,8 +41,8 @@ if (!empty($_POST['save'])) {
 					$translations[$locale] = '';
 				}
 			}
-			SetTranslation($key, $translations);
-			loadDBTranslations(getSessionLocale());
+			SetTranslation($database, $key, $translations);
+			loadDBTranslations($database, getSessionLocale());
 		}
 	}
 }
@@ -74,7 +74,7 @@ if (is_file('cust/' . CUSTOMIZATIONS . '/teamplayers.functions.php')) {
 	include_once 'cust/' . CUSTOMIZATIONS . '/teamplayers.functions.php';
 }
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 //help
@@ -101,15 +101,15 @@ if (hasTranslationRight()) {
 	}
 	echo "<th>&nbsp;</th></tr>\n";
 
-	$translations = Translations();
+	$translations = Translations($database);
 	$i = 0;
-	$translation = mysql_fetch_assoc($translations);
+	$translation = $database->FetchAssoc($translations);
 	while ($translation) {
 		$tkey = $translation['translation_key'];
 		$values = array();
 		while ($translations && $translation['translation_key'] == $tkey) {
 			$values[$translation['locale']] = $translation['translation'];
-			$translation = mysql_fetch_assoc($translations);
+			$translation = $database->FetchAssoc($translations);
 		}
 		echo "<tr>\n<td>" . utf8entities($tkey);
 		echo "<input type='hidden' id='translationEdited" . $i . "' name='translationEdited[]' value='no'/>\n";

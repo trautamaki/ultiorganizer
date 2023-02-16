@@ -44,7 +44,7 @@ class Restful
 	function getItem($id)
 	{
 		$query = $this->getItemSQL($id);
-		$ret = DBQueryToRow($query, true);
+		$ret = $database->DBQueryToRow($query, true);
 		$merged = array_merge($ret, $this->getChildren($id));
 		$this->convertLinkFields($merged);
 		return $merged;
@@ -71,15 +71,15 @@ class Restful
 			$ordering = $this->getDefaultOrdering();
 		}
 		$tables = $this->getTables();
-		$orderby = CreateOrdering($tables, $ordering);
-		$where = CreateFilter($tables, $filter);
+		$orderby = CreateOrdering($database, $tables, $ordering);
+		$where = CreateFilter($database, $tables, $filter);
 		$query = $this->getListSQL() . " " . $where . " " . $orderby;
 		return $query;
 	}
 
 	function getItemSQL($id)
 	{
-		return sprintf($this->itemsql, mysql_real_escape_string($id));
+		return sprintf($this->itemsql, $database->RealEscapeString($id));
 	}
 
 	function getDefaultOrdering()
@@ -98,14 +98,14 @@ class Restful
 			$ordering = $this->getDefaultOrdering();
 		}
 		$tables = $this->getTables();
-		$orderby = CreateOrdering($tables, $ordering);
-		$where = CreateFilter($tables, $filter);
+		$orderby = CreateOrdering($database, $tables, $ordering);
+		$where = CreateFilter($database, $tables, $filter);
 		$query = $this->listsql . " " . $where . " " . $orderby;
-		$items = DBQuery(trim($query));
+		$items = $database->DBQuery(trim($query));
 
 		$retArray = array();
 		$className = $this->getRestClassName();
-		while ($next = mysql_fetch_assoc($items)) {
+		while ($next = $database->FetchAssoc($items)) {
 			$toadd = $this->getListData($next);
 			$retArray[] = $toadd;
 		}

@@ -44,7 +44,7 @@ pageTopHeadOpen($title);
 </script>
 <?php
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 $html .= "<h2>" . _("Twitter accounts to publish game results") . "</h2>";
@@ -61,7 +61,7 @@ $html .= "</tr>\n";
 
 //season
 $html .= "<tr>";
-$html .= "<td>" . U_(SeasonName($season)) . "</td>";
+$html .= "<td>" . U_(SeasonName($database, $season)) . "</td>";
 $html .= "<td>" . _("All results") . "</td>";
 $purpose = "season results";
 $key = GetTwitterKey($season, $purpose);
@@ -103,7 +103,7 @@ if ($key) {
 $html .= "</tr>\n";
 
 $purpose = "series results";
-$series = SeasonSeries($season);
+$series = SeasonSeries($database, $season);
 foreach ($series as $row) {
 	$html .= "<tr>";
 	$html .= "<td>" . U_($row['name']) . "</td>";

@@ -6,10 +6,10 @@ include_once 'lib/player.functions.php';
 $html = "";
 
 $gameId = intval(iget("game"));
-$game_result = GameResult($gameId);
+$game_result = GameResult($database, $gameId);
 
 if (isset($_POST['save'])) {
-	GameSetScoreSheetKeeper($gameId, $_POST['official']);
+	GameSetScoreSheetKeeper($database, $gameId, $_POST['official']);
 	header("location:?view=mobile/addscoresheet&game=" . $gameId);
 }
 

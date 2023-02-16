@@ -14,15 +14,15 @@ function printSeries($season, $series)
 if (count($elements) == 2) {
 	if (isset($filter)) {
 		if ($filter == "active") {
-			$series = SeasonSeries($seasonId, true);
+			$series = SeasonSeries($database, $seasonId, true);
 		}
 	} else {
-		$series = SeasonSeries($season);
+		$series = SeasonSeries($database, $season);
 		printSeries($season, $series);
 	}
 } else {
 	$series = $elements[2];
-	$seriesInfo = SeriesInfo($series);
+	$seriesInfo = SeriesInfo($database, $series);
 	if (count($elements) == 3) {
 		restHeader(_("Division") . ": " . U_($seriesInfo['name']));
 		printItem($seriesInfo);

@@ -20,15 +20,15 @@ function PlayerInfod($playerId)
 		LEFT JOIN uo_series ser ON (ser.series_id=t.series)
 		LEFT JOIN uo_player_profile pp ON (p.accreditation_id=pp.accreditation_id)
 		WHERE player_id='%s'",
-		mysql_real_escape_string($playerId)
+		$database->RealEscapeString($playerId)
 	);
 
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error());
 	}
 
-	return mysql_fetch_assoc($result);
+	return $database->FetchAssoc($result);
 }
 
 function Playersd($filter = null, $ordering = null)
@@ -37,8 +37,8 @@ function Playersd($filter = null, $ordering = null)
 		$ordering = array("season.starttime" => "ASC", "series.ordering" => "ASC", "pool.ordering" => "ASC");
 	}
 	$tables = array("uo_player" => "player", "uo_team" => "team", "uo_pool" => "pool", "uo_series" => "series", "uo_season" => "season");
-	$orderby = CreateOrdering($tables, $ordering);
-	$where = CreateFilter($tables, $filter);
+	$orderby = CreateOrdering($database, $tables, $ordering);
+	$where = CreateFilter($database, $tables, $filter);
 	$query = "SELECT player.player_id, player.num, player.firstname, player.lastname, player.accredited, player.accreditation_id
 		FROM uo_player player
 		LEFT JOIN uo_team team ON (player.team=team.team_id)
@@ -46,7 +46,7 @@ function Playersd($filter = null, $ordering = null)
 		LEFT JOIN uo_series series ON (team.series=series.series_id)
 		LEFT JOIN uo_season season ON (series.season=season.season_id)
 		$where $orderby";
-	return DBQuery(trim($query));
+	return $database->DBQuery(trim($query));
 }
 
 function PlayerprofileInfod($accreditation_id)
@@ -56,17 +56,17 @@ function PlayerprofileInfod($accreditation_id)
 		FROM uo_player_profile pp 
 		LEFT JOIN uo_player p ON pp.accreditation_id=p.accreditation_id
 		WHERE pp.accreditation_id='%s'",
-		mysql_real_escape_string($accreditation_id)
+		$database->RealEscapeString($accreditation_id)
 	);
 
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error());
 	}
-	if (hasEditPlayerProfileRight($accreditation_id)) {
-		return mysql_fetch_assoc($result);
+	if (hasEditPlayerProfileRight($database, $accreditation_id)) {
+		return $database->FetchAssoc($result);
 	} else {
-		$data = mysql_fetch_assoc($result);
+		$data = $database->FetchAssoc($result);
 		$publicfields = explode("|", $data['public']);
 		$ret = array();
 		$ret['firstname'] = $data['firstname'];
@@ -88,8 +88,8 @@ function Playerprofilesd($filter = null, $ordering = null)
 	}
 
 	$tables = array("uo_player" => "player", "uo_player_profile" => "player_profile", "uo_team" => "team", "uo_pool" => "pool", "uo_series" => "series", "uo_season" => "season");
-	$orderby = CreateOrdering($tables, $ordering);
-	$where = CreateFilter($tables, $filter);
+	$orderby = CreateOrdering($database, $tables, $ordering);
+	$where = CreateFilter($database, $tables, $filter);
 
 	$query = "SELECT player_profile.accreditation_id as playerprofile_id,player.firstname, player.lastname, player.num
 		FROM uo_player_profile player_profile 
@@ -100,5 +100,5 @@ function Playerprofilesd($filter = null, $ordering = null)
 		LEFT JOIN uo_season season ON (series.season=season.season_id)
 		$where $orderby";
 
-	return DBQuery(trim($query));
+	return $database->DBQuery(trim($query));
 }

@@ -5,21 +5,23 @@ include_once 'lib/season.functions.php';
 $LAYOUT_ID = USERS;
 $title = _("Users");
 
+$database = new Database();
+
 if (hasEditUsersRight()) {
 	if (isset($_POST['deleteuser'])) {
 		if (isset($_POST['users'])) {
 			foreach ($_POST['users'] as $userid) {
 				if (!empty($_POST['registerrequest'])) {
-					DeleteRegisterRequest(urldecode($userid));
+					DeleteRegisterRequest($database, urldecode($userid));
 				} else {
-					DeleteUser(urldecode($userid));
+					DeleteUser($database, urldecode($userid));
 				}
 			}
 		}
 	} elseif (isset($_POST['resetpassword'])) {
 		if (isset($_POST['users'])) {
 			foreach ($_POST['users'] as $userid) {
-				UserResetPassword(urldecode($userid));
+				UserResetPassword($database, urldecode($userid));
 			}
 		}
 	}
@@ -40,7 +42,7 @@ pageTopHeadOpen($title);
 </script>
 <?php
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 $target = "view=admin/users";
@@ -48,7 +50,7 @@ $target = "view=admin/users";
 echo "<p><a href='?view=admin/adduser'>" . _("Add new user") . "</a></p>";
 echo "<h2>" . $title . "</h2>";
 if (hasEditUsersRight()) {
-	echo SearchUser($target, array(), array('resetpassword' => _("Reset password"), 'deleteuser' => _("Delete")));
+	echo SearchUser($database, $target, array(), array('resetpassword' => _("Reset password"), 'deleteuser' => _("Delete")));
 }
 
 contentEnd();

@@ -13,7 +13,7 @@ if (iget('sep')) {
 	$separator = iget('sep');
 }
 
-$data = ResultsToCsv($season, $separator);
+$data = ResultsToCsv($database, $season, $separator);
 $data = mb_convert_encoding($data, $encoding, 'UTF-8');
 CloseConnection();
 header("Cache-Control: must-revalidate, post-check=0, pre-check=0");

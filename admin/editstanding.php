@@ -6,6 +6,8 @@ include_once 'lib/team.functions.php';
 include_once 'lib/game.functions.php';
 include_once 'lib/series.functions.php';
 
+$database = new Database();
+
 $LAYOUT_ID = EDITSTANDING;
 
 $season = $_GET["season"];
@@ -18,7 +20,7 @@ $backurl = utf8entities($_SERVER['HTTP_REFERER']);
 //common page
 pageTopHeadOpen($title);
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 
@@ -33,11 +35,11 @@ if (!empty($_POST['save'])) {
 	if (!empty($_POST['activerank']))
 		$activerank = $_POST['activerank'];
 
-	SetTeamSerieRank($teamId, $poolId, $rank, $activerank);
+	SetTeamSerieRank($database, $teamId, $poolId, $rank, $activerank);
 }
 
 echo "<form method='post' action='?view=admin/editstanding&amp;season=$season&amp;pool=$poolId&amp;team=$teamId'>";
-$info = TeamPoolInfo($teamId, $poolId);
+$info = TeamPoolInfo($database, $teamId, $poolId);
 
 echo "<h2>" . _("Standing") . "</h2>\n";
 
@@ -56,15 +58,15 @@ echo "<p><input class='button' name='save' type='submit' value='" . _("Save") . 
 
 echo "<h2>" . _("Games") . "</h2>\n";
 
-$games = TeamSerieGames($teamId, $poolId);
-if (mysql_num_rows($games)) {
+$games = TeamSerieGames($database, $teamId, $poolId);
+if ($database->NumRows($games)) {
 	echo "<table border='0' cellpadding='4px' width='400px'>\n";
-	while ($row = mysql_fetch_assoc($games)) {
+	while ($row = $database->FetchAssoc($games)) {
 		echo "<tr>";
 		echo "<td>" . DefWeekDateFormat($row['time']) . "</td>";
-		echo "<td>" . utf8entities(TeamName($row['hometeam'])) . "</td>";
+		echo "<td>" . utf8entities(TeamName($database, $row['hometeam'])) . "</td>";
 		echo "<td>-</td>";
-		echo "<td>" . utf8entities(TeamName($row['visitorteam'])) . "</td>";
+		echo "<td>" . utf8entities(TeamName($database, $row['visitorteam'])) . "</td>";
 		echo "<td>" . intval($row['homescore']) . "</td><td style='width:2%'>-</td><td style='width:5%'>" . intval($row['visitorscore']) . "</td>";
 		echo "<td class='center'><a href='?view=admin/editgame&amp;season=$season&amp;game=" . $row['game_id'] . "'>" . _("edit") . "</a></td>";
 		echo "</tr>\n";

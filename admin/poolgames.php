@@ -8,14 +8,16 @@ include_once 'lib/team.functions.php';
 include_once 'lib/game.functions.php';
 include_once 'lib/reservation.functions.php';
 
+$database = new Database();
+
 $LAYOUT_ID = POOLGAMES;
 
 $poolId = $_GET["pool"];
 $season = $_GET["season"];
 $rounds = 1;
-$title = utf8entities(U_(PoolSeriesName($poolId)) . ", " . U_(PoolName($poolId))) . ": " . _("Games");
-$poolInfo = PoolInfo($poolId);
-$usepseudoteams = PseudoTeamsOnly($poolId);
+$title = utf8entities(U_(PoolSeriesName($database, $poolId)) . ", " . U_(PoolName($database, $poolId))) . ": " . _("Games");
+$poolInfo = PoolInfo($database, $poolId);
+$usepseudoteams = PseudoTeamsOnly($database, $poolId);
 $generatedgames = array();
 $nomutual = 0;
 $html = "";
@@ -34,7 +36,7 @@ pageTopHeadOpen($title);
 </script>
 <?php
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 
@@ -44,24 +46,24 @@ if (!empty($_POST['remove_x'])) {
 	$ok = true;
 
 	//run some test to for safe deletion
-	$goals = GameAllGoals($id);
-	if (mysql_num_rows($goals)) {
-		$html .= "<p class='warning'>" . _("Game has") . " " . mysql_num_rows($goals) . " " . _("goals") . ". " . _("Goals must be removed before removing the team") . ".</p>";
+	$goals = GameAllGoals($database, $id);
+	if ($database->NumRows($goals)) {
+		$html .= "<p class='warning'>" . _("Game has") . " " . $database->NumRows($goals) . " " . _("goals") . ". " . _("Goals must be removed before removing the team") . ".</p>";
 		$ok = false;
 	}
 	if ($ok)
-		DeleteGame($id);
+		DeleteGame($database, $id);
 } elseif (!empty($_POST['swap_x'])) {
 	$id = $_POST['hiddenDeleteId'];
-	$goals = GameAllGoals($id);
-	if (!mysql_num_rows($goals)) {
-		GameChangeHome($id);
+	$goals = GameAllGoals($database, $id);
+	if (!$database->NumRows($goals)) {
+		GameChangeHome($database, $id);
 	}
 } elseif (!empty($_POST['removemoved'])) {
 	$id = $_POST['hiddenDeleteId'];
-	DeleteMovedGame($id, $poolId);
+	DeleteMovedGame($database, $id, $poolId);
 } elseif (!empty($_POST['removeall'])) {
-	PoolDeleteAllGames($poolId);
+	PoolDeleteAllGames($database, $poolId);
 } elseif (!empty($_POST['fakegenerate'])) {
 	if (!empty($_POST['rounds'])) {
 		$rounds = $_POST['rounds'];
@@ -69,29 +71,29 @@ if (!empty($_POST['remove_x'])) {
 	$nomutual = isset($_POST["nomutual"]);
 	$homeresp = isset($_POST["homeresp"]);
 	$fakegames = "";
-	$generatedgames = GenerateGames($poolId, $rounds, false, $nomutual, $homeresp);
+	$generatedgames = GenerateGames($database, $poolId, $rounds, false, $nomutual, $homeresp);
 
 	if ($poolInfo['type'] == 1) {
 		foreach ($generatedgames as $game) {
 			if ($usepseudoteams) {
-				$fakegames .= "<p>" . TeamPseudoName($game['home']) . " - " . TeamPseudoName($game['away']) . "</p>";
+				$fakegames .= "<p>" . TeamPseudoName($database, $game['home']) . " - " . TeamPseudoName($database, $game['away']) . "</p>";
 			} else {
-				$fakegames .= "<p>" . TeamName($game['home']) . " - " . TeamName($game['away']) . "</p>";
+				$fakegames .= "<p>" . TeamName($database, $game['home']) . " - " . TeamName($database, $game['away']) . "</p>";
 			}
 		}
 	} elseif ($poolInfo['type'] == 2) {
-		$generatedpools = GeneratePlayoffPools($poolId, false);
+		$generatedpools = GeneratePlayoffPools($database, $poolId, false);
 		$fakegames .= "<p><b>" . $poolInfo['name'] . "</b></p>";
 		foreach ($generatedgames as $game) {
 			if ($usepseudoteams) {
-				$fakegames .= "<p>" . TeamPseudoName($game['home']) . " - " . TeamPseudoName($game['away']) . "</p>";
+				$fakegames .= "<p>" . TeamPseudoName($database, $game['home']) . " - " . TeamPseudoName($database, $game['away']) . "</p>";
 			} else {
-				$fakegames .= "<p>" . TeamName($game['home']) . " - " . TeamName($game['away']) . "</p>";
+				$fakegames .= "<p>" . TeamName($database, $game['home']) . " - " . TeamName($database, $game['away']) . "</p>";
 			}
 		}
 		foreach ($generatedpools as $gpool) {
 			$fakegames .= "<p><b>" . $gpool['name'] . "</b></p>";
-			$generatedgames = GenerateGames($poolId, $rounds, false);
+			$generatedgames = GenerateGames($database, $poolId, $rounds, false);
 			$fakegames .= "<p>" . count($generatedgames) . " " . _("games") . ". " . _("Previous round winner vs. winners and losers vs. losers") . "</p>";
 			//			debugVar($gpool);
 			if ($gpool['specialmoves']) {
@@ -103,29 +105,29 @@ if (!empty($_POST['remove_x'])) {
 		if ($generatedgames[0] == false) {
 			$fakegames .= "<p>The number of teams in a Swiss-draw pool should be even. Please add or remove a team.</p>";
 		} else {
-			$generatedpools = GenerateSwissdrawPools($poolId, $rounds, false);
+			$generatedpools = GenerateSwissdrawPools($database, $poolId, $rounds, false);
 			$fakegames .= "<p><b>" . $poolInfo['name'] . "</b></p>";
 			foreach ($generatedgames as $game) {
 				if ($usepseudoteams) {
-					$fakegames .= "<p>" . TeamPseudoName($game['home']) . " - " . TeamPseudoName($game['away']) . "</p>";
+					$fakegames .= "<p>" . TeamPseudoName($database, $game['home']) . " - " . TeamPseudoName($database, $game['away']) . "</p>";
 				} else {
-					$fakegames .= "<p>" . TeamName($game['home']) . " - " . TeamName($game['away']) . "</p>";
+					$fakegames .= "<p>" . TeamName($database, $game['home']) . " - " . TeamName($database, $game['away']) . "</p>";
 				}
 			}
 			if ($rounds > 2) {
-				$generatedgames = GenerateGames($poolId, $rounds, false);
+				$generatedgames = GenerateGames($database, $poolId, $rounds, false);
 				$fakegames .= "<p><b> and " . ($rounds - 1) . " extra Swissdraw pools with " . count($generatedgames) . " games each</b></p>";
 			} elseif ($rounds = 2) {
-				$generatedgames = GenerateGames($poolId, $rounds, false);
+				$generatedgames = GenerateGames($database, $poolId, $rounds, false);
 				$fakegames .= "<p><b> and " . ($rounds - 1) . " extra Swissdraw pool with " . count($generatedgames) . " games each</b></p>";
 			}
 		}
 	} elseif ($poolInfo['type'] == 4) {
 		foreach ($generatedgames as $game) {
 			if ($usepseudoteams) {
-				$fakegames .= "<p>" . TeamPseudoName($game['home']) . " - " . TeamPseudoName($game['away']) . "</p>";
+				$fakegames .= "<p>" . TeamPseudoName($database, $game['home']) . " - " . TeamPseudoName($database, $game['away']) . "</p>";
 			} else {
-				$fakegames .= "<p>" . TeamName($game['home']) . " - " . TeamName($game['away']) . "</p>";
+				$fakegames .= "<p>" . TeamName($database, $game['home']) . " - " . TeamName($database, $game['away']) . "</p>";
 			}
 		}
 	}
@@ -135,36 +137,36 @@ if (!empty($_POST['remove_x'])) {
 	}
 	$homeresp = isset($_POST["homeresp"]);
 	$nomutual = isset($_POST["nomutual"]);
-	$generatedgames = GenerateGames($poolId, $rounds, true, $nomutual, $homeresp);
+	$generatedgames = GenerateGames($database, $poolId, $rounds, true, $nomutual, $homeresp);
 
 	//in case of playoff pool create all pools and games for playoffs
 	if ($poolInfo['type'] == 2) {
 		//generate pools needed to solve standings
-		$generatedpools = GeneratePlayoffPools($poolId, true);
+		$generatedpools = GeneratePlayoffPools($database, $poolId, true);
 
 		//generate games into generated pools
 		foreach ($generatedpools as $gpool) {
 			//echo "<p>Generate games for ".$gpool['pool_id']."</p>";
-			GenerateGames($gpool['pool_id'], $rounds, true);
+			GenerateGames($database, $gpool['pool_id'], $rounds, true);
 		}
 	} elseif ($poolInfo['type'] == 3) { //in case of Swissdraw, create pools and moves
 		if ($generatedgames[0] == false) {
 			echo "<p>The number of teams in a Swiss-draw pool should be even. Please add or remove a team.</p>";
 		} else {
 			//generate pools (with games) and moves 
-			$generatedpools = GenerateSwissdrawPools($poolId, $rounds, true);
+			$generatedpools = GenerateSwissdrawPools($database, $poolId, $rounds, true);
 		}
 	}
 } elseif (!empty($_POST['addnew'])) {
 	$home = $_POST['newhome'];
 	$away = $_POST['newaway'];
 	$homeresp = isset($_POST["homeresp"]);
-	PoolAddGame($poolId, $home, $away, $usepseudoteams, $homeresp);
+	PoolAddGame($database, $poolId, $home, $away, $usepseudoteams, $homeresp);
 }
 
 $html .= "<form method='post' action='?view=admin/poolgames&amp;season=$season&amp;pool=$poolId'>";
 
-if (CanGenerateGames($poolId)) {
+if (CanGenerateGames($database, $poolId)) {
 	$html .= "<h2>" . _("Creation of pool games") . "</h2>\n";
 
 	if ($poolInfo['type'] == "1") {
@@ -223,15 +225,15 @@ $mutualgames = array();
 
 //if mutual games moved, mark games played between teams moved from same pool
 if ($poolInfo['mvgames'] == 2) {
-	$allgames = PoolGames($poolInfo['pool_id']);
+	$allgames = PoolGames($database, $poolInfo['pool_id']);
 	foreach ($allgames as $game) {
-		$gameInfo = GameInfo($game['game_id']);
+		$gameInfo = GameInfo($database, $game['game_id']);
 		if (!empty($gameInfo['hometeam']) && !empty($gameInfo['visitorteam'])) {
-			$homepool = PoolGetFromPoolByTeamId($poolInfo['pool_id'], $gameInfo['hometeam']);
-			$awaypool = PoolGetFromPoolByTeamId($poolInfo['pool_id'], $gameInfo['visitorteam']);
+			$homepool = PoolGetFromPoolByTeamId($database, $poolInfo['pool_id'], $gameInfo['hometeam']);
+			$awaypool = PoolGetFromPoolByTeamId($database, $poolInfo['pool_id'], $gameInfo['visitorteam']);
 		} else {
-			$homepool = PoolGetFromPoolBySchedulingId($gameInfo['scheduling_name_home']);
-			$awaypool = PoolGetFromPoolBySchedulingId($gameInfo['scheduling_name_visitor']);
+			$homepool = PoolGetFromPoolBySchedulingId($database, $gameInfo['scheduling_name_home']);
+			$awaypool = PoolGetFromPoolBySchedulingId($database, $gameInfo['scheduling_name_visitor']);
 		}
 		if ($homepool == $awaypool) {
 			$mutualgames[] = $game['game_id'];
@@ -239,12 +241,12 @@ if ($poolInfo['mvgames'] == 2) {
 	}
 }
 
-$reservations = SeasonReservations($season);
+$reservations = SeasonReservations($database, $season);
 $tour = "";
 $totalgames = 0;
 foreach ($reservations as $res) {
-	$games = PoolGames($poolId, $res['id']);
-	$location = LocationInfo($res['location']);
+	$games = PoolGames($database, $poolId, $res['id']);
+	$location = LocationInfo($database, $res['location']);
 	if (count($games)) {
 		if ($tour != $res['reservationgroup']) {
 			$html .= "<h2>" . utf8entities($res['reservationgroup']) . "</h2>";
@@ -287,7 +289,7 @@ foreach ($reservations as $res) {
 }
 
 
-$games = PoolGamesNotScheduled($poolId);
+$games = PoolGamesNotScheduled($database, $poolId);
 if (count($games)) {
 	$html .= "<h2>" . _("No schedule") . "</h2>\n";
 	$html .= "<table border='0' cellpadding='4px' width='400px'>\n";
@@ -319,7 +321,7 @@ if (count($games)) {
 	$html .= "</table>";
 }
 
-$games = PoolMovedGames($poolId);
+$games = PoolMovedGames($database, $poolId);
 if (count($games)) {
 	$html .= "<h2>" . _("Moved games") . "</h2>\n";
 	$html .= "<table border='0' cellpadding='2px' width='400px'>\n";
@@ -355,9 +357,9 @@ if (!$poolInfo['played']) {
 	$html .= "<tr>";
 	$html .= "<td style='width:30%'><select class='dropdown' style='width:100%' name='newhome'>";
 	$pseudoteams = false;
-	$teams = PoolTeams($poolId);
+	$teams = PoolTeams($database, $poolId);
 	if (count($teams) == 0) {
-		$teams = PoolSchedulingTeams($poolId);
+		$teams = PoolSchedulingTeams($database, $poolId);
 		$pseudoteams = true;
 	}
 	$teamlist = "";

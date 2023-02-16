@@ -8,13 +8,13 @@ $LAYOUT_ID = SEASONSERIES;
 $season = $_GET["season"];
 $html = "";
 
-$title = utf8entities(U_(SeasonName($season))) . ": " . _("Divisions");
+$title = utf8entities(U_(SeasonName($database, $season))) . ": " . _("Divisions");
 
 //process itself on submit
 if (!empty($_POST['remove_x'])) {
   $id = $_POST['hiddenDeleteId'];
-  if (CanDeleteSeries($id)) {
-    DeleteSeries($id);
+  if (CanDeleteSeries($database, $id)) {
+    DeleteSeries($database, $id);
   }
 } elseif (!empty($_POST['add'])) {
   $sp['name'] = !empty($_POST['name0']) ? $_POST['name0'] : "no name";
@@ -23,11 +23,11 @@ if (!empty($_POST['remove_x'])) {
   $sp['season'] = $season;
   $sp['valid'] = isset($_POST['valid0']) ? 1 : 0;
   $sp['pool_template'] = $_POST['template0'];
-  AddSeries($sp);
+  AddSeries($database, $sp);
 } else if (!empty($_POST['save'])) {
 
   //Save all
-  $series = SeasonSeries($season);
+  $series = SeasonSeries($database, $season);
   foreach ($series as $row) {
     $id = $row['series_id'];
     $sp['series_id'] = $id;
@@ -45,13 +45,13 @@ if (!empty($_POST['remove_x'])) {
 pageTopHeadOpen($title);
 $setFocus = "onload=\"document.getElementById('name0').focus();\"";
 pageTopHeadClose($title, false, $setFocus);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 $html .= "<form method='post' action='?view=admin/seasonseries&amp;season=$season'>";
 $html .= "<h2>" . _("Divisions") . "</h2>\n";
 
-$series = SeasonSeries($season);
+$series = SeasonSeries($database, $season);
 $types = SeriesTypes();
 
 $html .= "<table class='admintable'>\n";
@@ -79,7 +79,7 @@ foreach ($series as $row) {
 
   $html .=  "<td><select class='dropdown' name='template$id'>\n";
 
-  $templates = PoolTemplates();
+  $templates = PoolTemplates($database);
 
   foreach ($templates as $template) {
 
@@ -109,7 +109,7 @@ foreach ($series as $row) {
   $html .= "</td>";
 
   $html .= "<td class='center'>";
-  if (CanDeleteSeries($id)) {
+  if (CanDeleteSeries($database, $id)) {
     $html .= "<input class='deletebutton' type='image' src='images/remove.png' alt='X' name='remove' value='" . _("X") . "' onclick=\"setId(" . $id . ");\"/>";
   }
   $html .= "</td>";
@@ -132,7 +132,7 @@ foreach ($types as $type) {
 $html .= "</select></td>";
 $html .=  "<td style='padding-top:15px'><select class='dropdown' name='template0'>\n";
 
-$templates = PoolTemplates();
+$templates = PoolTemplates($database);
 
 foreach ($templates as $template) {
   if ($last_rule_template == $template['template_id']) {

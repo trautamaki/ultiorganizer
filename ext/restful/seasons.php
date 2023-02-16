@@ -1,7 +1,7 @@
 <?php
 class Seasons extends Restful
 {
-	function Seasons()
+	function Seasons($database)
 	{
 		$this->listsql = "SELECT season_id, name FROM uo_season season";
 		$this->itemsql = "SELECT * FROM uo_season WHERE season_id='%s'";

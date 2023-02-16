@@ -1,7 +1,7 @@
 <?php
 class Players extends Restful
 {
-	function Players()
+	function Players($database)
 	{
 		$this->listsql = "SELECT player_id, CONCAT(player.firstname, ' ', player.lastname) as name, num, 
 		player.firstname, player.lastname, player.accredited, player.accreditation_id

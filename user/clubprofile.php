@@ -10,6 +10,8 @@ include_once $include_prefix . 'lib/country.functions.php';
 include_once $include_prefix . 'lib/url.functions.php';
 include_once $include_prefix . 'lib/image.functions.php';
 
+$database = new Database();
+
 $max_file_size = 5 * 1024 * 1024; //5 MB
 $max_new_links = 3;
 $html = "";
@@ -19,7 +21,7 @@ $clubId = 0;
 
 if (!empty($_GET["team"])) {
 	$teamId = intval($_GET["team"]);
-	$teaminfo = TeamInfo($teamId);
+	$teaminfo = TeamInfo($database, $teamId);
 	$clubId = $teaminfo['club'];
 }
 if (!empty($_GET["club"])) {
@@ -52,7 +54,7 @@ if (isset($_POST['save'])) {
 	if (!empty($_POST['name']))
 		$op['name'] = $_POST['name'];
 	else
-		$op['name'] = ClubName($clubId);
+		$op['name'] = ClubName($database, $clubId);
 
 	$op['founded'] = intval($_POST['founded']);
 	$op['contacts'] = $_POST['contacts'];
@@ -66,7 +68,7 @@ if (isset($_POST['save'])) {
 	else
 		$op['valid'] = 0;
 
-	SetClubProfile($teamId, $op);
+	SetClubProfile($database, $teamId, $op);
 
 	for ($i = 0; $i < $max_new_links; $i++) {
 
@@ -75,21 +77,21 @@ if (isset($_POST['save'])) {
 			if (!empty($_POST["urlname$i"])) {
 				$name = $_POST["urlname$i"];
 			}
-			AddClubProfileUrl($teamId, $clubId, $_POST["urltype$i"], $_POST["url$i"], $name);
+			AddClubProfileUrl($database, $teamId, $clubId, $_POST["urltype$i"], $_POST["url$i"], $name);
 		}
 	}
 
 	if (is_uploaded_file($_FILES['picture']['tmp_name'])) {
-		$html .= UploadClubImage($teamId, $clubId);
+		$html .= UploadClubImage($database, $teamId, $clubId);
 	}
 } elseif (isset($_POST['remove'])) {
-	RemoveClubProfileImage($teamId, $clubId);
+	RemoveClubProfileImage($database, $teamId, $clubId);
 } elseif (isset($_POST['removeurl_x'])) {
 	$id = $_POST['hiddenDeleteId'];
-	RemoveClubProfileUrl($teamId, $clubId, $id);
+	RemoveClubProfileUrl($database, $teamId, $clubId, $id);
 }
 
-$club = ClubInfo($clubId);
+$club = ClubInfo($database, $clubId);
 if ($club) {
 	$op['name'] = $club['name'];
 	$op['profile_image'] = $club['profile_image'];
@@ -112,7 +114,7 @@ $menutabs[_("Club Profile")] = "?view=user/clubprofile&team=$teamId";
 $html .= pageMenu($menutabs, "", false);
 
 $html .= "<form method='post' enctype='multipart/form-data' action='?view=user/clubprofile&amp;team=$teamId&amp;club=$clubId'>\n";
-if (isSuperAdmin() || hasEditTeamsRight($teaminfo['series'])) {
+if (isSuperAdmin() || hasEditTeamsRight($database, $teaminfo['series'])) {
 
 	if (intval($club['valid']))
 		$html .= "<p><input class='input' type='checkbox' id='valid' name='valid' checked='checked'/>";
@@ -127,14 +129,14 @@ $html .= "<h1>" . utf8entities($club['name']) . "</h1>";
 $html .= "<table>";
 
 $html .= "<tr><td class='infocell'>" . _("Name") . ":</td>";
-if (isSuperAdmin() || hasEditTeamsRight($teaminfo['series'])) {
+if (isSuperAdmin() || hasEditTeamsRight($database, $teaminfo['series'])) {
 	$html .= "<td><input class='input' maxlength='50' size='40' name='name' value='" . utf8entities($op['name']) . "'/></td></tr>\n";
 } else {
 	$html .= "<td><input class='input' maxlength='50' size='40' disabled='disabled' name='name' value='" . utf8entities($op['name']) . "'/></td></tr>\n";
 }
 
 $html .= "<tr><td class='infocell'>" . _("Country") . ":</td>";
-$html .= "<td>" . CountryDropListWithValues("country", "country", $op['country']) . "</td></tr>\n";
+$html .= "<td>" . CountryDropListWithValues($database, "country", "country", $op['country']) . "</td></tr>\n";
 
 $html .= "<tr><td class='infocell'>" . _("City") . ":</td>";
 $html .= "<td><input class='input' maxlength='100' size='40' name='city' value='" . utf8entities($op['city']) . "'/></td></tr>\n";
@@ -156,7 +158,7 @@ $html .= "<tr><td class='infocell' colspan='2'>" . _("Web pages (homepage, blogs
 $html .= "<tr><td colspan='2'>";
 $html .= "<table border='0'>";
 
-$urls = GetUrlList("club", $clubId);
+$urls = GetUrlList($database, "club", $clubId);
 
 foreach ($urls as $url) {
 	$html .= "<tr style='border-bottom-style:solid;border-bottom-width:1px;'>";
@@ -226,4 +228,4 @@ $html .= "<div><input type='hidden' id='hiddenDeleteId' name='hiddenDeleteId'/><
 $html .= "</form>";
 $html .= "<p><a href='?view=clubcard&amp;club=" . $clubId . "'>" . _("Check Club card") . "</a></p>";
 
-showPage($title, $html);
+showPage($database, $title, $html);

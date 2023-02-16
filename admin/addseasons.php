@@ -61,11 +61,11 @@ if (!empty($_POST['add'])) {
 	} else if (empty($_POST['type'])) {
 		$html .= "<p class='warning'>" . _("Type can not be empty") . ".</p>";
 	} else {
-		AddSeason($sp['season_id'], $sp, $comment);
+		AddSeason($database, $sp['season_id'], $sp, $comment);
 		$seasonId = $sp['season_id'];
 		//add rights for season creator
-		AddEditSeason($_SESSION['uid'], $sp['season_id']);
-		AddUserRole($_SESSION['uid'], 'seasonadmin:' . $sp['season_id']);
+		AddEditSeason($database, $_SESSION['uid'], $sp['season_id']);
+		AddUserRole($database, $_SESSION['uid'], 'seasonadmin:' . $sp['season_id']);
 
 		if ($sp['istournament']) {
 			$_SESSION['title'] = _("New tournament added") . ":";
@@ -114,7 +114,7 @@ if (strlen($sp['name']) > 0) {
 }
 
 if ($seasonId) {
-	$info = SeasonInfo($seasonId);
+	$info = SeasonInfo($database, $seasonId);
 	$sp['season_id'] = $info['season_id'];
 	$sp['name'] = $info['name'];
 	$sp['type'] = $info['type'];
@@ -131,7 +131,7 @@ if ($seasonId) {
 	$sp['spiritmode'] = $info['spiritmode'];
 	$sp['showspiritpoints'] = $info['showspiritpoints'];
 	$sp['timezone'] = $info['timezone'];
-	$comment = CommentRaw(1, $info['season_id']);
+	$comment = CommentRaw($database, 1, $info['season_id']);
 } else {
 	$comment = "";
 }
@@ -262,7 +262,7 @@ echo yuiLoad(array("utilities", "calendar", "datasource", "autocomplete"));
 </script>
 <?php
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 if (empty($seasonId)) {
@@ -312,7 +312,7 @@ if ($sp['isnationalteams']) {
 $html .= "/></td></tr>";
 
 $html .= "<tr><td class='infocell'>" . _("Spirit mode") . ": </td><td>";
-$spiritmodes = SpiritModes();
+$spiritmodes = SpiritModes($database);
 $html .= "<select class='dropdown' id='spiritmode' name='spiritmode'>\n";
 $html .= "<option value='0'></option>\n";
 foreach ($spiritmodes as $mode) {

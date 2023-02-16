@@ -1,7 +1,7 @@
 <?php
 class Teams extends Restful
 {
-	function Teams()
+	function Teams($database)
 	{
 		$this->listsql = "SELECT team_id, team.name, series.name as seriesname, pool.name as poolname, season.name as seasonname
 		FROM uo_team team LEFT JOIN uo_pool pool ON (team.pool=pool.pool_id)

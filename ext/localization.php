@@ -11,4 +11,4 @@ include_once '../lib/gettext/gettext.inc';
 include_once '../localization.php';
 
 //session_start();
-setSessionLocale();
+setSessionLocale($database);

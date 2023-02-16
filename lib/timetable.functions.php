@@ -2,7 +2,7 @@
 include_once $include_prefix . 'lib/configuration.functions.php';
 include_once $include_prefix . 'lib/game.functions.php';
 
-function TournamentView($games, $grouping = true)
+function TournamentView($database, $games, $grouping = true)
 {
 
   $ret = "";
@@ -16,7 +16,7 @@ function TournamentView($games, $grouping = true)
   $isTableOpen = false;
   $rss = IsGameRSSEnabled();
 
-  while ($game = mysql_fetch_assoc($games)) {
+  while ($game = $database->FetchAssoc($games)) {
     $ret .= "\n<!-- res:" . $game['reservationgroup'] . " pool:" . $game['pool'] . " date:" . JustDate($game['starttime']) . "-->\n";
     if (
       $game['reservationgroup'] != $prevTournament
@@ -59,8 +59,8 @@ function TournamentView($games, $grouping = true)
     }
 
     if ($isTableOpen) {
-      //function GameRow($game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
-      $ret .= GameRow($game, false, true, true, false, false, true, $rss);
+      //function GameRow($database, $game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
+      $ret .= GameRow($database, $game, false, true, true, false, false, true, $rss);
     }
 
     $prevTournament = $game['reservationgroup'];
@@ -91,7 +91,7 @@ function SeriesView($games, $date = true, $time = false)
   $isTableOpen = false;
   $rss = IsGameRSSEnabled();
 
-  while ($game = mysql_fetch_assoc($games)) {
+  while ($game = $database->FetchAssoc($games)) {
     if (
       $game['series_id'] != $prevSeries
       || (empty($game['series_id']) && !$isTableOpen)
@@ -114,8 +114,8 @@ function SeriesView($games, $date = true, $time = false)
       $ret .= PoolHeaders($game);
     }
 
-    //function GameRow($game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
-    $ret .= GameRow($game, true, true, true, false, false, true, $rss);
+    //function GameRow($database, $game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
+    $ret .= GameRow($database, $game, true, true, true, false, false, true, $rss);
 
     $prevTournament = $game['reservationgroup'];
     $prevPlace = $game['place_id'];
@@ -146,7 +146,7 @@ function PlaceView($games, $grouping = true)
   $isTableOpen = false;
   $rss = IsGameRSSEnabled();
 
-  while ($game = mysql_fetch_assoc($games)) {
+  while ($game = $database->FetchAssoc($games)) {
     if (
       $game['reservationgroup'] != $prevTournament
       || (empty($game['reservationgroup']) && !$isTableOpen)
@@ -183,8 +183,8 @@ function PlaceView($games, $grouping = true)
     }
 
     if ($isTableOpen) {
-      //function GameRow($game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
-      $ret .= GameRow($game, false, true, false, true, true, true, $rss);
+      //function GameRow($database, $game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
+      $ret .= GameRow($database, $game, false, true, false, true, true, true, $rss);
     }
 
     $prevTournament = $game['reservationgroup'];
@@ -211,7 +211,7 @@ function TimeView($games, $grouping = true)
   $isTableOpen = false;
   $rss = IsGameRSSEnabled();
 
-  while ($game = mysql_fetch_assoc($games)) {
+  while ($game = $database->FetchAssoc($games)) {
     if ($game['time'] != $prevTime) {
       if ($isTableOpen) {
         $ret .= "</table>\n";
@@ -224,8 +224,8 @@ function TimeView($games, $grouping = true)
     }
 
     if ($isTableOpen) {
-      //function GameRow($game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
-      $ret .= GameRow($game, false, false, true, true, true, true, $rss);
+      //function GameRow($database, $game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
+      $ret .= GameRow($database, $game, false, false, true, true, true, true, $rss);
     }
 
     $prevTime = $game['time'];
@@ -239,7 +239,7 @@ function TimeView($games, $grouping = true)
   return $ret;
 }
 
-function ExtTournamentView($games)
+function ExtTournamentView($database, $games)
 {
   $ret = "";
   $prevTournament = "";
@@ -253,7 +253,7 @@ function ExtTournamentView($games)
   $isTableOpen = false;
   $ret .= "<table width='95%'>";
 
-  while ($game = mysql_fetch_assoc($games)) {
+  while ($game = $database->FetchAssoc($games)) {
     if (
       $game['reservationgroup'] != $prevTournament
       || (empty($game['reservationgroup']) && !$isTableOpen)
@@ -335,7 +335,7 @@ function ExtGameView($games)
   $isTableOpen = false;
   $ret .= "<table style='white-space: nowrap' width='95%'>";
 
-  while ($game = mysql_fetch_assoc($games)) {
+  while ($game = $database->FetchAssoc($games)) {
     if (
       $game['reservationgroup'] != $prevTournament
       || (empty($game['reservationgroup']) && !$isTableOpen)
@@ -437,7 +437,7 @@ function SeriesAndPoolHeaders($info)
   return $ret;
 }
 
-function GameRow($game, $date = false, $time = true, $field = true, $series = false, $pool = false, $info = true, $rss = false, $media = true)
+function GameRow($database, $game, $date = false, $time = true, $field = true, $series = false, $pool = false, $info = true, $rss = false, $media = true)
 {
   $datew = 'width:60px';
   $timew = 'width:40px';
@@ -513,7 +513,7 @@ function GameRow($game, $date = false, $time = true, $field = true, $series = fa
   }
 
   if ($media) {
-    $urls = GetMediaUrlList("game", $game['game_id'], "live");
+    $urls = GetMediaUrlList($database, "game", $game['game_id'], "live");
     $ret .= "<td style='$mediaw;white-space: nowrap;'>";
     if (count($urls) && (intval($game['isongoing']) || !GameHasStarted($game))) {
       foreach ($urls as $url) {
@@ -533,8 +533,8 @@ function GameRow($game, $date = false, $time = true, $field = true, $series = fa
         $t1 = preg_replace('/\s*/m', '', $game['hometeamname']);
         $t2 = preg_replace('/\s*/m', '', $game['visitorteamname']);
 
-        $xgames = GetAllPlayedGames($t1, $t2, $game['type'], "");
-        if (mysql_num_rows($xgames) > 0) {
+        $xgames = GetAllPlayedGames($database, $t1, $t2, $game['type'], "");
+        if ($database->NumRows($games) > 0) {
           $ret .= "<td class='right' style='$infow'><span style='white-space: nowrap'>";
           $ret .= "<a href='?view=gamecard&amp;team1=" . utf8entities($game['hometeam']) . "&amp;team2=" . utf8entities($game['visitorteam']) . "'>";
           $ret .=  _("Game history") . "</a></span></td>\n";
@@ -581,26 +581,26 @@ function PrintTimeZone($timezone)
   return $ret;
 }
 
-function NextGameDay($id, $gamefilter, $order)
+function NextGameDay($database, $id, $gamefilter, $order)
 {
-  $games = TimetableGames($id, $gamefilter, "coming", "time");
-  $game = mysql_fetch_assoc($games);
+  $games = TimetableGames($database, $id, $gamefilter, "coming", "time");
+  $game = $database->FetchAssoc($games);
   $next = ShortEnDate($game['time']);
-  $games = TimetableGames($id, $gamefilter, $next, $order);
+  $games = TimetableGames($database, $id, $gamefilter, $next, $order);
   return $games;
 }
 
-function PrevGameDay($id, $gamefilter, $order)
+function PrevGameDay($database, $id, $gamefilter, $order)
 {
-  $games = TimetableGames($id, $gamefilter, "past", "timedesc");
-  $game = mysql_fetch_assoc($games);
+  $games = TimetableGames($database, $id, $gamefilter, "past", "timedesc");
+  $game = $database->FetchAssoc($games);
   $prev = ShortEnDate($game['time']);
-  $games = TimetableGames($id, $gamefilter, $prev, $order);
+  $games = TimetableGames($database, $id, $gamefilter, $prev, $order);
   return $games;
 }
 
 
-function TimetableGames($id, $gamefilter, $timefilter, $order, $groupfilter = "")
+function TimetableGames($database, $id, $gamefilter, $timefilter, $order, $groupfilter = "")
 {
   //common game query
   $query = "SELECT pp.game_id, pp.time, pp.hometeam, pp.visitorteam, pp.homescore,
@@ -630,7 +630,7 @@ function TimetableGames($id, $gamefilter, $timefilter, $order, $groupfilter = ""
 
   switch ($gamefilter) {
     case "season":
-      $query .= " WHERE pp.valid=true AND ps.season='" . mysql_real_escape_string($id) . "'";
+      $query .= " WHERE pp.valid=true AND ps.season='" . $database->RealEscapeString($id) . "'";
       break;
 
     case "series":
@@ -644,7 +644,7 @@ function TimetableGames($id, $gamefilter, $timefilter, $order, $groupfilter = ""
     case "poolgroup":
       //keep pool filter as it is to give better performance for single pool query
       //extra explode needed to make parameters safe
-      $pools = explode(",", mysql_real_escape_string($id));
+      $pools = explode(",", $database->RealEscapeString($id));
       $query .= " WHERE pp.valid=true AND pp.pool IN(" . implode(",", $pools) . ")";
       break;
 
@@ -698,12 +698,12 @@ function TimetableGames($id, $gamefilter, $timefilter, $order, $groupfilter = ""
       break;
 
     default:
-      $query .= " AND DATE_FORMAT(pp.time,'%Y-%m-%d') = '" . mysql_real_escape_string($timefilter) . "'";
+      $query .= " AND DATE_FORMAT(pp.time,'%Y-%m-%d') = '" . $database->RealEscapeString($timefilter) . "'";
       break;
   }
 
   if (!empty($groupfilter) && $groupfilter != "all") {
-    $query .= "AND pr.reservationgroup='" . mysql_real_escape_string($groupfilter) . "'";
+    $query .= "AND pr.reservationgroup='" . $database->RealEscapeString($groupfilter) . "'";
   }
 
   switch ($order) {
@@ -744,15 +744,15 @@ function TimetableGames($id, $gamefilter, $timefilter, $order, $groupfilter = ""
       break;
   }
 
-  $result = mysql_query($query);
+  $result = $database->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . $database->GetConnection()->error);
   }
 
   return $result;
 }
 
-function TimetableGrouping($id, $gamefilter, $timefilter)
+function TimetableGrouping($database, $id, $gamefilter, $timefilter)
 {
   //common game query
   $query = "SELECT pool.name AS poolname, ps.name AS seriesname, pr.fieldname, pr.reservationgroup,
@@ -770,7 +770,7 @@ function TimetableGrouping($id, $gamefilter, $timefilter)
 
   switch ($gamefilter) {
     case "season":
-      $query .= " WHERE pp.valid=true AND ps.season='" . mysql_real_escape_string($id) . "'";
+      $query .= " WHERE pp.valid=true AND ps.season='" . $database->RealEscapeString($id) . "'";
       break;
 
     case "series":
@@ -784,7 +784,7 @@ function TimetableGrouping($id, $gamefilter, $timefilter)
     case "poolgroup":
       //keep pool filter as it is to give better performance for single pool query
       //extra explode needed to make parameters safe
-      $pools = explode(",", mysql_real_escape_string($id));
+      $pools = explode(",", $database->RealEscapeString($id));
       $query .= " WHERE pp.valid=true AND pp.pool IN(" . implode(",", $pools) . ")";
       break;
 
@@ -834,15 +834,15 @@ function TimetableGrouping($id, $gamefilter, $timefilter)
       break;
 
     default:
-      $query .= " AND DATE_FORMAT(pp.time,'%Y-%m-%d') = '" . mysql_real_escape_string($timefilter) . "'";
+      $query .= " AND DATE_FORMAT(pp.time,'%Y-%m-%d') = '" . $database->RealEscapeString($timefilter) . "'";
       break;
   }
   $query .= " GROUP BY pr.reservationgroup ORDER BY pp.time ASC, ps.ordering, pr.reservationgroup";
 
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
-function TimetableFields($reservationgroup, $season)
+function TimetableFields($database, $reservationgroup, $season)
 {
   $query = "SELECT COUNT(*) as games
 			FROM uo_game pp 
@@ -851,13 +851,13 @@ function TimetableFields($reservationgroup, $season)
 			LEFT JOIN uo_series ps ON (pool.series=ps.series_id)
 			LEFT JOIN uo_reservation pr ON (pp.reservation=pr.id)";
 
-  $query .= " WHERE pp.valid=true AND ps.season='" . mysql_real_escape_string($season) . "' AND pr.reservationgroup='" . mysql_real_escape_string($reservationgroup) . "'";
+  $query .= " WHERE pp.valid=true AND ps.season='" . $database->RealEscapeString($season) . "' AND pr.reservationgroup='" . $database->RealEscapeString($reservationgroup) . "'";
   $query .= " GROUP BY pr.location, pr.fieldname";
-  $result = DBQuery($query);
-  return mysql_num_rows($result);
+  $result = $database->DBQuery($query);
+  return $database->NumRows($result);
 }
 
-function TimetableTimeslots($reservationgroup, $season)
+function TimetableTimeslots($database, $reservationgroup, $season)
 {
   $query = "SELECT pp.time
 			FROM uo_game pp 
@@ -865,12 +865,12 @@ function TimetableTimeslots($reservationgroup, $season)
 			LEFT JOIN uo_series ps ON (pool.series=ps.series_id)
 			LEFT JOIN uo_reservation pr ON (pp.reservation=pr.id)";
 
-  $query .= " WHERE pp.valid=true AND ps.season='" . mysql_real_escape_string($season) . "' AND pr.reservationgroup='" . mysql_real_escape_string($reservationgroup) . "'";
+  $query .= " WHERE pp.valid=true AND ps.season='" . $database->RealEscapeString($season) . "' AND pr.reservationgroup='" . $database->RealEscapeString($reservationgroup) . "'";
   $query .= " GROUP BY pp.time";
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
-function TimetableIntraPoolConflicts($season)
+function TimetableIntraPoolConflicts($database, $season)
 {
   $query = "SELECT g1.game_id as game1, g2.game_id as game2, g1.pool as pool1, g2.pool as pool2,  
       g1.hometeam as home1, g1.visitorteam as visitor1, g2.hometeam as home2, g2.visitorteam as visitor2, 
@@ -889,10 +889,10 @@ function TimetableIntraPoolConflicts($season)
       LEFT JOIN uo_series as ser2 ON (ser2.series_id = p2.series)
       WHERE g1.reservation IS NOT NULL AND g2.reservation IS NOT NULL AND ser1.season = '" . $season . "' AND ser2.season = '" . $season . "' AND g1.time <= g2.time
       ORDER BY time2 ASC, time1 ASC";
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
-function TimetableInterPoolConflicts($season)
+function TimetableInterPoolConflicts($database, $season)
 {
   $query = "SELECT  g1.game_id as game1, g2.game_id as game2, g1.pool as pool1, g2.pool as pool2,  
       g1.hometeam as home1, g1.visitorteam as visitor1, g2.hometeam as home2, g2.visitorteam as visitor2, 
@@ -914,21 +914,21 @@ function TimetableInterPoolConflicts($season)
         AND (g1.hometeam IS NULL OR g1.visitorteam IS NULL OR g2.hometeam IS NULL OR g2.visitorteam IS NULL OR
           (g1.hometeam=g2.hometeam OR g1.visitorteam = g2.visitorteam OR g1.hometeam=g2.visitorteam OR g1.visitorteam = g2.hometeam))
       ORDER BY time2 ASC, time1 ASC";
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
-function TimeTableMoveTimes($season)
+function TimeTableMoveTimes($database, $season)
 {
   $query = sprintf("SELECT * FROM uo_movingtime
             WHERE season = '%s'
             ORDER BY fromlocation, fromfield+0, tolocation, tofield+0", $season);
 
-  $result = mysql_query($query);
+  $result = $database->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . $database->GetConnection()->error);
   }
   $ret = array();
-  while ($row = mysql_fetch_assoc($result)) {
+  while ($row = $database->FetchAssoc($result)) {
     $ret[$row['fromlocation']][$row['fromfield']][$row['tolocation']][$row['tofield']] = $row['time'];
   }
   return $ret;
@@ -945,7 +945,7 @@ function TimeTableMoveTime($movetimes, $location1, $field1, $location2, $field2)
     return $time * 60;
 }
 
-function TimeTableSetMoveTimes($season, $times)
+function TimeTableSetMoveTimes($database, $season, $times)
 {
   if (isSuperAdmin() || isSeasonAdmin($season)) {
     for ($from = 0; $from < count($times); $from++) {
@@ -955,7 +955,7 @@ function TimeTableSetMoveTimes($season, $times)
           INSERT INTO uo_movingtime
           (season, fromlocation, fromfield, tolocation, tofield, time) 
           VALUES ('%s', '%d', '%d', '%d', '%d', '%d') ON DUPLICATE KEY UPDATE time='%d'",
-          mysql_real_escape_string($season),
+          $database->RealEscapeString($season),
           (int) $times[$from]['location'],
           (int) $times[$from]['field'],
           (int) $times[$to]['location'],
@@ -963,7 +963,7 @@ function TimeTableSetMoveTimes($season, $times)
           (int) $times[$from][$to],
           (int) $times[$from][$to]
         );
-        DBQuery($query);
+        $database->DBQuery($query);
       }
     }
   } else {
@@ -971,14 +971,14 @@ function TimeTableSetMoveTimes($season, $times)
   }
 }
 
-function IsGamesScheduled($id, $gamefilter, $timefilter)
+function IsGamesScheduled($database, $id, $gamefilter, $timefilter)
 {
-  $result = TimetableGames($id, $gamefilter, $timefilter, "");
+  $result = TimetableGames($database, $id, $gamefilter, $timefilter, "");
 
-  return (mysql_num_rows($result) > 0);
+  return ($database->NumRows($result) > 0);
 }
 
-function TimetableToCsv($season, $separator)
+function TimetableToCsv($database, $season, $separator)
 {
 
   $query = sprintf(
@@ -1000,10 +1000,10 @@ function TimetableToCsv($season, $separator)
 			LEFT JOIN uo_scheduling_name AS pvisitor ON (pp.scheduling_name_visitor=pvisitor.scheduling_id)
 			WHERE pp.valid=true AND ps.season='%s'
 			ORDER BY pr.starttime, pr.reservationgroup, pl.id, pr.fieldname +0, pp.time ASC, pp.game_id ASC",
-    mysql_real_escape_string($season)
+    $database->RealEscapeString($season)
   );
 
   // Gets the data from the database
-  $result = DBQuery($query);
-  return ResultsetToCsv($result, $separator);
+  $result = $database->DBQuery($query);
+  return ResultsetToCsv($database, $result, $separator);
 }

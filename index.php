@@ -4,6 +4,7 @@ if (is_file('install.php')) {
 }
 
 include_once 'lib/database.php';
+
 $database = new Database();
 
 global $include_prefix;
@@ -19,33 +20,33 @@ include_once $include_prefix . 'lib/debug.functions.php';
 session_name("UO_SESSID");
 session_start();
 if (!isset($_SESSION['VISIT_COUNTER'])) {
-  LogVisitor($_SERVER['REMOTE_ADDR']);
+  LogVisitor($database, $_SERVER['REMOTE_ADDR']);
   $_SESSION['VISIT_COUNTER'] = true;
 }
 
 if (!isset($_SESSION['uid'])) {
   $_SESSION['uid'] = "anonymous";
-  SetUserSessionData("anonymous");
+  SetUserSessionData($database, "anonymous");
 }
 
 require_once $include_prefix . 'lib/configuration.functions.php';
 
 include_once 'localization.php';
-setSessionLocale();
+setSessionLocale($database);
 
 if (isset($_POST['myusername'])) {
   $view = iget("view");
   if (strpos($view, "mobile") === false)
-    UserAuthenticate($_POST['myusername'], $_POST['mypassword'], "FailRedirect");
+    UserAuthenticate($database, $_POST['myusername'], $_POST['mypassword'], "FailRedirect");
   else
-    UserAuthenticate($_POST['myusername'], $_POST['mypassword'], "FailRedirectMobile");
+    UserAuthenticate($database, $_POST['myusername'], $_POST['mypassword'], "FailRedirectMobile");
 }
 
 if (!iget('view')) {
   header("location:?view=frontpage");
   exit();
 } else {
-  LogPageLoad(iget('view'));
+  LogPageLoad($database, iget('view'));
 }
 
 global $serverConf;
@@ -54,7 +55,7 @@ if (IsFacebookEnabled() && !empty($serverConf['FacebookAppId']) && !empty($serve
   $fb_cookie = FBCookie($serverConf['FacebookAppId'], $serverConf['FacebookAppSecret']);
   if ($_SESSION['uid'] == "anonymous" && $fb_cookie) {
     $_SESSION['uid'] = MapFBUserId($fb_cookie);
-    SetUserSessionData($_SESSION['uid']);
+    SetUserSessionData($database, $_SESSION['uid']);
   }
 }
 

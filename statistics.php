@@ -3,6 +3,8 @@ include_once 'lib/season.functions.php';
 include_once 'lib/team.functions.php';
 include_once 'lib/statistical.functions.php';
 
+$database = new Database();
+
 $title = _("Statistics");
 $html = "";
 $list = "teamstandings";
@@ -24,14 +26,14 @@ if ($list == "teamstandings") {
   $countall = 0;
 
   foreach ($seasontypes as $seasontype) {
-    $seasons = SeasonsByType($seasontype);
+    $seasons = SeasonsByType($database, $seasontype);
     if (count($seasons) < 1) {
       continue;
     }
     $html .= "<h2>" . U_($seasontype) . "</h2>\n";
 
     foreach ($serietypes as $seriestype) {
-      $serstats = SeriesStatisticsByType($seriestype, $seasontype);
+      $serstats = SeriesStatisticsByType($database, $seriestype, $seasontype);
       if (count($serstats) < 1) {
         continue;
       }
@@ -40,7 +42,7 @@ if ($list == "teamstandings") {
 				<th>" . _("Event") . "</th><th>" . _("Gold") . "</th><th>" . _("Silver") . "</th><th>" . _("Bronze") . "</th></tr>\n";
 
       foreach ($seasons as $season) {
-        $standings = TeamStandings($season['season_id'], $seriestype);
+        $standings = TeamStandings($database, $season['season_id'], $seriestype);
         if (!count($standings)) {
           continue;
         }
@@ -70,14 +72,14 @@ if ($list == "teamstandings") {
   $serietypes = SeriesTypes();
 
   foreach ($seasontypes as $seasontype) {
-    $seasons = SeasonsByType($seasontype);
+    $seasons = SeasonsByType($database, $seasontype);
     if (count($seasons) < 1) {
       continue;
     }
     $html .= "<h2>" . U_($seasontype) . "</h2>\n";
 
     foreach ($serietypes as $seriestype) {
-      $serstats = SeriesStatisticsByType($seriestype, $seasontype);
+      $serstats = SeriesStatisticsByType($database, $seriestype, $seasontype);
       if (count($serstats) < 1) {
         continue;
       }
@@ -86,7 +88,7 @@ if ($list == "teamstandings") {
 				<th>" . _("Event") . "</th><th>" . _("First") . "</th><th>" . _("Second") . "</th><th>" . _("Third") . "</th></tr>\n";
 
       foreach ($seasons as $season) {
-        $scores = AlltimeScoreboard($season['season_id'], $seriestype);
+        $scores = Alltimescoreboard($database, $season['season_id'], $seriestype);
         if (!count($scores)) {
           continue;
         }
@@ -111,7 +113,7 @@ if ($list == "teamstandings") {
   }
 } elseif ($list == "playerscoresall") {
   $html .= "<h1>" . _("All time scoreboard TOP 100") . "</h1>\n";
-  $scores = ScoreboardAllTime(100);
+  $scores = ScoreboardAllTime($database, 100);
   $html .= "<table border='1' width='100%'><tr>
 				<th>#</th><th>" . _("Name") . "</th><th>" . _("Latest event / team") . "</th><th class='center'>" . _("Games") . "</th>
 				<th class='center'>" . _("Passes") . "</th><th class='center'>" . _("Goals") . "</th><th class='center'>" . _("Total") . "</th></tr>\n";
@@ -123,7 +125,7 @@ if ($list == "teamstandings") {
     $html .= "<a href='?view=playercard&amp;profile=" . $row['profile_id'] . "'>";
     $html .= utf8entities($row['firstname'] . " " . $row['lastname']) . "</a>";
     $html .= "</td>";
-    $html .= "<td>" . utf8entities(SeriesSeasonName($row['last_series'])) . " / " . utf8entities(TeamName($row['last_team'])) . "</td>";
+    $html .= "<td>" . utf8entities(SeriesSeasonName($database, $row['last_series'])) . " / " . utf8entities(TeamName($database, $row['last_team'])) . "</td>";
     $html .= "<td class='center'>" . $row['gamestotal'] . "</td>";
     $html .= "<td class='center'>" . $row['goalstotal'] . "</td>";
     $html .= "<td class='center'>" . $row['passestotal'] . "</td>";
@@ -138,20 +140,20 @@ if ($list == "teamstandings") {
 
 
   foreach ($seasontypes as $seasontype) {
-    $seasons = SeasonsByType($seasontype);
+    $seasons = SeasonsByType($database, $seasontype);
     if (count($seasons) < 1) {
       continue;
     }
     $html .= "<h2>" . U_($seasontype) . "</h2>\n";
 
     foreach ($serietypes as $seriestype) {
-      $serstats = SeriesStatisticsByType($seriestype, $seasontype);
+      $serstats = SeriesStatisticsByType($database, $seriestype, $seasontype);
       if (count($serstats) < 1) {
         continue;
       }
       $html .= "<h3>" . U_($seriestype) . "</h3>\n";
 
-      $scores = ScoreboardAllTime(30, $seasontype, $seriestype);
+      $scores = ScoreboardAllTime($database, 30, $seasontype, $seriestype);
       $html .= "<table border='1' width='100%'><tr>
 						<th>#</th><th>" . _("Name") . "</th><th>" . _("Latest event / team") . "</th><th class='center'>" . _("Games") . "</th>
 						<th class='center'>" . _("Passes") . "</th><th class='center'>" . _("Goals") . "</th><th class='center'>" . _("Total") . "</th></tr>\n";
@@ -163,7 +165,7 @@ if ($list == "teamstandings") {
         $html .= "<a href='?view=playercard&amp;player=" . $row['player_id'] . "'>";
         $html .= utf8entities($row['firstname'] . " " . $row['lastname']) . "</a>";
         $html .= "</td>";
-        $html .= "<td>" . utf8entities(SeriesSeasonName($row['last_series'])) . " / " . utf8entities(TeamName($row['last_team'])) . "</td>";
+        $html .= "<td>" . utf8entities(SeriesSeasonName($database, $row['last_series'])) . " / " . utf8entities(TeamName($database, $row['last_team'])) . "</td>";
         $html .= "<td class='center'>" . $row['gamestotal'] . "</td>";
         $html .= "<td class='center'>" . $row['goalstotal'] . "</td>";
         $html .= "<td class='center'>" . $row['passestotal'] . "</td>";
@@ -175,4 +177,4 @@ if ($list == "teamstandings") {
   }
 }
 
-showPage($title, $html);
+showPage($database, $title, $html);

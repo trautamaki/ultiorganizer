@@ -58,7 +58,7 @@ if (isset($_POST['import'])) {
 				$seriesId = -1;
 				$teamId = -1;
 				$playerId = -1;
-				$allseries = SeasonSeries($seasonId);
+				$allseries = SeasonSeries($database, $seasonId);
 				foreach ($allseries as $ser) {
 					if ($ser['name'] == $series) {
 						$seriesId = $ser['series_id'];
@@ -74,10 +74,10 @@ if (isset($_POST['import'])) {
 						"season" => $seasonId,
 						"valid" => "1"
 					);
-					$seriesId = AddSeries($sp);
+					$seriesId = AddSeries($database, $sp);
 				}
 
-				$teams = SeriesTeams($seriesId);
+				$teams = SeriesTeams($database, $seriesId);
 				foreach ($teams as $t) {
 					if ($t['name'] == $team) {
 						$teamId = $t['team_id'];
@@ -91,13 +91,13 @@ if (isset($_POST['import'])) {
 					if ($country == "United Kingdom" || $country == "UK" || $country == "England") {
 						$country = "Great Britain";
 					}
-					$id = AddSeriesEnrolledTeam($seriesId, $_SESSION['uid'], $team, $team, $country);
-					$teamId = ConfirmEnrolledTeam($seriesId, $id);
+					$id = AddSeriesEnrolledTeam($database, $seriesId, $_SESSION['uid'], $team, $team, $country);
+					$teamId = ConfirmEnrolledTeam($database, $seriesId, $id);
 				}
 
 				if ($role == "player" || $role == "captain" || $role == "coach") {
-					$players = TeamPlayerList($teamId);
-					while ($player = mysql_fetch_assoc($players)) {
+					$players = TeamPlayerList($database, $teamId);
+					while ($player = $database->FetchAssoc($players)) {
 						//echo $player['firstname']."==$first && ".$player['lastname']."==$last &&". $player['num']."==$jersey";
 						if ($player['firstname'] == $first && $player['lastname'] == $last && intval($player['num']) == intval($jersey)) {
 							$playerId = $player['player_id'];
@@ -106,12 +106,12 @@ if (isset($_POST['import'])) {
 					}
 
 					if ($playerId == -1) {
-						$playerId = AddPlayer($teamId, $first, $last, "", $jersey, "", $gender, $birthdate);
+						$playerId = AddPlayer($database, $teamId, $first, $last, "", $jersey, "", $gender, $birthdate);
 					}
 				}
 
 				if ($role == "captain" || $role == "np_captain") {
-					$teamprofile = TeamProfile($teamId);
+					$teamprofile = TeamProfile($database, $teamId);
 					$captain = $teamprofile['captain'];
 					if (!empty($captain)) {
 						if (strpos($captain, $first . " " . $last) !== false) {
@@ -131,10 +131,10 @@ if (isset($_POST['import'])) {
 						"story" => $teamprofile['story'],
 						"achievements" => $teamprofile['achievements']
 					);
-					SetTeamProfile($tp);
+					SetTeamProfile($database, $tp);
 				}
 				if ($role == "coach" || $role == "np_coach") {
-					$teamprofile = TeamProfile($teamId);
+					$teamprofile = TeamProfile($database, $teamId);
 					$coach = $teamprofile['coach'];
 					if (!empty($coach)) {
 						if (strpos($coach, $first . " " . $last) !== false) {
@@ -154,7 +154,7 @@ if (isset($_POST['import'])) {
 						"story" => $teamprofile['story'],
 						"achievements" => $teamprofile['achievements']
 					);
-					SetTeamProfile($tp);
+					SetTeamProfile($database, $tp);
 				}
 			}
 			fclose($handle);
@@ -170,9 +170,9 @@ $html .= "<form method='post' enctype='multipart/form-data' action='?view=plugin
 
 $html .= "<p>" . ("Select event") . ": <select class='dropdown' name='season'>\n";
 
-$seasons = Seasons();
+$seasons = Seasons($database);
 
-while ($row = mysql_fetch_assoc($seasons)) {
+while ($row = $database->FetchAssoc($seasons)) {
 	$html .= "<option class='dropdown' value='" . utf8entities($row['season_id']) . "'>" . utf8entities($row['name']) . "</option>";
 }
 
@@ -189,5 +189,5 @@ $html .= "<input type='hidden' name='MAX_FILE_SIZE' value='50000000' />\n";
 $html .= "</div>\n";
 $html .= "</form>";
 
-showPage($title, $html);
+showPage($database, $title, $html);
 ?>

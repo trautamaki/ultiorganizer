@@ -26,7 +26,7 @@ if (isset($_POST['save']) && isset($_POST['id'])) {
   if (isset($_POST['indoor'])) $indoor = "1";
   if (isset($_POST['lat'])) $lat = $_POST['lat'];
   if (isset($_POST['lng'])) $lng = $_POST['lng'];
-  SetLocation($id, $name, $address, $info, $fields, $indoor, $lat, $lng, $season);
+  SetLocation($database, $id, $name, $address, $info, $fields, $indoor, $lat, $lng, $season);
 }
 
 if (isset($_POST['add'])) {
@@ -47,14 +47,14 @@ if (isset($_POST['add'])) {
   if (isset($_POST['indoor'])) $indoor = "1";
   if (isset($_POST['lat'])) $lat = $_POST['lat'];
   if (isset($_POST['lng'])) $lng = $_POST['lng'];
-  $newId = AddLocation($name, $address, $info, $fields, $indoor, $lat, $lng, $season);
+  $newId = AddLocation($database, $name, $address, $info, $fields, $indoor, $lat, $lng, $season);
   header('location: ?view=admin/locations&Location=' . $newId . "&amp;season=" . $season);
   exit();
 }
 
 if (isset($_POST['delete']) && isset($_POST['id'])) {
   $id = $_POST['id'];
-  RemoveLocation($id);
+  RemoveLocation($database, $id);
   header('location: ?view=admin/locations');
   exit();
 }
@@ -345,7 +345,7 @@ echo yuiLoad(array("utilities", "datasource", "autocomplete"));
 </script>
 <?php
 pageTopHeadClose($title, false, "onload=\"load()\" onunload=\"GUnload()\"");
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 ?>
 <?php echo _("Name or address") ?>: <input type="text" id="search" />

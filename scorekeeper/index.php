@@ -36,31 +36,31 @@ session_start();
 
 if (!isset($_SESSION['uid']) && iget('view') != "result") {
 	$_SESSION['uid'] = "anonymous";
-	SetUserSessionData("anonymous");
+	SetUserSessionData($database, "anonymous");
 	header("location:?view=login");
 }
 
 
 if (isset($_POST['myusername'])) {
-	UserAuthenticate($_POST['myusername'], $_POST['mypassword'], "");
+	UserAuthenticate($database, $_POST['myusername'], $_POST['mypassword'], "");
 }
 
 $user = $_SESSION['uid'];
 
 if (!isset($_SESSION['VISIT_COUNTER'])) {
-	LogVisitor($_SERVER['REMOTE_ADDR']);
+	LogVisitor($database, $_SERVER['REMOTE_ADDR']);
 	$_SESSION['VISIT_COUNTER'] = true;
 }
 
-setSessionLocale();
+setSessionLocale($database);
 setSelectedSeason();
-$_SESSION['userproperties']['selseason'] = CurrentSeason();
+$_SESSION['userproperties']['selseason'] = CurrentSeason($database);
 
 if (!iget('view')) {
 	header("location:?view=login");
 	exit();
 } else {
-	LogPageLoad(iget('view'));
+	LogPageLoad($database, iget('view'));
 }
 
 if (!iget("view")) {

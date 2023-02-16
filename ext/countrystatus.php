@@ -27,17 +27,18 @@ include_once 'localization.php';
 	include_once '../lib/game.functions.php';
 	include_once '../lib/timetable.functions.php';
 
+	$database = new Database();
 
 	$season = iget("season");
-	$seasoninfo = SeasonInfo($season);
+	$seasoninfo = SeasonInfo($database, $season);
 
 	$countryId = iget("country");
 
 	$prevdivision = "";
-	$allpools = CountryPools($season, $countryId);
+	$allpools = CountryPools($database, $season, $countryId);
 
-	while ($pool = mysql_fetch_assoc($allpools)) {
-		$poolinfo = PoolInfo($pool['pool_id']);
+	while ($pool = $database->FetchAssoc($allpools)) {
+		$poolinfo = PoolInfo($database, $pool['pool_id']);
 		if ($poolinfo['seriesname'] != $prevdivision) {
 			echo "<h1 class='pk_h1'>" . utf8entities($poolinfo['seriesname']) . "</h1>";
 			$prevdivision = $poolinfo['seriesname'];
@@ -54,11 +55,11 @@ include_once 'localization.php';
 			echo "<th style='width:8%' class='pk_ser_th'>" . _("diff.") . "</th>";
 			echo "</tr>\n";
 
-			$standings = PoolTeams($poolinfo['pool_id'], "rank");
+			$standings = PoolTeams($database, $poolinfo['pool_id'], "rank");
 
 			foreach ($standings as $row) {
-				$stats = TeamStatsByPool($poolinfo['pool_id'], $row['team_id']);
-				$points = TeamPointsByPool($poolinfo['pool_id'], $row['team_id']);
+				$stats = TeamStatsByPool($database, $poolinfo['pool_id'], $row['team_id']);
+				$points = TeamPointsByPool($database, $poolinfo['pool_id'], $row['team_id']);
 				$flag = "";
 				if (intval($seasoninfo['isinternational'])) {
 					$flag = "<img height='10' src='../images/flags/tiny/" . $row['flagfile'] . "' alt=''/> ";
@@ -77,7 +78,7 @@ include_once 'localization.php';
 
 			echo "<table width='95%'>\n";
 			if ($poolinfo['mvgames'] == 0 || $poolinfo['mvgames'] == 2) {
-				$mvgames = PoolMovedGames($poolinfo['pool_id']);
+				$mvgames = PoolMovedGames($database, $poolinfo['pool_id']);
 				foreach ($games as $game) {
 					if ($game['homecountryid'] == $countryId || $game['visitorcountryid'] == $countryId) {
 						echo "<tr>";
@@ -91,8 +92,8 @@ include_once 'localization.php';
 					}
 				}
 			}
-			$games = TimetableGames($poolinfo['pool_id'], "pool", "all", "series");
-			while ($game = mysql_fetch_assoc($games)) {
+			$games = TimetableGames($database, $poolinfo['pool_id'], "pool", "all", "series");
+			while ($game = $database->FetchAssoc($games)) {
 				if ($game['homecountryid'] == $countryId || $game['visitorcountryid'] == $countryId) {
 					echo "<tr>";
 					echo "<td style='width:35%;border:none' class='pk_ser_td1'>" . utf8entities($game['hometeamname']) . "</td>\n";
@@ -117,14 +118,14 @@ include_once 'localization.php';
 			$pools[] = $poolinfo['pool_id'];
 
 			//find out total rounds played
-			$followers = PoolFollowersArray($poolinfo['pool_id']);
+			$followers = PoolFollowersArray($database, $poolinfo['pool_id']);
 			$pools = array_merge($pools, $followers);
 			$rounds = count($pools);
 
 			//find out total teams in pool
-			$teams = PoolTeams($poolinfo['pool_id']);
+			$teams = PoolTeams($database, $poolinfo['pool_id']);
 			if (count($teams) == 0) {
-				$teams = PoolSchedulingTeams($poolinfo['pool_id']);
+				$teams = PoolSchedulingTeams($database, $poolinfo['pool_id']);
 			}
 			$totalteams = count($teams);
 
@@ -138,11 +139,11 @@ include_once 'localization.php';
 
 			$round = 0;
 			foreach ($pools as $poolId) {
-				$pool = PoolInfo($poolId);
+				$pool = PoolInfo($database, $poolId);
 				$pseudoteams = false;
-				$teams = PoolTeams($pool['pool_id'], "seed");
+				$teams = PoolTeams($database, $pool['pool_id'], "seed");
 				if (count($teams) == 0) {
-					$teams = PoolSchedulingTeams($pool['pool_id']);
+					$teams = PoolSchedulingTeams($database, $pool['pool_id']);
 					$pseudoteams = true;
 				}
 
@@ -172,13 +173,13 @@ include_once 'localization.php';
 						$name .= "<img height='10' src='../images/flags/tiny/" . $team['flagfile'] . "' alt=''/> ";
 					}
 					$name .= $team['name'];
-					$movefrom = PoolGetMoveFrom($pool['pool_id'], $i);
+					$movefrom = PoolGetMoveFrom($database, $pool['pool_id'], $i);
 					if ($pseudoteams && $round > 0) {
-						$realteam = PoolTeamFromStandings($movefrom['frompool'], $movefrom['fromplacing']);
+						$realteam = PoolTeamFromStandings($database, $movefrom['frompool'], $movefrom['fromplacing']);
 						if ($realteam['team_id']) {
-							$gamesleft = TeamPoolGamesLeft($realteam['team_id'], $movefrom['frompool']);
+							$gamesleft = TeamPoolGamesLeft($database, $realteam['team_id'], $movefrom['frompool']);
 
-							if (mysql_num_rows($gamesleft) == 0) {
+							if ($database->NumRows($gamesleft) == 0) {
 								$name = "";
 								if (intval($seasoninfo['isinternational']) && !empty($realteam['flagfile'])) {
 									$name .= "<img height='10' src='../images/flags/tiny/" . $realteam['flagfile'] . "' alt=''/> ";
@@ -206,7 +207,7 @@ include_once 'localization.php';
 						$games++;
 						$game = "&nbsp;";
 						if (!$pseudoteams) {
-							$results = GameHomeTeamResults($team['team_id'], $pool['pool_id']);
+							$results = GameHomeTeamResults($database, $team['team_id'], $pool['pool_id']);
 							foreach ($results as $res) {
 								$game .= $res['homescore'] . "-" . $res['visitorscore'];
 							}
@@ -220,11 +221,11 @@ include_once 'localization.php';
 			//placements
 			$html = str_replace("[placement]", _("Placement"), $html);
 			for ($i = 1; $i <= $totalteams; $i++) {
-				$placement = PoolPlacementString($pool['pool_id'], $i);
-				$team = PoolTeamFromStandings($pool['pool_id'], $i);
-				$gamesleft = TeamPoolGamesLeft($team['team_id'], $pool['pool_id']);
+				$placement = PoolPlacementString($database, $pool['pool_id'], $i);
+				$team = PoolTeamFromStandings($database, $pool['pool_id'], $i);
+				$gamesleft = TeamPoolGamesLeft($database, $team['team_id'], $pool['pool_id']);
 
-				if (mysql_num_rows($gamesleft) == 0) {
+				if ($database->NumRows($gamesleft) == 0) {
 					$placementname = "";
 					if (intval($seasoninfo['isinternational']) && !empty($team['flagfile'])) {
 						$placementname .= "<img height='10' src='../images/flags/tiny/" . $team['flagfile'] . "' alt=''/> ";

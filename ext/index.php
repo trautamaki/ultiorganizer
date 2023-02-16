@@ -52,7 +52,7 @@ if (!empty($_POST['update'])) {
 }
 //content
 if (empty($season))
-	$season = CurrentSeason();
+	$season = CurrentSeason($database);
 
 $html .= "<h1>" . _("Embedding Ultiorganizer into other pages") . "</h1>";
 
@@ -64,9 +64,9 @@ $html .= "<h2>" . _("Select") . "</h2>";
 //season selection
 $selector = "<p>" . _("Select event") . ":	<select class='dropdown' name='season'>\n";
 
-$seasons = Seasons();
+$seasons = Seasons($database);
 
-while ($row = mysql_fetch_assoc($seasons)) {
+while ($row = $database->FetchAssoc($seasons)) {
 
 	if ($row['season_id'] == $season)
 		$selector .= "<option class='dropdown' selected='selected' value='" . utf8entities($row['season_id']) . "'>" . utf8entities($row['name']) . "</option>";
@@ -79,7 +79,7 @@ $selector .= "</select></p>\n";
 if (!empty($season)) {
 	$selector .= "<p>" . _("Select grouping") . ":	<select class='dropdown' name='tournamentname'>\n";
 
-	$tours = SeasonReservationgroups($season);
+	$tours = SeasonReservationgroups($database, $season);
 
 	foreach ($tours as $row) {
 		if (empty($seltournament))
@@ -97,7 +97,7 @@ $series = array();
 if (!empty($season)) {
 	$selector .= "<p>" . _("Select division") . ":	<select class='dropdown' name='seriesid'>\n";
 
-	$series = SeasonSeries($season, true);
+	$series = SeasonSeries($database, $season, true);
 
 	foreach ($series as $row) {
 		if (empty($selseries))
@@ -112,12 +112,12 @@ if (!empty($season)) {
 
 
 	$selector .= "<p>" . _("Select country") . ":\n";
-	$selector .= CountryDropListWithValues("country", "country", $selcountry);
+	$selector .= CountryDropListWithValues($database, "country", "country", $selcountry);
 	$selector .= "</p>\n";
 }
 if (!empty($selseries)) {
 	$selector .= "<p>" . _("Select pool") . ": <select class='dropdown' name='poolid'>\n";
-	$pools = SeriesPools($selseries, true);
+	$pools = SeriesPools($database, $selseries, true);
 
 	foreach ($pools as $row) {
 		if (empty($selpool))
@@ -134,7 +134,7 @@ if (!empty($selseries)) {
 if (!empty($selseries)) {
 	$selector .= "<p>" . _("Select team") . ": <select class='dropdown' name='teamid'>\n";
 
-	$teams = SeriesTeams($selseries);
+	$teams = SeriesTeams($database, $selseries);
 
 	foreach ($teams as $row) {
 		if (empty($selteam))
@@ -173,10 +173,10 @@ $html .= "<li><a href='$baseurl/ext/rss.php?feed=all'>"
 	. _("Ultimate results") . "</a></li>";
 if (count($series)) {
 	$html .= "<li><a href='$baseurl/ext/rss.php?feed=gameresults&amp;id1=$season'>"
-		. _("Ultimate results") . ": " . utf8entities(SeasonName($season)) . "</a></li>";
+		. _("Ultimate results") . ": " . utf8entities(SeasonName($database, $season)) . "</a></li>";
 	foreach ($series as $ser) {
 		$html .= "<li><a href='$baseurl/ext/rss.php?feed=gameresults&amp;id1=$season&amp;id2=" . $ser['series_id'] . "'>"
-			. _("Ultimate results") . ": " . utf8entities(SeasonName($season)) . " " . utf8entities(U_($ser['name'])) . "</a></li>";
+			. _("Ultimate results") . ": " . utf8entities(SeasonName($database, $season)) . " " . utf8entities(U_($ser['name'])) . "</a></li>";
 	}
 }
 $html .= "</ul>\n";
@@ -185,17 +185,17 @@ if (IsTwitterEnabled()) {
 	$html .= "<h2>" . _("Twitter") . "</h2>\n";
 	if (count($series)) {
 		$html .= "<ul class='twitter-list'>";
-		$savedurl = GetUrl("season", $season, "result_twitter");
+		$savedurl = GetUrl($database, "season", $season, "result_twitter");
 		if ($savedurl) {
 			$html .= "<li><a href='" . $savedurl['url'] . "'>"
-				. _("Ultimate results") . ": " . utf8entities(SeasonName($season)) . "</a></li>";
+				. _("Ultimate results") . ": " . utf8entities(SeasonName($database, $season)) . "</a></li>";
 		}
 
 		foreach ($series as $ser) {
-			$savedurl = GetUrl("series", $ser['series_id'], "result_twitter");
+			$savedurl = GetUrl($database, "series", $ser['series_id'], "result_twitter");
 			if ($savedurl) {
 				$html .= "<li><a href='" . $ser['series_id'] . "'>"
-					. _("Ultimate results") . ": " . utf8entities(SeasonName($season)) . " " . utf8entities(U_($ser['name'])) . "</a></li>";
+					. _("Ultimate results") . ": " . utf8entities(SeasonName($database, $season)) . " " . utf8entities(U_($ser['name'])) . "</a></li>";
 			}
 		}
 		$html .= "</ul>\n";
@@ -282,4 +282,4 @@ if (!empty($selteam)) {
 }
 $html .= "</form>\n";
 
-showPage($title, $html);
+showPage($database, $title, $html);

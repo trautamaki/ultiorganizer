@@ -5,7 +5,7 @@ function EventCategories()
 	return array("security", "user", "enrolment", "club", "team", "player", "season", "series", "pool", "game", "media");
 }
 
-function LogEvent($event)
+function LogEvent($database, $event)
 {
 	if (empty($event['id1']))
 		$event['id1'] = "";
@@ -43,23 +43,23 @@ function LogEvent($event)
 		"INSERT INTO uo_event_log (user_id, ip, category, type, source,
 			id1, id2, description)
 				VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
-		mysql_real_escape_string($event['user_id']),
-		mysql_real_escape_string($event['ip']),
-		mysql_real_escape_string($event['category']),
-		mysql_real_escape_string($event['type']),
-		mysql_real_escape_string($event['source']),
-		mysql_real_escape_string($event['id1']),
-		mysql_real_escape_string($event['id2']),
-		mysql_real_escape_string($event['description'])
+		$database->RealEscapeString($event['user_id']),
+		$database->RealEscapeString($event['ip']),
+		$database->RealEscapeString($event['category']),
+		$database->RealEscapeString($event['type']),
+		$database->RealEscapeString($event['source']),
+		$database->RealEscapeString($event['id1']),
+		$database->RealEscapeString($event['id2']),
+		$database->RealEscapeString($event['description'])
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
-	return mysql_insert_id();
+	return $database->GetConnection()->insert_id;
 }
 
-function EventList($categoryfilter, $userfilter)
+function EventList($database, $categoryfilter, $userfilter)
 {
 	if (isSuperAdmin()) {
 		if (count($categoryfilter) == 0) {
@@ -76,7 +76,7 @@ function EventList($categoryfilter, $userfilter)
 				$query .= " OR ";
 			}
 
-			$query .= sprintf("category='%s'", mysql_real_escape_string($cat));
+			$query .= sprintf("category='%s'", $database->RealEscapeString($cat));
 			$i++;
 			if ($i == count($categoryfilter)) {
 				$query .= ")";
@@ -84,31 +84,31 @@ function EventList($categoryfilter, $userfilter)
 		}
 
 		if (!empty($userfilter)) {
-			$query .= sprintf("AND user_id='%s'", mysql_real_escape_string($userfilter));
+			$query .= sprintf("AND user_id='%s'", $database->RealEscapeString($userfilter));
 		}
 		$query .= " ORDER BY time DESC";
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
 		return $result;
 	}
 }
 
-function ClearEventList($ids)
+function ClearEventList($database, $ids)
 {
 	if (isSuperAdmin()) {
-		$query = sprintf("DELETE FROM uo_event_log WHERE event_id IN (%s)", mysql_real_escape_string($ids));
+		$query = sprintf("DELETE FROM uo_event_log WHERE event_id IN (%s)", $database->RealEscapeString($ids));
 
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error);
 		}
 		return $result;
 	}
 }
 
-function Log1($category, $type, $id1 = "", $id2 = "", $description = "", $source = "")
+function Log1($database, $category, $type, $id1 = "", $id2 = "", $description = "", $source = "")
 {
 	$event['category'] = $category;
 	$event['type'] = $type;
@@ -116,120 +116,120 @@ function Log1($category, $type, $id1 = "", $id2 = "", $description = "", $source
 	$event['id2'] = $id2;
 	$event['description'] = $description;
 	$event['source'] = $source;
-	return LogEvent($event);
+	return LogEvent($database, $event);
 }
 
-function Log2($category, $type, $description = "", $source = "")
+function Log2($database, $category, $type, $description = "", $source = "")
 {
 	$event['category'] = $category;
 	$event['type'] = $type;
 	$event['description'] = $description;
 	$event['source'] = $source;
-	return LogEvent($event);
+	return LogEvent($database, $event);
 }
 
-function LogPlayerProfileUpdate($playerId, $source = "")
+function LogPlayerProfileUpdate($database, $playerId, $source = "")
 {
 	$event['category'] = "player";
 	$event['type'] = "change";
 	$event['source'] = $source;
 	$event['id1'] = $playerId;
 	$event['description'] = "profile updated";
-	return LogEvent($event);
+	return LogEvent($database, $event);
 }
 
-function LogTeamProfileUpdate($teamId, $source = "")
+function LogTeamProfileUpdate($database, $teamId, $source = "")
 {
 	$event['category'] = "team";
 	$event['type'] = "change";
 	$event['source'] = $source;
 	$event['id1'] = $teamId;
 	$event['description'] = "profile updated";
-	return LogEvent($event);
+	return LogEvent($database, $event);
 }
 
-function LogUserAuthentication($userId, $result, $source = "")
+function LogUserAuthentication($database, $userId, $result, $source = "")
 {
 	$event['user_id'] = $userId;
 	$event['category'] = "security";
 	$event['type'] = "authenticate";
 	$event['source'] = $source;
 	$event['description'] = $result;
-	return LogEvent($event);
+	return LogEvent($database, $event);
 }
 
-function LogGameResult($gameId, $result, $source = "")
+function LogGameResult($database, $gameId, $result, $source = "")
 {
 	$event['category'] = "game";
 	$event['type'] = "change";
 	$event['source'] = $source;
 	$event['id1'] = $gameId;
 	$event['description'] = $result;
-	return LogEvent($event);
+	return LogEvent($database, $event);
 }
 
-function LogDefenseResult($gameId, $result, $source = "")
+function LogDefenseResult($database, $gameId, $result, $source = "")
 {
 	$event['category'] = "defense";
 	$event['type'] = "change";
 	$event['source'] = $source;
 	$event['id1'] = $gameId;
 	$event['description'] = $result;
-	return LogEvent($event);
+	return LogEvent($database, $event);
 }
 
-function LogGameUpdate($gameId, $details, $source = "")
+function LogGameUpdate($database, $gameId, $details, $source = "")
 {
 	$event['category'] = "game";
 	$event['type'] = "change";
 	$event['source'] = $source;
 	$event['id1'] = $gameId;
 	$event['description'] = $details;
-	return LogEvent($event);
+	return LogEvent($database, $event);
 }
 
-function LogDefenseUpdate($gameId, $details, $source = "")
+function LogDefenseUpdate($database, $gameId, $details, $source = "")
 {
 	$event['category'] = "defense";
 	$event['type'] = "change";
 	$event['source'] = $source;
 	$event['id1'] = $gameId;
 	$event['description'] = $details;
-	return LogEvent($event);
+	return LogEvent($database, $event);
 }
 
-function GetLastGameUpdateEntry($gameId, $source)
+function GetLastGameUpdateEntry($database, $gameId, $source)
 {
 	$query = sprintf(
 		"SELECT * FROM uo_event_log WHERE id1=%d AND source='%s' ORDER BY TIME DESC",
 		(int)$gameId,
-		mysql_real_escape_string($source)
+		$database->RealEscapeString($source)
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error);
 	}
-	return mysql_fetch_assoc($result);
+	return $database->FetchAssoc($result);
 }
 
-function LogPoolUpdate($poolId, $details, $source = "")
+function LogPoolUpdate($database, $poolId, $details, $source = "")
 {
 	$event['category'] = "pool";
 	$event['type'] = "change";
 	$event['source'] = $source;
 	$event['id1'] = $poolId;
 	$event['description'] = $details;
-	return LogEvent($event);
+	return LogEvent($database, $event);
 }
 
-function LogDbUpgrade($version, $end = false, $source = "")
+function LogDbUpgrade($database, $version, $end = false, $source = "")
 {
 	$event['category'] = "database";
 	$event['type'] = "change";
 	$event['source'] = $source;
 	$event['id1'] = $version;
 	$event['description'] = $end ? "finished" : "started";
-	return LogEvent($event);
+	return LogEvent($database, $event);
 }
 
 /**
@@ -238,30 +238,30 @@ function LogDbUpgrade($version, $end = false, $source = "")
  * @param string $page
  *          - loaded page
  */
-function LogPageLoad($page)
+function LogPageLoad($database, $page)
 {
 
 	$query = sprintf(
 		"SELECT loads FROM uo_pageload_counter WHERE page='%s'",
-		mysql_real_escape_string($page)
+		$database->RealEscapeString($page)
 	);
-	$loads = DBQueryToValue($query);
+	$loads = $database->DBQueryToValue($query);
 
 	if ($loads < 0) {
 		$query = sprintf(
 			"INSERT INTO uo_pageload_counter (page, loads) VALUES ('%s',%d)",
-			mysql_real_escape_string($page),
+			$database->RealEscapeString($page),
 			1
 		);
-		DBQuery($query);
+		$database->DBQuery($query);
 	} else {
 		$loads++;
 		$query = sprintf(
 			"UPDATE uo_pageload_counter SET loads=%d WHERE page='%s'",
 			$loads,
-			mysql_real_escape_string($page)
+			$database->RealEscapeString($page)
 		);
-		DBQuery($query);
+		$database->DBQuery($query);
 	}
 }
 
@@ -270,47 +270,47 @@ function LogPageLoad($page)
  * 
  * @param string $ip - ip address
  */
-function LogVisitor($ip)
+function LogVisitor($database, $ip)
 {
 
 	$query = sprintf(
 		"SELECT visits FROM uo_visitor_counter WHERE ip='%s'",
-		mysql_real_escape_string($ip)
+		$database->RealEscapeString($ip)
 	);
-	$visits = DBQueryToValue($query);
+	$visits = $database->DBQueryToValue($query);
 
 	if ($visits < 0) {
 		$query = sprintf(
 			"INSERT INTO uo_visitor_counter (ip, visits) VALUES ('%s',%d)",
-			mysql_real_escape_string($ip),
+			$database->RealEscapeString($ip),
 			1
 		);
-		DBQuery($query);
+		$database->DBQuery($query);
 	} else {
 		$visits++;
 		$query = sprintf(
 			"UPDATE uo_visitor_counter SET visits=%d WHERE ip='%s'",
 			$visits,
-			mysql_real_escape_string($ip)
+			$database->RealEscapeString($ip)
 		);
-		DBQuery($query);
+		$database->DBQuery($query);
 	}
 }
 
 /**
  * Get visitor count.
  */
-function LogGetVisitorCount()
+function LogGetVisitorCount($database)
 {
 	$query = sprintf("SELECT SUM(visits) AS visits, COUNT(ip) AS visitors FROM uo_visitor_counter");
-	return DBQueryToRow($query);
+	return $database->DBQueryToRow($query);
 }
 
 /**
  * Get page loads.
  */
-function LogGetPageLoads()
+function LogGetPageLoads($database)
 {
 	$query = sprintf("SELECT page, loads FROM uo_pageload_counter ORDER BY loads DESC");
-	return DBQueryToArray($query);
+	return $database->DBQueryToArray($query);
 }

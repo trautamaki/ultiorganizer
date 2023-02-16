@@ -4,7 +4,7 @@ $html = "";
 $gameId = isset($_GET['game']) ? $_GET['game'] : $_SESSION['game'];
 $_SESSION['game'] = $gameId;
 
-$game_result = GameResult($gameId);
+$game_result = GameResult($database, $gameId);
 
 if (isset($_POST['tweettext'])) {
 

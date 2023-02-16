@@ -4,18 +4,18 @@ $html = "";
 $gameId = isset($_GET['game']) ? $_GET['game'] : $_SESSION['game'];
 $_SESSION['game'] = $gameId;
 
-$result = GameGoals($gameId);
-$game_result = GameResult($gameId);
+$result = GameGoals($database, $gameId);
+$game_result = GameResult($database, $gameId);
 
 $scores = array();
-while ($row = mysql_fetch_assoc($result)) {
+while ($row = $database->FetchAssoc($result)) {
 	$scores[] = $row;
 }
 
 if (isset($_POST['delete'])) {
 	if (count($scores) > 0) {
 		$lastscore = $scores[count($scores) - 1];
-		GameRemoveScore($gameId, $lastscore['num']);
+		GameRemoveScore($database, $gameId, $lastscore['num']);
 		header("location:?view=addscoresheet&game=" . $gameId);
 	}
 }
@@ -38,11 +38,11 @@ if (count($scores) > 0) {
 	if (intval($lastscore['iscallahan'])) {
 		$lastpass = "xx";
 	} else {
-		$lastpass = "#" . PlayerNumber($lastscore['assist'], $gameId) . " ";
-		$lastpass .= PlayerName($lastscore['assist']);
+		$lastpass = "#" . PlayerNumber($database, $lastscore['assist'], $gameId) . " ";
+		$lastpass .= PlayerName($database, $lastscore['assist']);
 	}
-	$lastgoal = "#" . PlayerNumber($lastscore['scorer'], $gameId) . " ";
-	$lastgoal .= PlayerName($lastscore['scorer']);
+	$lastgoal = "#" . PlayerNumber($database, $lastscore['scorer'], $gameId) . " ";
+	$lastgoal .= PlayerName($database, $lastscore['scorer']);
 	$html .= $lastpass . " --> " . $lastgoal . "";
 } else {
 	$html .= _("Score") . ": 0 - 0";

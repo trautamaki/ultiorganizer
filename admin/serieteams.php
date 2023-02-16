@@ -9,6 +9,8 @@ include_once 'lib/common.functions.php';
 $LAYOUT_ID = SERIETEAMS;
 $backurl = utf8entities($_SERVER['HTTP_REFERER']);
 
+$database = new Database();
+
 $seriesId = 0;
 if (!empty($_GET["pool"]))
   $poolId = intval($_GET["pool"]);
@@ -24,7 +26,7 @@ $title = _("Teams");
 //process itself on submit
 if (!empty($_POST['save'])) {
   $backurl = utf8entities($_POST['backurl']);
-  $teams = PoolTeams($poolId);
+  $teams = PoolTeams($database, $poolId);
 
   //Remove un-checked teams
   foreach ($teams as $team) {
@@ -38,7 +40,7 @@ if (!empty($_POST['save'])) {
       }
     }
     if (!$found) {
-      PoolSetTeam($poolId, $team['team_id'], 0, 0);
+      PoolSetTeam($database, $poolId, $team['team_id'], 0, 0);
     }
   }
 
@@ -48,7 +50,7 @@ if (!empty($_POST['save'])) {
       $rank = 0;
       if (!empty($_POST["rank$selId"]))
         $rank = $_POST["rank$selId"];
-      $teams = PoolTeams($poolId);
+      $teams = PoolTeams($database, $poolId);
       foreach ($teams as $team) {
         if ($team['team_id'] == $selId) {
           $found = true;
@@ -56,22 +58,22 @@ if (!empty($_POST['save'])) {
         }
       }
       if ($found) {
-        PoolSetTeam($poolId, $team['team_id'], $rank, $poolId);
+        PoolSetTeam($database, $poolId, $team['team_id'], $rank, $poolId);
       } else {
-        PoolSetTeam(0, $selId, $rank, $poolId);
+        PoolSetTeam($database, 0, $selId, $rank, $poolId);
       }
     }
   }
-  ResolvePoolStandings($poolId);
+  ResolvePoolStandings($database, $poolId);
 } else if (!empty($_POST['move'])) {
-  PoolConfirmMoves($poolId, $_POST['visible'] == "on");
+  PoolConfirmMoves($database, $poolId, $_POST['visible'] == "on");
 
   $backurl = $_POST['backurl'];
   session_write_close();
   header("location:$backurl");
 } else if (!empty($_POST['ties'])) {
   //	$backurl = $_POST['backurl'];
-  AutoResolveTiesInSourcePools($poolId);
+  AutoResolveTiesInSourcePools($database, $poolId);
   //	header("location:$backurl");
 }
 
@@ -94,22 +96,22 @@ pageTopHeadOpen($title);
 </script>
 <?php
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 echo "<form method='post' action='?view=admin/serieteams&amp;series=$seriesId&amp;pool=$poolId&amp;season=$season'>";
 
-echo "<h1>" . utf8entities(PoolName($poolId)) . "</h1>\n";
+echo "<h1>" . utf8entities(PoolName($database, $poolId)) . "</h1>\n";
 
 
-$poolinfo = PoolInfo($poolId);
+$poolinfo = PoolInfo($database, $poolId);
 $continuation = intval($poolinfo['continuingpool']);
 
 // for Swiss-draw: come up with moves such that no team plays
 // a team that they have played previously
 // this can only be done if all ties from the previous pool have been resolved
 if ($poolinfo['type'] == 3) {
-  $SwissOK = CheckSwissdrawMoves($poolId);
+  $SwissOK = CheckSwissdrawMoves($database, $poolId);
   //returned -1 if ties were detected
   //-2 if not all activeranks were found
   // 1 if a correct Swissdraw move has been found
@@ -117,15 +119,15 @@ if ($poolinfo['type'] == 3) {
   $SwissOK = 0;
 }
 if ($poolinfo['type'] == 2) {
-  $PlayoffOK = CheckPlayoffMoves($poolId);
+  $PlayoffOK = CheckPlayoffMoves($database, $poolId);
   // returns -1 if the number of teams in the pool is odd, i.e. one team will have a BYE,
   // and at least one team already had a BYE previously
 
   // returns 0 if everything is OK
 }
 
-$moved = PoolIsAllMoved($poolId);
-$moves = count(PoolMovingsToPool($poolId));
+$moved = PoolIsAllMoved($database, $poolId);
+$moves = count(PoolMovingsToPool($database, $poolId));
 
 if ($continuation && $SwissOK == -1) {
   echo "<p>Ties detected in previous pool. Swissdraw moves only make sense if there are no ties in the previous pools. ";
@@ -137,8 +139,8 @@ if ($continuation && $SwissOK == -1) {
   echo "<h2>" . _("Select teams") . ":</h2>\n";
   echo "<table border='0' cellpadding='4px'>\n";
 
-  $allteams = PoolTeams($poolId, "seed");
-  $serieteams = SeriesTeamsWithoutPool($seriesId);
+  $allteams = PoolTeams($database, $poolId, "seed");
+  $serieteams = SeriesTeamsWithoutPool($database, $seriesId);
 
   if (count($allteams) > 0 || count($serieteams) > 0) {
     echo "<tr><th>" . _("Plays") . "</th><th>" . _("Seed") . "</th>
@@ -188,24 +190,24 @@ if ($continuation && $SwissOK == -1) {
 		<th>" . _("To pool") . "</th>
 		<th>" . _("Name in Schedule") . "</th></tr>";
 
-  $moves = PoolMovingsToPool($poolId);
+  $moves = PoolMovingsToPool($database, $poolId);
   $BYEs = false;
 
   foreach ($moves as $row) {
     echo "<tr>";
     echo "<td style='white-space: nowrap'>" . utf8entities($row['name']) . "</td>";
     if (!$playoffpool) {
-      $frompool = PoolInfo($row['frompool']);
+      $frompool = PoolInfo($database, $row['frompool']);
       if ($frompool['type'] == 2) {
         $playoffpool = true;
       }
     }
-    $team = PoolTeamFromStandings($row['frompool'], $row['fromplacing'], $poolinfo['type'] != 2);  // do not count the BYE team if we are moving to a playoff pool
+    $team = PoolTeamFromStandings($database, $row['frompool'], $row['fromplacing'], $poolinfo['type'] != 2);  // do not count the BYE team if we are moving to a playoff pool
     //    if ($team['name']=="") {
     //   		die('yay! '.$team['team_id']);
     //    }
     echo "<td class='center'>" . intval($row['fromplacing']) . "</td>";
-    if (TeamPoolCountBYEs($team['team_id'], $row['frompool']) > 0) {
+    if (TeamPoolCountBYEs($database, $team['team_id'], $row['frompool']) > 0) {
       echo "<td class='highlight'><b>" . utf8entities($team['name']) . "</b></td>";
       $BYEs = true;
     } else {
@@ -213,7 +215,7 @@ if ($continuation && $SwissOK == -1) {
       $BYEs = false;
     }
     echo "<td class='center'>" . intval($row['torank']) . "</td>";
-    echo "<td style='white-space: nowrap'>" . utf8entities(PoolName($poolId)) . "</td>";
+    echo "<td style='white-space: nowrap'>" . utf8entities(PoolName($database, $poolId)) . "</td>";
     echo "<td>" . utf8entities($row['sname']) . "</td>";
     echo "</tr>\n";
   }
@@ -230,17 +232,17 @@ if ($continuation && $SwissOK == -1) {
 
   echo "<p>" . _("Games to move") . ":</p>";
   $mvgames = intval($poolinfo['mvgames']);
-  $games = PoolGetGamesToMove($poolId, $mvgames);
+  $games = PoolGetGamesToMove($database, $poolId, $mvgames);
 
   if (count($games)) {
     echo "<table cellpadding='2'>";
     foreach ($games as $id) {
       echo "<tr>";
-      $result = GameResult($id);
+      $result = GameResult($database, $id);
       echo "<td>" . DefWeekDateFormat($result['time']) . "</td>";
-      echo "<td>" . utf8entities(TeamName($result['hometeam'])) . "</td>";
+      echo "<td>" . utf8entities(TeamName($database, $result['hometeam'])) . "</td>";
       echo "<td> - </td>";
-      echo "<td>" . utf8entities(TeamName($result['visitorteam'])) . "</td>";
+      echo "<td>" . utf8entities(TeamName($database, $result['visitorteam'])) . "</td>";
       echo "<td>" . intval($result['homescore']) . "</td><td> - </td><td>" . intval($result['visitorscore']) . "</td>";
       echo "</tr>\n";
     }

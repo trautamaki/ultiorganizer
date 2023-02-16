@@ -5,6 +5,8 @@ include_once 'lib/series.functions.php';
 include_once 'lib/team.functions.php';
 include_once 'lib/timetable.functions.php';
 
+$database = new Database();
+
 if (is_file('cust/' . CUSTOMIZATIONS . '/pdfprinter.php')) {
   include_once 'cust/' . CUSTOMIZATIONS . '/pdfprinter.php';
 } else {
@@ -26,34 +28,34 @@ if (iget("series")) {
   $id = iget("series");
   $baseurl .= "&series=$id";
   $gamefilter = "series";
-  $title = _("Schedule") . " " . utf8entities(U_(SeriesName($id)));
+  $title = _("Schedule") . " " . utf8entities(U_(SeriesName($database, $id)));
 } elseif (iget("pool")) {
   $id = iget("pool");
   $baseurl .= "&pool=$id";
   $gamefilter = "pool";
-  $title = _("Schedule") . " " . utf8entities(U_(PoolSeriesName($id)) . ", " . U_(PoolName($id)));
+  $title = _("Schedule") . " " . utf8entities(U_(PoolSeriesName($database, $id)) . ", " . U_(PoolName($database, $id)));
 } elseif (iget("pools")) {
   $id = iget("pools");
   $baseurl .= "&pools=$id";
   $gamefilter = "poolgroup";
-  $title = _("Schedule") . " " . utf8entities(U_(PoolSeriesName($id)) . ", " . U_(PoolName($id)));
+  $title = _("Schedule") . " " . utf8entities(U_(PoolSeriesName($database, $id)) . ", " . U_(PoolName($database, $id)));
 } elseif (iget("team")) {
   $id = iget("team");
   $baseurl .= "&team=$id";
   $gamefilter = "team";
   $filter = 'places';
-  $title = _("Schedule") . " " . utf8entities(TeamName($id));
+  $title = _("Schedule") . " " . utf8entities(TeamName($database, $id));
 } elseif (iget("season")) {
   $id = iget("season");
   $baseurl .= "&season=$id";
   $gamefilter = "season";
-  $title = _("Schedule") . " " . utf8entities(U_(SeasonName($id)));
-  $comment = CommentHTML(1, $id);
+  $title = _("Schedule") . " " . utf8entities(U_(SeasonName($database, $id)));
+  $comment = CommentHTML($database, 1, $id);
 } else {
-  $id = CurrentSeason();
+  $id = CurrentSeason($database);
   $baseurl .= "&season=$id";
   $gamefilter = "season";
-  $title = _("Schedule") . " " . utf8entities(U_(SeasonName($id)));
+  $title = _("Schedule") . " " . utf8entities(U_(SeasonName($database, $id)));
 }
 
 $filter  = iget("filter");
@@ -139,8 +141,8 @@ switch ($filter) {
     break;
 }
 
-$games = TimetableGames($id, $gamefilter, $timefilter, $order, $group);
-$groups = TimetableGrouping($id, $gamefilter, $timefilter);
+$games = TimetableGames($database, $id, $gamefilter, $timefilter, $order, $group);
+$groups = TimetableGrouping($database, $id, $gamefilter, $timefilter);
 
 if ($format == "pdf") {
   $pdf = new PDF();
@@ -185,16 +187,16 @@ if (!empty($group) && $group != "all") {
   $groupheader = false;
 }
 
-if (mysql_num_rows($games) == 0) {
+if ($database->NumRows($games) == 0) {
   $html .= "\n<p>" . _("No games") . ".</p>\n";
 } elseif ($filter == 'tournaments') {
-  $html .= TournamentView($games, $groupheader);
+  $html .= TournamentView($database, $games, $groupheader);
 } elseif ($filter == 'series') {
   $html .= SeriesView($games);
 } elseif ($filter == 'today') {
   $html .= SeriesView($games, false);
 } elseif ($filter == 'next') {
-  $html .= TournamentView($games, $groupheader);
+  $html .= TournamentView($database, $games, $groupheader);
 } elseif ($filter == 'tomorrow') {
   $html .= SeriesView($games, false);
 } elseif ($filter == 'places') {
@@ -210,7 +212,7 @@ $querystring = $_SERVER['QUERY_STRING'];
 $querystring = preg_replace("/&Print=[0-1]/", "", $querystring);
 if ($print) {
   $html .= "<hr/><div style='text-align:right'><a href='?" . utf8entities($querystring) . "'>" . _("Return") . "</a></div>";
-} elseif (mysql_num_rows($games)) {
+} elseif ($database->NumRows($games)) {
   $html .= "<hr/>\n";
   $html .= "<p>";
   $html .= "<a href='?view=ical&amp;$gamefilter=$id&amp;time=$timefilter&amp;order=$order'>" . _("iCalendar (.ical)") . "</a> | ";
@@ -220,7 +222,7 @@ if ($print) {
   $html .= "</p>\n";
 }
 if ($print) {
-  showPrintablePage($title, $html);
+  showPrintablePage($database, $title, $html);
 } else {
-  showPage($title, $html);
+  showPage($database, $title, $html);
 }

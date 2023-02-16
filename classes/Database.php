@@ -30,6 +30,11 @@ class Database
     $this->connection->close();
   }
 
+  function GetConnection()
+  {
+    return $this->connection;
+  }
+
   /**
    * Executes sql query and  returns result as an mysql array.
    *
@@ -73,8 +78,8 @@ class Database
       die('Invalid query: ("' . $query . '")' . "<br/>\n" . $this->connection->error);
     }
 
-    if ($result->num_rows) {
-      $row = $result->fetch_row($result);
+    if ($this->NumRows($result)) {
+      $row = $result->fetch_row();
       if ($docasting) {
         $row = $this->DBCastArray($result, $row);
       }
@@ -97,7 +102,7 @@ class Database
       die('Invalid query: ("' . $query . '")' . "<br/>\n" . $this->connection->error);
     }
 
-    return $result->num_rows;
+    return $this->NumRows($result);
   }
 
   /**
@@ -118,13 +123,13 @@ class Database
   /**
    * Converts a db resource to an array
    *
-   * @param $result The database resource returned from mysql_query
+   * @param $result The database resource returned from $database->DBQuery
    * @return array of rows
    */
   function DBResourceToArray($result, $docasting = false)
   {
     $retarray = array();
-    while ($row = $result->fetch_assoc($result)) {
+    while ($row = $this->FetchAssoc($result)) {
       if ($docasting) {
         $row = $this->DBCastArray($result, $row);
       }
@@ -145,7 +150,7 @@ class Database
     if (!$result) {
       die('Invalid query: ("' . $query . '")' . "<br/>\n" . $this->connection->error);
     }
-    $ret = $result->fetch_assoc();
+    $ret = $this->FetchAssoc($result);
     if ($docasting && $ret) {
       $ret = $this->DBCastArray($result, $ret);
     }
@@ -163,10 +168,10 @@ class Database
     $values = array_values($data);
     $fields = array_keys($data);
 
-    $query = "UPDATE " . $this->connection->real_escape_string($name) . " SET ";
+    $query = "UPDATE " . $this->RealEscapeString($name) . " SET ";
 
     for ($i = 0; $i < count($fields); $i++) {
-      $query .= $this->connection->real_escape_string($fields[$i]) . "='" . $values[$i] . "', ";
+      $query .= $this->RealEscapeString($fields[$i]) . "='" . $values[$i] . "', ";
     }
     $query = rtrim($query, ', ');
     $query .= " WHERE ";
@@ -177,7 +182,7 @@ class Database
   /**
    * Copy mysql_associative array row to regular php array.
    *
-   * @param $result return value of mysql_query
+   * @param $result return value of $database->DBQuery
    * @param $row mysql_associative array row
    * @return php array of $row
    */
@@ -186,7 +191,7 @@ class Database
     $ret = array();
     $i = 0;
     foreach ($row as $key => $value) {
-      if ($result->fetch_field_direct($result, $i)->type == "int") {
+      if ($result->fetch_field_direct($i)->type == "int") {
         $ret[$key] = (int)$value;
       } else {
         $ret[$key] = $value;
@@ -204,11 +209,11 @@ class Database
     $installedDb = $this->getDBVersion();
     for ($i = $installedDb; $i <= DB_VERSION; $i++) {
       $upgradeFunc = 'upgrade' . $i;
-      LogDbUpgrade($this, $this, $i);
+      LogDbUpgrade($this, $i);
       $upgradeFunc($this);
       $query = sprintf("insert into uo_database (version, updated) values (%d, now())", $i + 1);
       runQuery($this, $query);
-      LogDbUpgrade($this, $this, $i, true);
+      LogDbUpgrade($this, $i, true);
     }
   }
 
@@ -226,7 +231,7 @@ class Database
       $result = $this->connection->query($query);
     }
     if (!$result) return 0;
-    if (!$row = $result->fetch_assoc()) {
+    if (!$row = $this->FetchAssoc($result)) {
       return 0;
     } else return $row['version'];
   }
@@ -234,6 +239,80 @@ class Database
   function RealEscapeString($string)
   {
     return $this->connection->real_escape_string($string);
+  }
+
+  function FetchAssoc($data)
+  {
+    return $data->fetch_assoc();
+  }
+
+  function NumRows($data)
+  {
+    return $data->num_rows;
+  }
+
+  function DataSeek($data, $row)
+  {
+    return $data->data_seek($row);
+  }
+
+  function FetchRow($data)
+  {
+    return $data->fetch_row();
+  }
+
+  function FieldType($data, $i)
+  {
+    return $data->fetch_field_direct($i)->type;
+  }
+
+  function FetchField($data)
+  {
+    return $data->fetch_field();
+  }
+
+  function FetchArray($data)
+  {
+    return $data->fetch_array();
+  }
+
+  function FieldName($data, $field_offset)
+  {
+      $properties = mysqli_fetch_field_direct($data, $field_offset);
+      return is_object($properties) ? $properties->name : null;
+  }
+
+  function AffectedRows()
+  {
+    return $this->connection->affected_rows;
+  }
+
+  function FreeResult($data) {
+    $data->free_result();
+  }
+
+  function GetServerInfo()
+  {
+    return $this->connection->server_info;
+  }
+
+  function GetClientInfo()
+  {
+    return $this->connection->client_info;
+  }
+
+  function GetHostInfo()
+  {
+    return $this->connection->host_info;
+  }
+
+  function Stat()
+  {
+    return $this->connection->stat;
+  }
+
+  function GetProtocolVersion() {
+    return $this->connection->protocol_version;
   }
 
   public static function GetServerName()

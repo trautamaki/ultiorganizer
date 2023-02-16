@@ -66,7 +66,7 @@ if (!empty($_POST['save'])) {
 $settings = GetServerConf();
 //common page
 pageTop($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 $htmltmp1 = "";
 $htmltmp2 = "";
@@ -85,7 +85,7 @@ $html .= "<form method='post' action='?view=admin/addseasonlinks&amp;season=" . 
 
 $html .= "<table style='white-space: nowrap' cellpadding='2'>\n";
 $html .= "<tr><th>" . _("Type") . "</th><th>" . _("Order") . "</th><th>" . _("Name") . "</th><th>" . _("Url") . "</th><th></th></tr>\n";
-$urls = GetUrlListByTypeArray(array("menulink", "menumail"), $seasonId);
+$urls = GetUrlListByTypeArray($database, array("menulink", "menumail"), $seasonId);
 $i = 0;
 foreach ($urls as $url) {
 	$html .= "<tr>";

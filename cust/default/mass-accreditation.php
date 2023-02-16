@@ -1,7 +1,7 @@
 <?php
 echo "<h3>" . _("Mass accreditation") . "</h3>";
 echo "<table><tr>";
-$seriesResults = SeasonSeries($season);
+$seriesResults = SeasonSeries($database, $season);
 foreach ($seriesResults as $row) {
 	echo "<td>\n";
 	echo "<h3>" . utf8entities($row['name']) . "</h3>\n";

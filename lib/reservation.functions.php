@@ -6,7 +6,7 @@ include_once $include_prefix . 'lib/user.functions.php';
  * 
  * @param int $id uo_reservation.id 
  */
-function ReservationInfo($id)
+function ReservationInfo($database, $id)
 {
 	$locale = str_replace(".", "_", getSessionLocale());
 	$query = sprintf("SELECT res.id, res.location, res.fieldname, res.reservationgroup, 
@@ -16,16 +16,16 @@ function ReservationInfo($id)
 	    left join uo_location as loc on (res.location=loc.id)
 	    LEFT JOIN uo_location_info inf on (loc.id = inf.location_id AND inf.locale='%s' ) 
 		left join uo_game as game on (res.id = game.reservation)
-		WHERE res.id=%d", mysql_real_escape_string($locale), (int)$id);
-	return DBQueryToRow($query);
+		WHERE res.id=%d", $database->RealEscapeString($locale), (int)$id);
+	return $database->DBQueryToRow($query);
 }
 
-function ReservationName($reservationInfo)
+function ReservationName($database, $reservationInfo)
 {
 	return utf8entities($reservationInfo['name']) . " " . _("Field") . " " . utf8entities($reservationInfo['fieldname']) . " " . ShortDate($reservationInfo['starttime']) . " " . DefHourFormat($reservationInfo['starttime']);
 }
 
-function ReservationGames($placeId, $seasonId = "")
+function ReservationGames($database, $placeId, $seasonId = "")
 {
 	$query = sprintf("
 		SELECT game_id, hometeam, kj.name as hometeamname, visitorteam, vj.name as visitorteamname, pp.pool as pool,
@@ -44,20 +44,20 @@ function ReservationGames($placeId, $seasonId = "")
 		WHERE res.id=%d", (int)$placeId);
 
 	if (!empty($seasonId))
-		$query .= sprintf("	AND ser.season='%s'", mysql_real_escape_string($seasonId));
+		$query .= sprintf("	AND ser.season='%s'", $database->RealEscapeString($seasonId));
 
 	$query .= " ORDER BY pp.time ASC";
 
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error());
 	}
 
 	return  $result;
 }
 
 
-function ReservationGetGame($reservationId, $time = "")
+function ReservationGetGame($database, $reservationId, $time = "")
 {
 	$query = sprintf(
 		"SELECT g.game_id FROM uo_game g 
@@ -67,14 +67,14 @@ function ReservationGetGame($reservationId, $time = "")
 	);
 
 	if (!empty($time))
-		$query .= sprintf("	AND g.time='%s'", mysql_real_escape_string($time));
+		$query .= sprintf("	AND g.time='%s'", $database->RealEscapeString($time));
 
 	$query .= " ORDER BY g.game_id ASC";
 
-	return  DBQueryToArray($query);
+	return  $database->DBQueryToArray($query);
 }
 
-function ReservationGamesByField($fieldname, $seasonId = "")
+function ReservationGamesByField($database, $fieldname, $seasonId = "")
 {
 	$query = sprintf("
 		SELECT game_id, hometeam, kj.name as hometeamname, visitorteam, vj.name as visitorteamname, pp.pool as pool,
@@ -90,22 +90,22 @@ function ReservationGamesByField($fieldname, $seasonId = "")
 			left join uo_team vj on (pp.visitorteam=vj.team_id)
 			LEFT JOIN uo_scheduling_name AS phome ON (pp.scheduling_name_home=phome.scheduling_id)
 			LEFT JOIN uo_scheduling_name AS pvisitor ON (pp.scheduling_name_visitor=pvisitor.scheduling_id)
-		WHERE res.fieldname='%s'", mysql_real_escape_string($fieldname));
+		WHERE res.fieldname='%s'", $database->RealEscapeString($fieldname));
 
 	if (!empty($seasonId))
-		$query .= sprintf("	AND ser.season='%s'", mysql_real_escape_string($seasonId));
+		$query .= sprintf("	AND ser.season='%s'", $database->RealEscapeString($seasonId));
 
 	$query .= " ORDER BY pp.time ASC";
 
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error());
 	}
 
 	return  $result;
 }
 
-function ReservationFields($seasonId)
+function ReservationFields($database, $seasonId)
 {
 	$query = sprintf(
 		"
@@ -120,18 +120,18 @@ function ReservationFields($seasonId)
 			LEFT JOIN uo_scheduling_name AS pvisitor ON (pp.scheduling_name_visitor=pvisitor.scheduling_id)
 		WHERE ser.season='%s'
 		GROUP BY res.fieldname",
-		mysql_real_escape_string($seasonId)
+		$database->RealEscapeString($seasonId)
 	);
 
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error());
 	}
 
 	return  $result;
 }
 
-function ResponsibleReservationGames($placeId, $gameResponsibilities)
+function ResponsibleReservationGames($database, $placeId, $gameResponsibilities)
 {
 	$query = "SELECT game_id, hometeam, kj.name as hometeamname, visitorteam,
 			vj.name as visitorteamname, pp.pool as pool, time, homescore, visitorscore,
@@ -155,26 +155,26 @@ function ResponsibleReservationGames($placeId, $gameResponsibilities)
 	$query .= " AND game_id IN (" . implode(",", $gameResponsibilities) . ")
 		ORDER BY pp.time ASC";
 
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error());
 	}
 
 	return $result;
 }
 
-function ReservationSeasons($reservationId)
+function ReservationSeasons($database, $reservationId)
 {
 	$query = sprintf("SELECT DISTINCT ser.season FROM uo_game p 
 		LEFT JOIN uo_pool pool ON (p.pool=pool.pool_id)
 		LEFT JOIN uo_series ser ON (pool.series=ser.series_id)
 		WHERE p.reservation=%d", (int)$reservationId);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error());
 	}
 	$ret = array();
-	while ($row = mysql_fetch_row($result)) {
+	while ($row = $result->fetch_row()) {
 		$ret[] = $row[0];
 	}
 	return $ret;
@@ -188,23 +188,23 @@ function ReservationSeasons($reservationId)
  * @param Int $id: Reservation id
  * @param array $data: Field data for uo_reservation
  */
-function SetReservation($reservationId, $data)
+function SetReservation($database, $reservationId, $data)
 {
 	if (hasEditSeasonSeriesRight($data['season'])) {
 		$query = sprintf(
 			"UPDATE uo_reservation SET location=%d, fieldname='%s', reservationgroup='%s', 
 			date='%s', starttime='%s', endtime='%s', timeslots='%s', season='%s' WHERE id=%d",
 			(int)$data['location'],
-			mysql_real_escape_string($data['fieldname']),
-			mysql_real_escape_string($data['reservationgroup']),
-			mysql_real_escape_string($data['date']),
-			mysql_real_escape_string($data['starttime']),
-			mysql_real_escape_string($data['endtime']),
-			mysql_real_escape_string($data['timeslots']),
-			mysql_real_escape_string($data['season']),
+			$database->RealEscapeString($data['fieldname']),
+			$database->RealEscapeString($data['reservationgroup']),
+			$database->RealEscapeString($data['date']),
+			$database->RealEscapeString($data['starttime']),
+			$database->RealEscapeString($data['endtime']),
+			$database->RealEscapeString($data['timeslots']),
+			$database->RealEscapeString($data['season']),
 			(int)$reservationId
 		);
-		DBQuery($query);
+		$database->DBQuery($query);
 	} else {
 		die('Insufficient rights to change reservation');
 	}
@@ -217,7 +217,7 @@ function SetReservation($reservationId, $data)
  * 
  * @param array $data: Field data for uo_reservation
  */
-function AddReservation($data)
+function AddReservation($database, $data)
 {
 
 	if (hasEditSeasonSeriesRight($data['season'])) {
@@ -225,35 +225,35 @@ function AddReservation($data)
 			"INSERT INTO uo_reservation (location, fieldname, reservationgroup, date, 
 			starttime, endtime, timeslots, season) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
 			(int)$data['location'],
-			mysql_real_escape_string($data['fieldname']),
-			mysql_real_escape_string($data['reservationgroup']),
-			mysql_real_escape_string($data['date']),
-			mysql_real_escape_string($data['starttime']),
-			mysql_real_escape_string($data['endtime']),
-			mysql_real_escape_string($data['timeslots']),
-			mysql_real_escape_string($data['season'])
+			$database->RealEscapeString($data['fieldname']),
+			$database->RealEscapeString($data['reservationgroup']),
+			$database->RealEscapeString($data['date']),
+			$database->RealEscapeString($data['starttime']),
+			$database->RealEscapeString($data['endtime']),
+			$database->RealEscapeString($data['timeslots']),
+			$database->RealEscapeString($data['season'])
 		);
-		return DBQueryInsert($query);
+		return $database->DBQueryInsert($query);
 	} else {
 		die('Insufficient rights to add reservation');
 	}
 }
 
 
-function RemoveReservation($id, $season)
+function RemoveReservation($database, $id, $season)
 {
 	if (isSuperAdmin() || isSeasonAdmin($season)) {
 		$query = sprintf("DELETE FROM uo_reservation WHERE id=%d", (int)$id);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 	} else {
 		die('Insufficient rights to remove location');
 	}
 }
 
-function ReservationInfoArray($reservations)
+function ReservationInfoArray($database, $reservations)
 {
 	$fetch = array();
 	foreach ($reservations as $reservation) {
@@ -262,20 +262,20 @@ function ReservationInfoArray($reservations)
 	$fetchStr = implode(",", $fetch);
 	$query = "SELECT DATE_FORMAT(starttime, '%Y%m%d') as gameday, id FROM uo_reservation WHERE id IN (" . $fetchStr . ") 
 		ORDER BY starttime ASC, location, fieldname +0, id";
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error());
 	}
 	$ret = array();
-	while ($row = mysql_fetch_row($result)) {
+	while ($row = $result->fetch_row()) {
 		if (!isset($ret[$row[0]])) {
 			$ret[$row[0]] = array();
 		}
 		$next = $ret[$row[0]];
-		$nextInfo = ReservationInfo($row[1]);
+		$nextInfo = ReservationInfo($database, $row[1]);
 		$nextGames = array();
-		$gameResults = ReservationGames($row[1]);
-		while ($gameRow = mysql_fetch_assoc($gameResults)) {
+		$gameResults = ReservationGames($database, $row[1]);
+		while ($gameRow = $database->FetchAssoc($gameResults)) {
 			$nextGames["" . $gameRow['game_id']] = $gameRow;
 		}
 		$nextInfo['games'] = $nextGames;
@@ -285,7 +285,7 @@ function ReservationInfoArray($reservations)
 	return $ret;
 }
 
-function UnscheduledTeams()
+function UnscheduledTeams($database)
 {
 	if (isSuperAdmin()) {
 		$query = "SELECT team_id FROM uo_team WHERE team_id IN (SELECT hometeam FROM uo_game WHERE reservation IS NULL AND time IS NULL)
@@ -302,7 +302,7 @@ function UnscheduledTeams()
 				} else {
 					$criteria .= " OR ";
 				}
-				$criteria .= sprintf("series IN (SELECT series_id FROM uo_series WHERE season='%s')", mysql_real_escape_string($season));
+				$criteria .= sprintf("series IN (SELECT series_id FROM uo_series WHERE season='%s')", $database->RealEscapeString($season));
 			}
 		}
 		if (isset($_SESSION['userproperties']['userrole']['seriesadmin'])) {
@@ -322,27 +322,27 @@ function UnscheduledTeams()
 		}
 	}
 	echo "<!--" . $query . "-->\n";
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error());
 	}
 	$ret = array();
-	while ($row = mysql_fetch_row($result)) {
+	while ($row = $result->fetch_row()) {
 		$ret[] = $row[0];
 	}
 	return  $ret;
 }
 
-function CanDeleteReservation($reservationId)
+function CanDeleteReservation($database, $reservationId)
 {
 	$query = sprintf(
 		"SELECT count(*) FROM uo_game WHERE reservation=%d",
-		(int)$poolId
+		(int)$reservationId
 	);
-	$result = mysql_query($query);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error());
 	}
-	if (!$row = mysql_fetch_row($result)) return false;
+	if (!$row = $result->fetch_row()) return false;
 	return $row[0] == 0;
 }

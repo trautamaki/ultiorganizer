@@ -7,9 +7,9 @@ $LAYOUT_ID = ADDSEASONUSERS;
 $title = _("Team admins");
 $html = "";
 $seriesId = intval($_GET["series"]);
-$seriesinfo = SeriesInfo($seriesId);
+$seriesinfo = SeriesInfo($database, $seriesId);
 $backurl = isset($_POST['backurl']) ? utf8entities($_POST['backurl']) : utf8entities($_SERVER['HTTP_REFERER']);
-$teams = SeriesTeams($seriesId);
+$teams = SeriesTeams($database, $seriesId);
 
 if (!isSeasonAdmin($seriesinfo['season'])) {
   die('Insufficient rights');
@@ -33,8 +33,8 @@ if (!empty($_POST['add'])) {
       }
     }
 
-    if (IsRegistered($userid)) {
-      AddSeasonUserRole($userid, "teamadmin:$tid", $seriesinfo['season']);
+    if (IsRegistered($database, $userid)) {
+      AddSeasonUserRole($database, $userid, "teamadmin:$tid", $seriesinfo['season']);
       $html .= "<p>" . _("User rights added for:") . " " . $userid . "</p>";
     } else {
       $html .= "<p class='warning'>" . _("Invalid user:") . " " . $userid . "</p>";
@@ -48,17 +48,17 @@ if (!empty($_POST['add'])) {
 pageTopHeadOpen($title);
 include_once 'script/disable_enter.js.inc';
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 $html .= "<h3>" . _("Team admins") . ":</h3>";
 $html .= "<form method='post' action='?view=admin/addteamadmins&amp;series=" . $seriesId . "' name='teamadmin'>";
 
 
-$admins = SeasonTeamAdmins($seriesinfo['season']);
+$admins = SeasonTeamAdmins($database, $seriesinfo['season']);
 $html .= "<table style='white-space: nowrap;'>";
 foreach ($admins as $user) {
-  $teaminfo = TeamInfo($user['team_id']);
+  $teaminfo = TeamInfo($database, $user['team_id']);
   if ($teaminfo['series'] != $seriesId) {
     continue;
   }
@@ -74,7 +74,7 @@ $html .= "<h3>" . _("Add more") . "</h3>";
 $html .= "<table style='white-space: nowrap;'>";
 
 foreach ($teams as $team) {
-  $teaminfo = TeamInfo($team['team_id']);
+  $teaminfo = TeamInfo($database, $team['team_id']);
   $html .= "<tr>";
   $html .= "<td style='width:175px'>" . utf8entities(U_($teaminfo['name'])) . "</td>\n";
   $html .= "<td>" . _("User Id") . "</td><td><input class='input' size='20' name='userid" . $team['team_id'] . "' id='userid" . $team['team_id'] . "'/></td><td>" . _("or") . "</td>\n";

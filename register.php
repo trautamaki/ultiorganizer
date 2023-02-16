@@ -1,6 +1,8 @@
 <?php
 include_once $include_prefix . 'lib/common.functions.php';
 
+$database = new Database();
+
 $html = "";
 $message = "";
 $title = _("Register");
@@ -18,7 +20,7 @@ if (!empty($_POST['save'])) {
     $message .= "<p>" . _("Username is too short (min. 3 letters)") . ".</p>";
     $error = 1;
   }
-  if (IsRegistered($newUsername)) {
+  if (IsRegistered($database, $newUsername)) {
     $message .=  "<p>" . _("The username is already in use") . ".</p>";
     $error = 1;
   }
@@ -41,14 +43,14 @@ if (!empty($_POST['save'])) {
     $error = 1;
   }
 
-  $uidcheck = mysql_real_escape_string($newUsername);
+  $uidcheck = $database->RealEscapeString($newUsername);
 
   if ($uidcheck != $newUsername || preg_match('/[ ]/', $newUsername) || preg_match('/[^a-z0-9._]/i', $newUsername)) {
     $message .= "<p>" . _("User id may not have spaces or special characters") . ".</p>";
     $error = 1;
   }
 
-  $pswcheck = mysql_real_escape_string($newPassword);
+  $pswcheck = $database->RealEscapeString($newPassword);
 
   if ($pswcheck != $newPassword) {
     $message .= "<p>" . _("Illegal characters in the password") . ".</p>";
@@ -60,7 +62,7 @@ if (!empty($_POST['save'])) {
   }
 
   if ($error == 0) {
-    if (AddRegisterRequest($newUsername, $newPassword, $newName, $newEmail)) {
+    if (AddRegisterRequest($database, $newUsername, $newPassword, $newName, $newEmail)) {
       $message .= "<p>" . _("Confirmation e-mail has been sent to the email address provided. You have to follow the link in the mail to finalize registration, before you can use the account.") . "</p>\n";
       $mailsent = true;
     }
@@ -70,10 +72,10 @@ if (!empty($_POST['save'])) {
 }
 $confirmed = false;
 if (!empty($_GET['token'])) {
-  $userid = RegisterUIDByToken($_GET['token']);
-  if (ConfirmRegister($_GET['token'])) {
-    SetUserSessionData($userid);
-    AddEditSeason($userid, CurrentSeason());
+  $userid = RegisterUIDByToken($database, $_GET['token']);
+  if (ConfirmRegister($database, $_GET['token'])) {
+    SetUserSessionData($database, $userid);
+    AddEditSeason($database, $userid, CurrentSeason($database));
     $message = _("Registration was confirmed successfully");
     $confirmed = true;
   } else {
@@ -136,4 +138,4 @@ if (!$confirmed && !$mailsent) {
 }
 
 
-showPage($title, $html);
+showPage($database, $title, $html);

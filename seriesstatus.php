@@ -4,6 +4,8 @@ include_once 'lib/series.functions.php';
 include_once 'lib/pool.functions.php';
 include_once 'lib/team.functions.php';
 
+$database = new Database();
+
 $LAYOUT_ID = SERIESTATUS;
 
 $title = _("Statistics") . " ";
@@ -12,9 +14,9 @@ $sort = "ranking";
 $html = "";
 
 if (iget("series")) {
-  $seriesinfo = SeriesInfo(iget("series"));
+  $seriesinfo = SeriesInfo($database, iget("series"));
   $viewUrl .= "&amp;series=" . $seriesinfo['series_id'];
-  $seasoninfo = SeasonInfo($seriesinfo['season']);
+  $seasoninfo = SeasonInfo($database, $seriesinfo['season']);
   $title .= U_($seriesinfo['name']);
 }
 
@@ -24,11 +26,11 @@ if (iget("sort")) {
 
 $teamstats = array();
 $allteams = array();
-$teams = SeriesTeams($seriesinfo['series_id']);
-$spiritAvg = SeriesSpiritBoard($seriesinfo['series_id']);
+$teams = SeriesTeams($database, $seriesinfo['series_id']);
+$spiritAvg = SeriesSpiritBoard($database, $seriesinfo['series_id']);
 foreach ($teams as $team) {
-  $stats = TeamStats($team['team_id']);
-  $points = TeamPoints($team['team_id']);
+  $stats = TeamStats($database, $team['team_id']);
+  $points = TeamPoints($database, $team['team_id']);
 
   $teamstats['name'] = $team['name'];
   $teamstats['team_id'] = $team['team_id'];
@@ -47,13 +49,13 @@ foreach ($teams as $team) {
 
   $teamstats['spirit'] = isset($spiritAvg[$team['team_id']]) ? $spiritAvg[$team['team_id']]['total'] : null;
 
-  $teamstats['winavg'] = number_format(SafeDivide(intval($stats['wins']), intval($stats['games'])) * 100, 1);
+  $teamstats['winavg'] = number_format(SafeDivide($database, intval($stats['wins']), intval($stats['games'])) * 100, 1);
 
   $teamstats['ranking'] = 0;
   $allteams[] = $teamstats;
 }
 
-$rankedteams  = SeriesRanking($seriesinfo['series_id']);
+$rankedteams  = SeriesRanking($database, $seriesinfo['series_id']);
 $rank = 0;
 foreach ($rankedteams as $rteam) {
   $rank++;
@@ -64,7 +66,7 @@ foreach ($rankedteams as $rteam) {
 }
 
 
-$html .= CommentHTML(2, $seriesinfo['series_id']);
+$html .= CommentHTML($database, 2, $seriesinfo['series_id']);
 
 $html .= "<h2>" . _("Division statistics:") . " " . utf8entities($seriesinfo['name']) . "</h2>";
 $style = "";
@@ -247,8 +249,8 @@ $html .= "<table cellspacing='0' border='0' width='100%'>\n";
 $html .= "<tr><th style='width:200px'>" . _("Player") . "</th><th style='width:200px'>" . _("Team") . "</th><th class='center'>" . _("Games") . "</th>
 <th class='center'>" . _("Assists") . "</th><th class='center'>" . _("Goals") . "</th><th class='center'>" . _("Tot.") . "</th></tr>\n";
 
-$scores = SeriesScoreBoard($seriesinfo['series_id'], "total", 10);
-while ($row = mysql_fetch_assoc($scores)) {
+$scores = SeriesScoreBoard($database, $seriesinfo['series_id'], "total", 10);
+while ($row = $database->FetchAssoc($scores)) {
   $html .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
   $html .= "<td>" . utf8entities($row['teamname']) . "</td>";
   $html .= "<td class='center'>" . intval($row['games']) . "</td>";
@@ -267,8 +269,8 @@ $html .= "<table cellspacing='0' border='0'>\n";
 $html .= "<tr><th style='width:100%'>" . _("Player") . "</th><th>" . _("Team") . "</th><th class='center'>" . _("Games") . "</th>
 <th class='center'>" . _("Goals") . "</th></tr>\n";
 
-$scores = SeriesScoreBoard($seriesinfo['series_id'], "goal", 10);
-while ($row = mysql_fetch_assoc($scores)) {
+$scores = SeriesScoreBoard($database, $seriesinfo['series_id'], "goal", 10);
+while ($row = $database->FetchAssoc($scores)) {
   $html .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
   $html .= "<td>" . utf8entities($row['abbr']) . "</td>";
   $html .= "<td class='center'>" . intval($row['games']) . "</td>";
@@ -285,8 +287,8 @@ $html .= "<table cellspacing='0' border='0'>\n";
 $html .= "<tr><th style='width:100%'>" . _("Player") . "</th><th>" . _("Team") . "</th><th class='center'>" . _("Games") . "</th>
 <th class='center'>" . _("Assists") . "</th></tr>\n";
 
-$scores = SeriesScoreBoard($seriesinfo['series_id'], "pass", 10);
-while ($row = mysql_fetch_assoc($scores)) {
+$scores = SeriesScoreBoard($database, $seriesinfo['series_id'], "pass", 10);
+while ($row = $database->FetchAssoc($scores)) {
   $html .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
   $html .= "<td>" . utf8entities($row['abbr']) . "</td>";
   $html .= "<td class='center'>" . intval($row['games']) . "</td>";
@@ -303,8 +305,8 @@ if (ShowDefenseStats()) {
 	<th class='center'>" . _("Total defenses") . "</th></tr>\n";
 
 
-  $defenses = SeriesDefenseBoard($seriesinfo['series_id'], "deftotal", 10);
-  while ($row = mysql_fetch_assoc($defenses)) {
+  $defenses = SeriesDefenseBoard($database, $seriesinfo['series_id'], "deftotal", 10);
+  while ($row = $database->FetchAssoc($defenses)) {
     $html .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
     $html .= "<td>" . utf8entities($row['teamname']) . "</td>";
     $html .= "<td>" . _("Games") . "</td>";
@@ -317,7 +319,7 @@ if (ShowDefenseStats()) {
 }
 
 if ($seasoninfo['showspiritpoints']) { // TODO total
-  $categories = SpiritCategories($seasoninfo['spiritmode']);
+  $categories = SpiritCategories($database, $seasoninfo['spiritmode']);
   $html .= "<h2>" . _("Spirit points average per category") . "</h2>\n";
 
   $html .= "<table cellspacing='0' border='0' width='100%'>\n";
@@ -355,4 +357,4 @@ if ($seasoninfo['showspiritpoints']) { // TODO total
 }
 
 
-showPage($title, $html);
+showPage($database, $title, $html);

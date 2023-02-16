@@ -26,17 +26,17 @@ if (ENABLE_ADMIN_DB_ACCESS != "enabled") {
 		$isDelete = (strpos(strtolower($query), "delete") === 0);
 		$arraycolumnsname = array();
 		if (isSuperAdmin()) {
-			$result = mysql_query($query);
+			$result = $database->DBQuery($query);
 		}
 
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 
 		if ($isSelect || $isShow) {
 			$i = 0;
-			while ($i < mysql_num_fields($result)) {
-				$meta = mysql_fetch_field($result, $i);
+			while ($i < $result->field_count) {
+				$meta = $database->fetchfield($result, $i);
 				$arraycolumnsname[$i] = $meta->name;
 				$arraycolumnstype[$i] = $meta->type;
 
@@ -94,10 +94,10 @@ if (ENABLE_ADMIN_DB_ACCESS != "enabled") {
 		$html .= "</tr>\n";
 		// Print contents of the query
 		if ($isSelect || $isShow) {
-			while ($row = mysql_fetch_assoc($result)) {
+			while ($row = $database->FetchAssoc($result)) {
 				$html .= "<tr>";
 				foreach ($arraycolumnsname as $i => $columnname) {
-					if (mysql_field_type($result, $i) != 'blob') {
+					if ($database->fieldtype($result, $i) != 'blob') {
 						$html .= "<td  class='dbrow'>" . utf8entities($row[$columnname]) . "</td>";
 					} else {
 						$html .= "<td  class='dbrow'>BINARY</td>";
@@ -130,7 +130,7 @@ if (ENABLE_ADMIN_DB_ACCESS != "enabled") {
 
 //common page
 pageTop($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 echo $html;

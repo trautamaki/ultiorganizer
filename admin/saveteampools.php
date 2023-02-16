@@ -26,20 +26,20 @@ foreach ($pools as $PoolStr) {
 
 			$teamArr = explode("/", $pools[$i]);
 			foreach ($poolIds as $PoolId) {
-				PoolDeleteTeam($PoolId, $teamArr[0]);
+				PoolDeleteTeam($database, $PoolId, $teamArr[0]);
 			}
-			PoolAddTeam($pools[0], $teamArr[0], $i);
+			PoolAddTeam($database, $pools[0], $teamArr[0], $i);
 		}
 	} else {
 		for ($i = 1; $i < count($pools); $i++) {
 			$teamArr = explode("/", $pools[$i]);
 			foreach ($poolIds as $PoolId) {
-				PoolDeleteTeam($PoolId, $teamArr[0]);
+				PoolDeleteTeam($database, $PoolId, $teamArr[0]);
 			}
 		}
 	}
 }
 foreach ($poolIds as $PoolId) {
-	ResolvePoolStandings($PoolId);
+	ResolvePoolStandings($database, $PoolId);
 }
 echo _("Teams saved");

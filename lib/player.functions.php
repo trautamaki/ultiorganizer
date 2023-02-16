@@ -12,10 +12,10 @@ include_once $include_prefix . 'lib/common.functions.php';
  * @param string $lname
  * @param string $accrId
  */
-function SetPlayer($playerId, $number, $fname, $lname, $accrId, $profileId)
+function SetPlayer($database, $playerId, $number, $fname, $lname, $accrId, $profileId)
 {
-  $playerInfo = PlayerInfo($playerId);
-  if (hasEditPlayersRight($playerInfo['team'])) {
+  $playerInfo = PlayerInfo($database, $playerId);
+  if (hasEditPlayersRight($database, $playerInfo['team'])) {
     if ($number < 0) $number = "null";
     else $number = (int)$number;
     //echo "<p>".$profileId."</p>";
@@ -24,13 +24,13 @@ function SetPlayer($playerId, $number, $fname, $lname, $accrId, $profileId)
     		profile_id='%s'
 			WHERE player_id=%d",
       $number,
-      mysql_real_escape_string($fname),
-      mysql_real_escape_string($lname),
-      mysql_real_escape_string($accrId),
-      mysql_real_escape_string($profileId),
+      $database->RealEscapeString($fname),
+      $database->RealEscapeString($lname),
+      $database->RealEscapeString($accrId),
+      $database->RealEscapeString($profileId),
       (int)$playerId
     );
-    return DBQuery($query);
+    return $database->DBQuery($query);
   } else {
     die("Insufficient rights to edit player");
   }
@@ -41,20 +41,20 @@ function SetPlayer($playerId, $number, $fname, $lname, $accrId, $profileId)
  *
  * @param unknown_type $playerId
  */
-function CreatePlayerProfile($playerId)
+function CreatePlayerProfile($database, $playerId)
 {
-  $playerInfo = PlayerInfo($playerId);
-  if (hasEditPlayersRight($playerInfo['team'])) {
+  $playerInfo = PlayerInfo($database, $playerId);
+  if (hasEditPlayersRight($database, $playerInfo['team'])) {
 
     $query = sprintf(
       "INSERT INTO uo_player_profile (firstname,lastname,accreditation_id,num) VALUES
 				('%s','%s','%s','%s')",
-      mysql_real_escape_string($playerInfo['firstname']),
-      mysql_real_escape_string($playerInfo['lastname']),
-      mysql_real_escape_string($playerInfo['accreditation_id']),
-      mysql_real_escape_string($playerInfo['num'])
+      $database->RealEscapeString($playerInfo['firstname']),
+      $database->RealEscapeString($playerInfo['lastname']),
+      $database->RealEscapeString($playerInfo['accreditation_id']),
+      $database->RealEscapeString($playerInfo['num'])
     );
-    $profileId = DBQueryInsert($query);
+    $profileId = $database->DBQueryInsert($query);
 
     $query = sprintf(
       "UPDATE uo_player SET profile_id=%d
@@ -62,7 +62,7 @@ function CreatePlayerProfile($playerId)
       (int)$profileId,
       (int)$playerId
     );
-    $result = DBQuery($query);
+    $result = $database->DBQuery($query);
   } else {
     die("Insufficient rights to edit player");
   }
@@ -74,14 +74,14 @@ function CreatePlayerProfile($playerId)
  * @param unknown_type $filter
  * @param unknown_type $ordering
  */
-function Players($filter = null, $ordering = null)
+function Players($database, $filter = null, $ordering = null)
 {
   if (!isset($ordering)) {
     $ordering = array("season.starttime" => "ASC", "series.ordering" => "ASC", "pool.ordering" => "ASC");
   }
   $tables = array("uo_player" => "player", "uo_team" => "team", "uo_pool" => "pool", "uo_series" => "series", "uo_season" => "season");
-  $orderby = CreateOrdering($tables, $ordering);
-  $where = CreateFilter($tables, $filter);
+  $orderby = CreateOrdering($database, $tables, $ordering);
+  $where = CreateFilter($database, $tables, $filter);
   $query = "SELECT player_id, CONCAT(player.firstname, ' ', player.lastname) as name, num,
 		player.firstname, player.lastname, player.accredited, player.accreditation_id, player.profile_id
 		FROM uo_player player
@@ -90,7 +90,7 @@ function Players($filter = null, $ordering = null)
 		LEFT JOIN uo_series series ON (team.series=series.series_id)
 		LEFT JOIN uo_season season ON (series.season=season.season_id)
 		$where $orderby";
-  return DBQuery(trim($query));
+  return $database->DBQuery(trim($query));
 }
 
 /**
@@ -98,7 +98,7 @@ function Players($filter = null, $ordering = null)
  * 
  * @param int $playerId
  */
-function PlayerInfo($playerId)
+function PlayerInfo($database, $playerId)
 {
   $query = sprintf(
     "SELECT p.player_id, p.profile_id, CONCAT(p.firstname, ' ', p.lastname) as name, p.firstname,
@@ -110,17 +110,17 @@ function PlayerInfo($playerId)
 		LEFT JOIN uo_series ser ON (ser.series_id=t.series)
 		LEFT JOIN uo_player_profile pp ON (p.profile_id=pp.profile_id)
 		WHERE player_id='%s'",
-    mysql_real_escape_string($playerId)
+    $database->RealEscapeString($playerId)
   );
 
-  return DBQueryToRow($query);
+  return $database->DBQueryToRow($query);
 }
 
 /**
  * Gets latest playerId for given profile id.
  * @param int $profileId
  */
-function PlayerLatestId($profileId)
+function PlayerLatestId($database, $profileId)
 {
   if (!empty($profileId)) {
     $query = sprintf(
@@ -131,24 +131,24 @@ function PlayerLatestId($profileId)
       (int)$profileId
     );
 
-    return DBQueryToValue($query);
+    return $database->DBQueryToValue($query);
   }
   return -1;
 }
 
-function PlayerListAll($lastname = "")
+function PlayerListAll($database, $lastname = "")
 {
   $query = "SELECT MAX(player_id) AS player_id, firstname, lastname, num, accreditation_id, profile_id, team, uo_team.name AS teamname
 		FROM uo_player p 
 		LEFT JOIN uo_team ON p.team=team_id
 		WHERE accredited=1";
   if (!empty($lastname) && $lastname != "ALL") {
-    $query .= " AND UPPER(lastname) LIKE '" . mysql_real_escape_string($lastname) . "%'";
+    $query .= " AND UPPER(lastname) LIKE '" . $database->RealEscapeString($lastname) . "%'";
   }
 
   $query .= " GROUP BY profile_id ORDER BY lastname, firstname";
 
-  return DBQuery($query);
+  return $database->DBQuery($query);
 }
 
 /**
@@ -156,16 +156,16 @@ function PlayerListAll($lastname = "")
  * 
  * @param int $playerId
  */
-function PlayerName($playerId)
+function PlayerName($database, $playerId)
 {
   $query = sprintf(
     "SELECT firstname, lastname 
 		FROM uo_player p 
 		WHERE player_id='%s'",
-    mysql_real_escape_string($playerId)
+    $database->RealEscapeString($playerId)
   );
 
-  $row = DBQueryToRow($query);
+  $row = $database->DBQueryToRow($query);
   return $row['firstname'] . " " . $row['lastname'];
 }
 
@@ -174,7 +174,7 @@ function PlayerName($playerId)
  * 
  * @param int $profileId
  */
-function PlayerProfile($profileId)
+function PlayerProfile($database, $profileId)
 {
   $query = sprintf(
     " SELECT pp.*
@@ -183,7 +183,7 @@ function PlayerProfile($profileId)
     (int)$profileId
   );
 
-  return DBQueryToRow($query);
+  return $database->DBQueryToRow($query);
 }
 
 /**
@@ -192,7 +192,7 @@ function PlayerProfile($profileId)
  * @param int $accrId
  * @param int $series
  */
-function PlayerInfoByAccrId($accrId, $series)
+function PlayerInfoByAccrId($database, $accrId, $series)
 {
   $query = sprintf(
     "SELECT player_id, firstname, lastname, num, accreditation_id, profile_id, team, team.name AS teamname, accredited
@@ -200,11 +200,11 @@ function PlayerInfoByAccrId($accrId, $series)
 		LEFT JOIN uo_team team ON (p.team=team.team_id)
 		LEFT JOIN uo_series ser ON (team.series=ser.series_id)
 		WHERE p.accreditation_id='%s' AND ser.series_id=%d",
-    mysql_real_escape_string($accrId),
+    $database->RealEscapeString($accrId),
     (int)$series
   );
 
-  return DBQueryToRow($query);
+  return $database->DBQueryToRow($query);
 }
 
 /**
@@ -213,7 +213,7 @@ function PlayerInfoByAccrId($accrId, $series)
  * @param int $playerId
  * @param int $gameId
  */
-function PlayerNumber($playerId, $gameId)
+function PlayerNumber($database, $playerId, $gameId)
 {
   $query = sprintf(
     "SELECT p.num as defnum, pel.num as game 
@@ -225,15 +225,15 @@ function PlayerNumber($playerId, $gameId)
     (int)$playerId
   );
 
-  $result = mysql_query($query);
+  $result = $database->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . $database->GetConnection()->error());
   }
 
-  if (!mysql_num_rows($result))
+  if (!$database->NumRows($result))
     return -1;
 
-  $row = mysql_fetch_assoc($result);
+  $row = $database->FetchAssoc($result);
 
   if (is_numeric($row['game'])) {
     return intval($row['game']);
@@ -251,7 +251,7 @@ function PlayerNumber($playerId, $gameId)
  * @param string $seasonId
  */
 
-function PlayerSeasonGames($playerId, $seasonId)
+function PlayerSeasonGames($database, $playerId, $seasonId)
 {
   $query = sprintf(
     "SELECT game_id,hometeam,visitorteam 
@@ -265,12 +265,12 @@ function PlayerSeasonGames($playerId, $seasonId)
 			WHERE scorer=%d OR assist=%d)
 		AND p.isongoing=0
 		ORDER BY p.time, p.game_id",
-    mysql_real_escape_string($seasonId),
+    $database->RealEscapeString($seasonId),
     (int)$playerId,
     (int)$playerId
   );
 
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -279,7 +279,7 @@ function PlayerSeasonGames($playerId, $seasonId)
  * @param int $playerId
  * @param string $seasonId
  */
-function PlayerSeasonPlayedGames($playerId, $seasonId)
+function PlayerSeasonPlayedGames($database, $playerId, $seasonId)
 {
   $query = sprintf(
     "
@@ -292,12 +292,12 @@ function PlayerSeasonPlayedGames($playerId, $seasonId)
 			LEFT JOIN uo_series AS ser ON (pool.series=ser.series_id)
 			WHERE ser.season='%s' AND pp.player='%s' AND timetable=1 AND ug.isongoing=0) 
 		AND player='%s'", // FIXME ug.hasstarted>0??
-    mysql_real_escape_string($seasonId),
-    mysql_real_escape_string($playerId),
-    mysql_real_escape_string($playerId)
+    $database->RealEscapeString($seasonId),
+    $database->RealEscapeString($playerId),
+    $database->RealEscapeString($playerId)
   );
 
-  return DBQueryToValue($query);
+  return $database->DBQueryToValue($query);
 }
 
 /**
@@ -306,7 +306,7 @@ function PlayerSeasonPlayedGames($playerId, $seasonId)
  * @param int $playerId
  * @param string $seasonId
  */
-function PlayerSeasonPasses($playerId, $seasonId)
+function PlayerSeasonPasses($database, $playerId, $seasonId)
 {
   $query = sprintf(
     "SELECT COUNT(*) AS passes
@@ -318,12 +318,12 @@ function PlayerSeasonPasses($playerId, $seasonId)
 			LEFT JOIN uo_series AS ser ON (pool.series=ser.series_id)
 			WHERE ser.season='%s' AND pp.player='%s' AND timetable=1 AND ug.isongoing=0) 
 		AND assist='%s'", // FIXME ug.hasstarted>0??
-    mysql_real_escape_string($seasonId),
-    mysql_real_escape_string($playerId),
-    mysql_real_escape_string($playerId)
+    $database->RealEscapeString($seasonId),
+    $database->RealEscapeString($playerId),
+    $database->RealEscapeString($playerId)
   );
 
-  return DBQueryToValue($query);
+  return $database->DBQueryToValue($query);
 }
 
 /**
@@ -332,7 +332,7 @@ function PlayerSeasonPasses($playerId, $seasonId)
  * @param int $playerId
  * @param string $seasonId
  */
-function PlayerSeasonGoals($playerId, $seasonId)
+function PlayerSeasonGoals($database, $playerId, $seasonId)
 {
   $query = sprintf(
     "SELECT COUNT(*) AS goals
@@ -344,12 +344,12 @@ function PlayerSeasonGoals($playerId, $seasonId)
 			LEFT JOIN uo_series AS ser ON (pool.series=ser.series_id)			
 			WHERE ser.season='%s' AND pp.player='%s' AND timetable=1 AND ug.isongoing=0) 
 		AND scorer='%s'", // FIXME ug.hasstarted>0??
-    mysql_real_escape_string($seasonId),
-    mysql_real_escape_string($playerId),
-    mysql_real_escape_string($playerId)
+    $database->RealEscapeString($seasonId),
+    $database->RealEscapeString($playerId),
+    $database->RealEscapeString($playerId)
   );
 
-  return DBQueryToValue($query);
+  return $database->DBQueryToValue($query);
 }
 
 /**
@@ -358,7 +358,7 @@ function PlayerSeasonGoals($playerId, $seasonId)
  * @param int $playerId
  * @param string $seasonId
  */
-function PlayerSeasonDefenses($playerId, $seasonId)
+function PlayerSeasonDefenses($database, $playerId, $seasonId)
 {
   $query = sprintf(
     "SELECT COUNT(*) AS defenses
@@ -370,12 +370,12 @@ function PlayerSeasonDefenses($playerId, $seasonId)
 			LEFT JOIN uo_series AS ser ON (pool.series=ser.series_id)			
 			WHERE ser.season='%s' AND pp.player='%s' AND timetable=1 AND ug.isongoing=0) 
 		AND author='%s'", // FIXME ug.hasstarted>0??
-    mysql_real_escape_string($seasonId),
-    mysql_real_escape_string($playerId),
-    mysql_real_escape_string($playerId)
+    $database->RealEscapeString($seasonId),
+    $database->RealEscapeString($playerId),
+    $database->RealEscapeString($playerId)
   );
 
-  return DBQueryToValue($query);
+  return $database->DBQueryToValue($query);
 }
 
 
@@ -385,7 +385,7 @@ function PlayerSeasonDefenses($playerId, $seasonId)
  * @param int $playerId
  * @param string $seasonId
  */
-function PlayerSeasonCallahanGoals($playerId, $seasonId)
+function PlayerSeasonCallahanGoals($database, $playerId, $seasonId)
 {
   $query = sprintf(
     "SELECT COUNT(*) AS goals
@@ -397,12 +397,12 @@ function PlayerSeasonCallahanGoals($playerId, $seasonId)
 			LEFT JOIN uo_series AS ser ON (pool.series=ser.series_id)			
 			WHERE ser.season='%s' AND pp.player='%s' AND timetable=1 AND ug.isongoing=0) 
 		AND scorer='%s' AND iscallahan=1",
-    mysql_real_escape_string($seasonId),
-    mysql_real_escape_string($playerId),
-    mysql_real_escape_string($playerId)
+    $database->RealEscapeString($seasonId),
+    $database->RealEscapeString($playerId),
+    $database->RealEscapeString($playerId)
   );
 
-  return DBQueryToValue($query);
+  return $database->DBQueryToValue($query);
 }
 
 /**
@@ -411,7 +411,7 @@ function PlayerSeasonCallahanGoals($playerId, $seasonId)
  * @param int $playerId
  * @param string $seasonId
  */
-function PlayerSeasonWins($playerId, $teamId, $seasonId)
+function PlayerSeasonWins($database, $playerId, $teamId, $seasonId)
 {
   $query = sprintf(
     "SELECT COUNT(*) AS wins
@@ -426,14 +426,14 @@ function PlayerSeasonWins($playerId, $teamId, $seasonId)
 			AND ((g.homescore>g.visitorscore AND g.hometeam='%s')
 			OR (g.homescore<g.visitorscore AND g.visitorteam='%s'))) 
 		AND p.player='%s'",
-    mysql_real_escape_string($seasonId),
-    mysql_real_escape_string($playerId),
-    mysql_real_escape_string($teamId),
-    mysql_real_escape_string($teamId),
-    mysql_real_escape_string($playerId)
+    $database->RealEscapeString($seasonId),
+    $database->RealEscapeString($playerId),
+    $database->RealEscapeString($teamId),
+    $database->RealEscapeString($teamId),
+    $database->RealEscapeString($playerId)
   );
 
-  return DBQueryToValue($query);
+  return $database->DBQueryToValue($query);
 }
 
 /**
@@ -442,7 +442,7 @@ function PlayerSeasonWins($playerId, $teamId, $seasonId)
  * @param int $playerId
  * @param int $gameId
  */
-function PlayerGameEvents($playerId, $gameId)
+function PlayerGameEvents($database, $playerId, $gameId)
 {
   $query = sprintf(
     " SELECT time,homescore,visitorscore,assist,scorer,iscallahan 
@@ -454,7 +454,7 @@ function PlayerGameEvents($playerId, $gameId)
     (int)$playerId
   );
 
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -464,10 +464,10 @@ function PlayerGameEvents($playerId, $gameId)
  * @param int $playerId
  * @param int $profile
  */
-function SetPlayerProfile($teamId, $playerId, $profile)
+function SetPlayerProfile($database, $teamId, $playerId, $profile)
 {
-  $playerInfo = PlayerInfo($playerId);
-  if (hasEditPlayerProfileRight($playerId) && $playerInfo['team'] == $teamId) {
+  $playerInfo = PlayerInfo($database, $playerId);
+  if (hasEditPlayerProfileRight($database, $playerId) && $playerInfo['team'] == $teamId) {
 
     $query = sprintf(
       "SELECT pp.profile_id
@@ -476,9 +476,9 @@ function SetPlayerProfile($teamId, $playerId, $profile)
       (int)$playerInfo['profile_id']
     );
 
-    $exist = DBQueryRowCount($query);
+    $exist = $database->DBQueryRowCount($query);
 
-    //SetPlayer($playerId, $profile['num'], $profile['firstname'], $profile['lastname'], $profile['accreditation_id']);
+    //SetPlayer($database, $playerId, $profile['num'], $profile['firstname'], $profile['lastname'], $profile['accreditation_id']);
     if (empty($profile['num']) || $profile['num'] < 0) {
       $number = "null";
     } else {
@@ -490,13 +490,13 @@ function SetPlayerProfile($teamId, $playerId, $profile)
       "UPDATE uo_player SET num=%s, firstname='%s', lastname='%s', accreditation_id='%s'
 			WHERE player_id=%d",
       $number,
-      mysql_real_escape_string($profile['firstname']),
-      mysql_real_escape_string($profile['lastname']),
-      mysql_real_escape_string($profile['accreditation_id']),
+      $database->RealEscapeString($profile['firstname']),
+      $database->RealEscapeString($profile['lastname']),
+      $database->RealEscapeString($profile['accreditation_id']),
       (int)$playerId
     );
 
-    DBQuery($query);
+    $database->DBQuery($query);
 
     //add
     if (!$exist) {
@@ -506,66 +506,66 @@ function SetPlayerProfile($teamId, $playerId, $profile)
 			throwing_hand, height, weight, position, story, achievements, public) VALUES 
 			('%s', '%s','%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', 
 			'%s', '%s', '%s', '%s', '%s', '%s')",
-        mysql_real_escape_string($profile['accreditation_id']),
-        mysql_real_escape_string($profile['firstname']),
-        mysql_real_escape_string($profile['lastname']),
-        mysql_real_escape_string($profile['num']),
-        mysql_real_escape_string($profile['email']),
-        mysql_real_escape_string($profile['nickname']),
-        mysql_real_escape_string($profile['gender']),
-        mysql_real_escape_string($profile['info']),
-        mysql_real_escape_string($profile['national_id']),
-        mysql_real_escape_string($profile['birthdate']),
-        mysql_real_escape_string($profile['birthplace']),
-        mysql_real_escape_string($profile['nationality']),
-        mysql_real_escape_string($profile['throwing_hand']),
-        mysql_real_escape_string($profile['height']),
-        mysql_real_escape_string($profile['weight']),
-        mysql_real_escape_string($profile['position']),
-        mysql_real_escape_string($profile['story']),
-        mysql_real_escape_string($profile['achievements']),
-        mysql_real_escape_string($profile['public'])
+        $database->RealEscapeString($profile['accreditation_id']),
+        $database->RealEscapeString($profile['firstname']),
+        $database->RealEscapeString($profile['lastname']),
+        $database->RealEscapeString($profile['num']),
+        $database->RealEscapeString($profile['email']),
+        $database->RealEscapeString($profile['nickname']),
+        $database->RealEscapeString($profile['gender']),
+        $database->RealEscapeString($profile['info']),
+        $database->RealEscapeString($profile['national_id']),
+        $database->RealEscapeString($profile['birthdate']),
+        $database->RealEscapeString($profile['birthplace']),
+        $database->RealEscapeString($profile['nationality']),
+        $database->RealEscapeString($profile['throwing_hand']),
+        $database->RealEscapeString($profile['height']),
+        $database->RealEscapeString($profile['weight']),
+        $database->RealEscapeString($profile['position']),
+        $database->RealEscapeString($profile['story']),
+        $database->RealEscapeString($profile['achievements']),
+        $database->RealEscapeString($profile['public'])
       );
 
-      $profileId = DBQueryInsert($query);
+      $profileId = $database->DBQueryInsert($query);
       $query = sprintf(
         "UPDATE uo_player SET profile_id=%d WHERE player_id=%d",
         $profileId,
         (int)$playerId
       );
 
-      DBQuery($query);
+      $database->DBQuery($query);
     } else {
       $query = sprintf(
         "UPDATE uo_player_profile SET accreditation_id='%s', email='%s', firstname='%s', lastname='%s', num='%s',
 			nickname='%s', gender='%s', info='%s', national_id='%s', birthdate='%s', birthplace='%s', nationality='%s', throwing_hand='%s', 
 			height='%s', weight='%s', position='%s', story='%s', achievements='%s', public='%s' WHERE profile_id='%s'",
-        mysql_real_escape_string($profile['accreditation_id']),
-        mysql_real_escape_string($profile['email']),
-        mysql_real_escape_string($profile['firstname']),
-        mysql_real_escape_string($profile['lastname']),
-        mysql_real_escape_string($profile['num']),
-        mysql_real_escape_string($profile['nickname']),
-        mysql_real_escape_string($profile['gender']),
-        mysql_real_escape_string($profile['info']),
-        mysql_real_escape_string($profile['national_id']),
-        mysql_real_escape_string($profile['birthdate']),
-        mysql_real_escape_string($profile['birthplace']),
-        mysql_real_escape_string($profile['nationality']),
-        mysql_real_escape_string($profile['throwing_hand']),
-        mysql_real_escape_string($profile['height']),
-        mysql_real_escape_string($profile['weight']),
-        mysql_real_escape_string($profile['position']),
-        mysql_real_escape_string($profile['story']),
-        mysql_real_escape_string($profile['achievements']),
-        mysql_real_escape_string($profile['public']),
-        mysql_real_escape_string($profile['profile_id'])
+        $database->RealEscapeString($profile['accreditation_id']),
+        $database->RealEscapeString($profile['email']),
+        $database->RealEscapeString($profile['firstname']),
+        $database->RealEscapeString($profile['lastname']),
+        $database->RealEscapeString($profile['num']),
+        $database->RealEscapeString($profile['nickname']),
+        $database->RealEscapeString($profile['gender']),
+        $database->RealEscapeString($profile['info']),
+        $database->RealEscapeString($profile['national_id']),
+        $database->RealEscapeString($profile['birthdate']),
+        $database->RealEscapeString($profile['birthplace']),
+        $database->RealEscapeString($profile['nationality']),
+        $database->RealEscapeString($profile['throwing_hand']),
+        $database->RealEscapeString($profile['height']),
+        $database->RealEscapeString($profile['weight']),
+        $database->RealEscapeString($profile['position']),
+        $database->RealEscapeString($profile['story']),
+        $database->RealEscapeString($profile['achievements']),
+        $database->RealEscapeString($profile['public']),
+        $database->RealEscapeString($profile['profile_id'])
       );
 
-      DBQuery($query);
+      $database->DBQuery($query);
     }
 
-    LogPlayerProfileUpdate($playerId);
+    LogPlayerProfileUpdate($database, $playerId);
   } else {
     die('Insufficient rights to edit player profile');
   }
@@ -576,10 +576,10 @@ function SetPlayerProfile($teamId, $playerId, $profile)
  * 
  * @param int $playerId
  */
-function UploadPlayerImage($playerId)
+function UploadPlayerImage($database, $playerId)
 {
-  $playerInfo = PlayerInfo($playerId);
-  if (hasEditPlayerProfileRight($playerId)) {
+  $playerInfo = PlayerInfo($database, $playerId);
+  if (hasEditPlayerProfileRight($database, $playerId)) {
     $max_file_size = 5 * 1024 * 1024; //5 MB
 
     if ($_FILES['picture']['size'] > $max_file_size) {
@@ -610,8 +610,8 @@ function UploadPlayerImage($playerId)
     CreateThumb($basedir . $imgname, $basedir . "thumbs/" . $imgname, 120, 160);
 
     //currently removes old image, in future there might be a gallery of images
-    RemovePlayerProfileImage($playerId);
-    SetPlayerProfileImage($playerId, $imgname);
+    RemovePlayerProfileImage($database, $playerId);
+    SetPlayerProfileImage($database, $playerId, $imgname);
 
     return "";
   } else {
@@ -625,29 +625,29 @@ function UploadPlayerImage($playerId)
  * @param int $playerId
  * @param string $filename
  */
-function SetPlayerProfileImage($playerId, $filename)
+function SetPlayerProfileImage($database, $playerId, $filename)
 {
-  $playerInfo = PlayerInfo($playerId);
-  if (hasEditPlayerProfileRight($playerId)) {
+  $playerInfo = PlayerInfo($database, $playerId);
+  if (hasEditPlayerProfileRight($database, $playerId)) {
 
     $query = sprintf(
       "UPDATE uo_player_profile SET profile_image='%s' WHERE profile_id='%s'",
-      mysql_real_escape_string($filename),
-      mysql_real_escape_string($playerInfo['profile_id'])
+      $database->RealEscapeString($filename),
+      $database->RealEscapeString($playerInfo['profile_id'])
     );
 
-    DBQuery($query);
+    $database->DBQuery($query);
   } else {
     die('Insufficient rights to edit player profile');
   }
 }
 
-function RemovePlayerProfileImage($playerId)
+function RemovePlayerProfileImage($database, $playerId)
 {
-  $playerInfo = PlayerInfo($playerId);
-  if (hasEditPlayerProfileRight($playerId)) {
+  $playerInfo = PlayerInfo($database, $playerId);
+  if (hasEditPlayerProfileRight($database, $playerId)) {
 
-    $profile = PlayerProfile($playerInfo['profile_id']);
+    $profile = PlayerProfile($database, $playerInfo['profile_id']);
 
     if (!empty($profile['profile_image'])) {
 
@@ -666,10 +666,10 @@ function RemovePlayerProfileImage($playerId)
 
       $query = sprintf(
         "UPDATE uo_player_profile SET profile_image=NULL WHERE profile_id='%s'",
-        mysql_real_escape_string($playerInfo['profile_id'])
+        $database->RealEscapeString($playerInfo['profile_id'])
       );
 
-      DBQuery($query);
+      $database->DBQuery($query);
     }
   } else {
     die('Insufficient rights to edit player profile');
@@ -684,20 +684,20 @@ function RemovePlayerProfileImage($playerId)
  * @param string $url
  * @param string $name
  */
-function AddPlayerProfileUrl($playerId, $type, $url, $name)
+function AddPlayerProfileUrl($database, $playerId, $type, $url, $name)
 {
-  $playerInfo = PlayerInfo($playerId);
-  if (hasEditPlayerProfileRight($playerId)) {
+  $playerInfo = PlayerInfo($database, $playerId);
+  if (hasEditPlayerProfileRight($database, $playerId)) {
     $url = SafeUrl($url);
     $query = sprintf(
       "INSERT INTO uo_urls (owner,owner_id,type,name,url)
 				VALUES('player',%d,'%s','%s','%s')",
       (int)$playerInfo['profile_id'],
-      mysql_real_escape_string($type),
-      mysql_real_escape_string($name),
-      mysql_real_escape_string($url)
+      $database->RealEscapeString($type),
+      $database->RealEscapeString($name),
+      $database->RealEscapeString($url)
     );
-    return DBQuery($query);
+    return $database->DBQuery($query);
   } else {
     die('Insufficient rights to add url');
   }
@@ -709,15 +709,15 @@ function AddPlayerProfileUrl($playerId, $type, $url, $name)
  * @param int $playerId
  * @param int $urlId
  */
-function RemovePlayerProfileUrl($playerId, $urlId)
+function RemovePlayerProfileUrl($database, $playerId, $urlId)
 {
-  $playerInfo = PlayerInfo($playerId);
-  if (hasEditPlayerProfileRight($playerId)) {
+  $playerInfo = PlayerInfo($database, $playerId);
+  if (hasEditPlayerProfileRight($database, $playerId)) {
     $query = sprintf(
       "DELETE FROM uo_urls WHERE url_id=%d",
       (int)$urlId
     );
-    return DBQuery($query);
+    return $database->DBQuery($query);
   } else {
     die('Insufficient rights to remove url');
   }
@@ -729,7 +729,7 @@ function RemovePlayerProfileUrl($playerId, $urlId)
  * @param string $season
  * @param string $separator
  */
-function PlayersToCsv($season, $separator)
+function PlayersToCsv($database, $season, $separator)
 {
 
   $query = sprintf(
@@ -771,15 +771,15 @@ function PlayersToCsv($season, $separator)
 			GROUP BY player) AS pel ON (p.player_id=pel.player)
 		WHERE divi.season='%s'
 		ORDER BY j.name, p.lastname, p.firstname", // FIXME g4.hasstarted>0??
-    mysql_real_escape_string($season),
-    mysql_real_escape_string($season),
-    mysql_real_escape_string($season),
-    mysql_real_escape_string($season),
-    mysql_real_escape_string($season),
-    mysql_real_escape_string($season)
+    $database->RealEscapeString($season),
+    $database->RealEscapeString($season),
+    $database->RealEscapeString($season),
+    $database->RealEscapeString($season),
+    $database->RealEscapeString($season),
+    $database->RealEscapeString($season)
   );
 
   // Gets the data from the database
-  $result = DBQuery($query);
-  return ResultsetToCsv($result, $separator);
+  $result = $database->DBQuery($query);
+  return ResultsetToCsv($database, $result, $separator);
 }

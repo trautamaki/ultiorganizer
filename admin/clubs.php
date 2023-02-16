@@ -6,33 +6,33 @@ include_once 'lib/country.functions.php';
 $html = "";
 if (isset($_POST['removeclub_x']) && isset($_POST['hiddenDeleteId'])) {
 	$id = $_POST['hiddenDeleteId'];
-	RemoveClub($id);
+	RemoveClub($database, $id);
 } elseif (isset($_POST['addclub']) && !empty($_POST['name'])) {
-	AddClub(0, $_POST['name']);
+	AddClub($database, 0, $_POST['name']);
 } elseif (isset($_POST['saveclub']) && !empty($_POST['valid'])) {
 	//invalidate all valid clubs
-	$clubs = ClubList(true);
-	while ($row = mysql_fetch_assoc($clubs)) {
-		SetClubValidity($row['club_id'], false);
+	$clubs = ClubList($database, true);
+	while ($row = $database->FetchAssoc($clubs)) {
+		SetClubValidity($database, $row['club_id'], false);
 	}
 	//revalidate
 	foreach ($_POST["valid"] as $clubId) {
-		SetClubValidity($clubId, true);
+		SetClubValidity($database, $clubId, true);
 	}
 } elseif (isset($_POST['removecountry_x']) && isset($_POST['hiddenDeleteId'])) {
 	$id = $_POST['hiddenDeleteId'];
-	RemoveCountry($id);
+	RemoveCountry($database, $id);
 } elseif (isset($_POST['addcountry']) && !empty($_POST['name']) && !empty($_POST['abbreviation']) && !empty($_POST['flag'])) {
-	AddCountry($_POST['name'], $_POST['abbreviation'], $_POST['flag']);
+	AddCountry($database, $_POST['name'], $_POST['abbreviation'], $_POST['flag']);
 } elseif (isset($_POST['savecountry']) && !empty($_POST['valid'])) {
 	//invalidate all valid countries
-	$countries = CountryList(true);
+	$countries = CountryList($database, true);
 	foreach ($countries as $row) {
-		SetCountryValidity($row['country_id'], false);
+		SetCountryValidity($database, $row['country_id'], false);
 	}
 	//revalidate
 	foreach ($_POST["valid"] as $countryId) {
-		SetCountryValidity($countryId, true);
+		SetCountryValidity($database, $countryId, true);
 	}
 }
 
@@ -42,7 +42,7 @@ $LAYOUT_ID = CLUBS;
 pageTopHeadOpen($title);
 include 'script/common.js.inc';
 pageTopHeadClose($title, false);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 $html .= "<form method='post' action='?view=admin/clubs'>";
@@ -55,21 +55,21 @@ $html .= "<table border='0'>\n";
 $html .= "<tr><th>" . _("Id") . "</th> <th>" . _("Name") . "</th><th>" . _("Teams") . "</th><th>" . _("Valid") . "</th><th></th></tr>\n";
 
 $i = 0;
-$clubs = ClubList();
-while ($row = mysql_fetch_assoc($clubs)) {
+$clubs = ClubList($database);
+while ($row = $database->FetchAssoc($clubs)) {
 
 	$html .= "<tr>";
 	$html .= "<td>" . $row['club_id'] . "&#160;</td>";
 	$html .=  "<td><a href='?view=user/clubprofile&amp;club=" . $row['club_id'] . "'>" . utf8entities($row['name']) . "</a></td>";
 
-	$html .= "<td class='center'>" . ClubNumOfTeams($row['club_id']) . "</td>";
+	$html .= "<td class='center'>" . ClubNumOfTeams($database, $row['club_id']) . "</td>";
 	if (intval($row['valid'])) {
 		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . utf8entities($row['club_id']) . "' checked='checked'/></td>";
 	} else {
 		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . utf8entities($row['club_id']) . "'/></td>";
 	}
 
-	if (CanDeleteClub($row['club_id'])) {
+	if (CanDeleteClub($database, $row['club_id'])) {
 		$html .=  "<td class='center'><input class='deletebutton' type='image' src='images/remove.png' alt='X' name='removeclub' value='" . _("X") . "' onclick=\"setId('" . $row['club_id'] . "');\"/></td>";
 	}
 	$html .= "</tr>\n";
@@ -90,7 +90,7 @@ $html .= "<table border='0'>\n";
 $html .= "<tr><th>" . _("Id") . "</th> <th>" . _("Name") . "</th><th>" . _("Abbreviation") . "</th><th>" . _("Teams") . "</th><th>" . _("Valid") . "</th><th></th></tr>\n";
 
 $i = 0;
-$countries = CountryList(false);
+$countries = CountryList($database, false);
 foreach ($countries as $row) {
 
 	$html .= "<tr>";
@@ -98,14 +98,14 @@ foreach ($countries as $row) {
 	$html .=  "<td>" . utf8entities($row['name']) . "</td>";
 	$html .=  "<td class='center'>" . utf8entities($row['abbreviation']) . "</td>";
 
-	$html .= "<td class='center'>" . CountryNumOfTeams($row['country_id']) . "</td>";
+	$html .= "<td class='center'>" . CountryNumOfTeams($database, $row['country_id']) . "</td>";
 	if (intval($row['valid'])) {
 		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . utf8entities($row['country_id']) . "' checked='checked'/></td>";
 	} else {
 		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . utf8entities($row['country_id']) . "'/></td>";
 	}
 
-	if (CanDeleteCountry($row['country_id'])) {
+	if (CanDeleteCountry($database, $row['country_id'])) {
 		$html .=  "<td class='center'><input class='deletebutton' type='image' src='images/remove.png' alt='X' name='removecountry' value='" . _("X") . "' onclick=\"setId('" . $row['country_id'] . "');\"/></td>";
 	}
 

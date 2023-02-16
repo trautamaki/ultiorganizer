@@ -4,6 +4,9 @@ include_once 'lib/team.functions.php';
 include_once 'lib/club.functions.php';
 include_once 'lib/pool.functions.php';
 include_once 'lib/series.functions.php';
+
+$database = new Database();
+
 $LAYOUT_ID = DBEQUALIZER;
 $title = _("Database equalization");
 $filter = 'teams';
@@ -22,30 +25,30 @@ if (isset($_POST['rename']) && !empty($_POST['ids']) && isSuperAdmin()) {
 	$name = $_POST["newname"];
 	foreach ($ids as $id) {
 		if ($filter == 'teams') {
-			$result .= "<p>" . utf8entities(TeamName($id)) . " --> " . utf8entities($name) . "</p>";
-			SetTeamName($id, $name);
+			$result .= "<p>" . utf8entities(TeamName($database, $id)) . " --> " . utf8entities($name) . "</p>";
+			SetTeamName($database, $id, $name);
 		} elseif ($filter == 'clubs') {
 			if ($id != $name) {
-				$result .= "<p>" . utf8entities(ClubName($id)) . " --> " . utf8entities(ClubName($name)) . "</p>";
-				$teams = TeamListAll();
-				while ($team = mysql_fetch_assoc($teams)) {
+				$result .= "<p>" . utf8entities(ClubName($database, $id)) . " --> " . utf8entities(ClubName($database, $name)) . "</p>";
+				$teams = TeamListAll($database);
+				while ($team = $database->FetchAssoc($teams)) {
 					if ($team['club'] == $id) {
-						SetTeamOwner($team['team_id'], $name);
+						SetTeamOwner($database, $team['team_id'], $name);
 					}
 				}
-				if (CanDeleteClub($id)) {
-					$result .= "<p>" . utf8entities(ClubName($id)) . " " . _("removed") . "</p>";
-					RemoveClub($id);
+				if (CanDeleteClub($database, $id)) {
+					$result .= "<p>" . utf8entities(ClubName($database, $id)) . " " . _("removed") . "</p>";
+					RemoveClub($database, $id);
 				} else {
-					$result .= "<p class='warning'>" . utf8entities(ClubName($id)) . " " . _("cannot delete") . "</p>";
+					$result .= "<p class='warning'>" . utf8entities(ClubName($database, $id)) . " " . _("cannot delete") . "</p>";
 				}
 			}
 		} elseif ($filter == 'pools') {
-			$result .= "<p>" . utf8entities(PoolName($id)) . " --> " . utf8entities($name) . "</p>";
-			SetPoolName($id, $name);
+			$result .= "<p>" . utf8entities(PoolName($database, $id)) . " --> " . utf8entities($name) . "</p>";
+			SetPoolName($database, $id, $name);
 		} elseif ($filter == 'series') {
-			$result .= "<p>" . utf8entities(SeriesName($id)) . " --> " . utf8entities($name) . "</p>";
-			SetSeriesName($id, $name);
+			$result .= "<p>" . utf8entities(SeriesName($database, $id)) . " --> " . utf8entities($name) . "</p>";
+			SetSeriesName($database, $id, $name);
 		}
 	}
 	$result .= "<hr/>";
@@ -55,32 +58,32 @@ if (isset($_POST['rename']) && !empty($_POST['ids']) && isSuperAdmin()) {
 	$name = $_POST["newname"];
 	foreach ($ids as $id) {
 		if ($filter == 'teams') {
-			if (CanDeleteTeam($id)) {
-				$result .= "<p>" . utf8entities(TeamName($id)) . " " . _("removed") . "</p>";
-				DeleteTeam($id);
+			if (CanDeleteTeam($database, $id)) {
+				$result .= "<p>" . utf8entities(TeamName($database, $id)) . " " . _("removed") . "</p>";
+				DeleteTeam($database, $id);
 			} else {
-				$result .= "<p class='warning'>" . utf8entities(TeamName($id)) . " " . _("cannot delete") . "</p>";
+				$result .= "<p class='warning'>" . utf8entities(TeamName($database, $id)) . " " . _("cannot delete") . "</p>";
 			}
 		} elseif ($filter == 'clubs') {
-			if (CanDeleteClub($id)) {
-				$result .= "<p>" . utf8entities(ClubName($id)) . " " . _("removed") . "</p>";
-				RemoveClub($id);
+			if (CanDeleteClub($database, $id)) {
+				$result .= "<p>" . utf8entities(ClubName($database, $id)) . " " . _("removed") . "</p>";
+				RemoveClub($database, $id);
 			} else {
-				$result .= "<p class='warning'>" . utf8entities(ClubName($id)) . " " . _("cannot delete") . "</p>";
+				$result .= "<p class='warning'>" . utf8entities(ClubName($database, $id)) . " " . _("cannot delete") . "</p>";
 			}
 		} elseif ($filter == 'pools') {
-			if (CanDeletePool($id)) {
-				$result .= "<p>" . utf8entities(PoolName($id)) . " " . _("removed") . "</p>";
-				DeletePool($id);
+			if (CanDeletePool($database, $id)) {
+				$result .= "<p>" . utf8entities(PoolName($database, $id)) . " " . _("removed") . "</p>";
+				DeletePool($database, $id);
 			} else {
-				$result .= "<p class='warning'>" . utf8entities(PoolName($id)) . " " . _("cannot delete") . "</p>";
+				$result .= "<p class='warning'>" . utf8entities(PoolName($database, $id)) . " " . _("cannot delete") . "</p>";
 			}
 		} elseif ($filter == 'series') {
-			if (CanDeleteSeries($id)) {
-				$result .= "<p>" . utf8entities(SeriesName($id)) . " " . _("removed") . "</p>";
-				DeletePool($id);
+			if (CanDeleteSeries($database, $id)) {
+				$result .= "<p>" . utf8entities(SeriesName($database, $id)) . " " . _("removed") . "</p>";
+				DeletePool($database, $id);
 			} else {
-				$result .= "<p class='warning'>" . utf8entities(SeriesName($id)) . " " . _("cannot delete") . "</p>";
+				$result .= "<p class='warning'>" . utf8entities(SeriesName($database, $id)) . " " . _("cannot delete") . "</p>";
 			}
 		}
 	}
@@ -90,7 +93,7 @@ if (isset($_POST['rename']) && !empty($_POST['ids']) && isSuperAdmin()) {
 pageTopHeadOpen($title);
 include 'script/common.js.inc';
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 $html .= $result;
 $html .=  "<div>\n";
@@ -110,8 +113,8 @@ if ($filter == 'clubs') {
 	$html .=  "<p>" . _("Club to keep") . ":\n";
 	//$html .=  "<input class='input' size='50' name='newname' value=''/></p>";
 	$html .=  "<select class='dropdown' name='newname'>";
-	$clubs = ClubList();
-	while ($row = mysql_fetch_assoc($clubs)) {
+	$clubs = ClubList($database);
+	while ($row = $database->FetchAssoc($clubs)) {
 		$html .= "<option class='dropdown' value='" . utf8entities($row['club_id']) . "'>" . utf8entities($row['name']) . "</option>";
 	}
 	$html .=  "</select></p>";
@@ -131,9 +134,9 @@ $prevseries = "";
 $counter = 0;
 
 if ($filter == 'teams') {
-	$teams = TeamListAll();
+	$teams = TeamListAll($database);
 	$html .= "<th>" . _("Team") . "</th><th>" . _("Division") . "</th><th>" . _("Club") . "</th><th>" . _("Event") . "</th></tr>\n";
-	while ($team = mysql_fetch_assoc($teams)) {
+	while ($team = $database->FetchAssoc($teams)) {
 		if ($prevname != $team['name'] || $prevseries != $team['seriesname']) {
 			$counter++;
 			$prevname = $team['name'];
@@ -153,9 +156,9 @@ if ($filter == 'teams') {
 		$html .= "</tr>\n";
 	}
 } elseif ($filter == 'clubs') {
-	$clubs = ClubList();
+	$clubs = ClubList($database);
 	$html .= "<th>" . _("Name") . "</th><th>" . _("Teams") . "</th></tr>\n";
-	while ($club = mysql_fetch_assoc($clubs)) {
+	while ($club = $database->FetchAssoc($clubs)) {
 		if ($prevname != $club['name']) {
 			$counter++;
 			$prevname = $club['name'];
@@ -168,13 +171,13 @@ if ($filter == 'teams') {
 
 		$html .= "<td><input type='checkbox' name='ids[]' value='" . utf8entities($club['club_id']) . "'/></td>";
 		$html .= "<td><b>" . utf8entities($club['name']) . "</b></td>";
-		$html .= "<td class='center'>" . ClubNumOfTeams($club['club_id']) . "</td>";
+		$html .= "<td class='center'>" . ClubNumOfTeams($database, $club['club_id']) . "</td>";
 		$html .= "</tr>\n";
 	}
 } elseif ($filter == 'pools') {
-	$pools = PoolListAll();
+	$pools = PoolListAll($database);
 	$html .= "<th>" . _("Name") . "</th><th>" . _("Division") . "</th><th>" . _("Event") . "</th></tr>\n";
-	while ($pool = mysql_fetch_assoc($pools)) {
+	while ($pool = $database->FetchAssoc($pools)) {
 		if ($prevname != $pool['name']) {
 			$counter++;
 			$prevname = $pool['name'];
@@ -192,9 +195,9 @@ if ($filter == 'teams') {
 		$html .= "</tr>\n";
 	}
 } elseif ($filter == 'series') {
-	$series = Series();
+	$series = Series($database);
 	$html .= "<th>" . _("Name") . "</th><th>" . _("Event") . "</th></tr>\n";
-	while ($row = mysql_fetch_assoc($series)) {
+	while ($row = $database->FetchAssoc($series)) {
 		if ($prevname != $row['name']) {
 			$counter++;
 			$prevname = $row['name'];

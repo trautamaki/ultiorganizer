@@ -13,13 +13,13 @@
  * @param boolean $onlyvalid true if only uo_series.valid=1 rows selected.
  * @return 
  */
-function SeasonSeries($seasonId, $onlyvalid = false)
+function SeasonSeries($database, $seasonId, $onlyvalid = false)
 {
   $query = sprintf(
     "SELECT ser.* 
   	FROM uo_series ser
 	WHERE ser.season = '%s'",
-    mysql_real_escape_string($seasonId)
+    $database->RealEscapeString($seasonId)
   );
 
   if ($onlyvalid) {
@@ -27,7 +27,7 @@ function SeasonSeries($seasonId, $onlyvalid = false)
   }
 
   $query .= " ORDER BY ser.ordering ASC, ser.series_id ASC";
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -38,7 +38,7 @@ function SeasonSeries($seasonId, $onlyvalid = false)
  * @param boolean $onlyvalid true if only uo_series.valid=1 rows selected.
  * @return php array of pools
  */
-function SeasonPools($seasonId, $onlyvisible = false, $onlyvalid = true)
+function SeasonPools($database, $seasonId, $onlyvisible = false, $onlyvalid = true)
 {
 
   $query = sprintf(
@@ -46,7 +46,7 @@ function SeasonPools($seasonId, $onlyvisible = false, $onlyvalid = true)
   	FROM uo_pool pool
 	LEFT JOIN uo_series ser ON(ser.series_id=pool.series)
 	WHERE ser.season = '%s'",
-    mysql_real_escape_string($seasonId)
+    $database->RealEscapeString($seasonId)
   );
 
   if ($onlyvisible) {
@@ -58,7 +58,7 @@ function SeasonPools($seasonId, $onlyvisible = false, $onlyvalid = true)
   }
 
   $query .= " ORDER BY ser.ordering ASC, pool.ordering ASC, pool.pool_id ASC";
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -76,13 +76,13 @@ function SeasonTypes()
  * User selected season is stored into $_SESSION['userproperties']['selseason']
  * @return uo_season.season_id 
  */
-function CurrentSeason()
+function CurrentSeason($database)
 {
   if (isset($_SESSION['userproperties']['selseason'])) {
     return $_SESSION['userproperties']['selseason'];
   }
   $query = sprintf("SELECT season_id FROM uo_season WHERE iscurrent=1 ORDER BY starttime DESC");
-  return DBQueryToValue($query);
+  return $database->DBQueryToValue($query);
 }
 
 /**
@@ -90,28 +90,28 @@ function CurrentSeason()
  * 
  * @return mysql array 
  */
-function CurrentSeasons()
+function CurrentSeasons($database)
 {
   $query = sprintf("SELECT season_id AS season_id, name FROM uo_season WHERE iscurrent=1 ORDER BY starttime DESC");
-  return DBQuery($query);
+  return $database->DBQuery($query);
 }
 
 /**
  * Returns current season name.
- * @see CurrentSeason()
+ * @see CurrentSeason($database)
  * @return String uo_season.name 
  */
-function CurrentSeasonName()
+function CurrentSeasonName($database)
 {
   if (isset($_SESSION['userproperties']['selseason'])) {
     $query = sprintf(
       "SELECT name FROM uo_season WHERE season_id='%s'",
-      mysql_real_escape_string($_SESSION['userproperties']['selseason'])
+      $database->RealEscapeString($_SESSION['userproperties']['selseason'])
     );
-    return U_(DBQueryToValue($query));
+    return U_($database->DBQueryToValue($query));
   }
   $query = sprintf("SELECT name FROM uo_season WHERE iscurrent=1 ORDER BY starttime DESC");
-  return U_(DBQueryToValue($query));
+  return U_($database->DBQueryToValue($query));
 }
 
 /**
@@ -119,13 +119,13 @@ function CurrentSeasonName()
  * @param string $seasonId uo_season.season_id
  * @return String uo_season.name 
  */
-function SeasonName($seasonId)
+function SeasonName($database, $seasonId)
 {
   $query = sprintf(
     "SELECT name FROM uo_season WHERE season_id='%s'",
-    mysql_real_escape_string($seasonId)
+    $database->RealEscapeString($seasonId)
   );
-  $name = U_(DBQueryToValue($query));
+  $name = U_($database->DBQueryToValue($query));
   return ($name == -1) ? "" : $name;
 }
 
@@ -134,13 +134,13 @@ function SeasonName($seasonId)
  * @param string $seasonId uo_season.season_id
  * @return String uo_season.type
  */
-function Seasontype($seasonId)
+function Seasontype($database, $seasonId)
 {
   $query = sprintf(
     "SELECT type FROM uo_season WHERE season_id='%s'",
-    mysql_real_escape_string($seasonId)
+    $database->RealEscapeString($seasonId)
   );
-  $type = DBQueryToValue($query);
+  $type = $database->DBQueryToValue($query);
   return ($type == -1) ? "" : $type;
 }
 
@@ -149,13 +149,13 @@ function Seasontype($seasonId)
  * @param string $seasonId uo_season.season_id 
  * @return uo_season.*
  */
-function SeasonInfo($seasonId)
+function SeasonInfo($database, $seasonId)
 {
   $query = sprintf(
     "SELECT * FROM uo_season WHERE season_id='%s'",
-    mysql_real_escape_string($seasonId)
+    $database->RealEscapeString($seasonId)
   );
-  return DBQueryToRow($query, true);
+  return $database->DBQueryToRow($query, true);
 }
 
 /**
@@ -163,10 +163,10 @@ function SeasonInfo($seasonId)
  * @param string $seasonId uo_season.season_id 
  * @return true if season with given id exists
  */
-function SeasonExists($seasonId)
+function SeasonExists($database, $seasonId)
 {
-  $query = sprintf("SELECT season_id FROM uo_season WHERE season_id='%s'", mysql_real_escape_string($seasonId));
-  return DBQueryRowCount($query) > 0;
+  $query = sprintf("SELECT season_id FROM uo_season WHERE season_id='%s'", $database->RealEscapeString($seasonId));
+  return $database->DBQueryRowCount($query) > 0;
 }
 
 /**
@@ -174,10 +174,10 @@ function SeasonExists($seasonId)
  * @param string $seasonId uo_season.name 
  * @return true if season with given name exists
  */
-function SeasonNameExists($seasonName)
+function SeasonNameExists($database, $seasonName)
 {
-  $query = sprintf("SELECT season_id FROM uo_season WHERE name='%s'", mysql_real_escape_string($seasonName));
-  return DBQueryRowCount($query) > 0;
+  $query = sprintf("SELECT season_id FROM uo_season WHERE name='%s'", $database->RealEscapeString($seasonName));
+  return $database->DBQueryRowCount($query) > 0;
 }
 
 
@@ -189,15 +189,15 @@ function SeasonNameExists($seasonName)
  * @param array $ordering sql ordering  
  * @return mysql array of seasons
  */
-function Seasons($filter = null, $ordering = null)
+function Seasons($database, $filter = null, $ordering = null)
 {
   if (!isset($ordering)) {
     $ordering = array("season.starttime" => "DESC");
   }
-  $orderby = CreateOrdering(array("uo_season" => "season"), $ordering);
-  $where = CreateFilter(array("uo_season" => "season"), $filter);
+  $orderby = CreateOrdering($database, array("uo_season" => "season"), $ordering);
+  $where = CreateFilter($database, array("uo_season" => "season"), $filter);
   $query = sprintf("SELECT season_id, name FROM uo_season season $where $orderby");
-  return DBQuery(trim($query));
+  return $database->DBQuery(trim($query));
 }
 
 /**
@@ -205,10 +205,10 @@ function Seasons($filter = null, $ordering = null)
  * 
  * @return array of seasons
  */
-function SeasonsArray()
+function SeasonsArray($database)
 {
   $query = sprintf("SELECT season_id, name FROM uo_season season ORDER BY starttime DESC");
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -218,11 +218,11 @@ function SeasonsArray()
  * @param string $seasonId uo_season.season_id 
  * @return php array of seasons
  */
-function SeasonsByType($seasontype)
+function SeasonsByType($database, $seasontype)
 {
   $query = sprintf("SELECT season_id AS season_id, name FROM uo_season WHERE type='%s'
-		ORDER BY starttime DESC", mysql_real_escape_string($seasontype));
-  return DBQueryToArray($query);
+		ORDER BY starttime DESC", $database->RealEscapeString($seasontype));
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -230,15 +230,15 @@ function SeasonsByType($seasontype)
  * 
  * @return php-array with uo_season.season_id as key and name as value.
  */
-function EnrollSeasons()
+function EnrollSeasons($database)
 {
   $query = sprintf("SELECT season_id AS season_id, name FROM uo_season WHERE enrollopen=1 ORDER BY starttime DESC");
-  $result = mysql_query($query);
+  $result = $database->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . $database->GetConnection()->error);
   }
   $ret = array();
-  while ($row = mysql_fetch_assoc($result)) {
+  while ($row = $database->FetchAssoc($result)) {
     $ret[$row['season_id']] = $row['name'];
   }
   return $ret;
@@ -250,16 +250,16 @@ function EnrollSeasons()
  * @param string $seasonId uo_season.season_id
  * @return php array of players
  */
-function SeasonAllPlayers($seasonId)
+function SeasonAllPlayers($database, $seasonId)
 {
   $query = sprintf(
     "SELECT p.player_id FROM uo_player p
 			LEFT JOIN uo_team t ON (p.team=t.team_id)
 			LEFT JOIN uo_series ser ON (t.series=ser.series_id)
 			WHERE ser.season='%s' ORDER BY ser.name, t.name,p.lastname, p.firstname",
-    mysql_real_escape_string($seasonId)
+    $database->RealEscapeString($seasonId)
   );
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 
@@ -271,14 +271,14 @@ function SeasonAllPlayers($seasonId)
  * @param boolean $onlyvalid true if only uo_team.valid=1 rows selected.
  * @return php array of teams
  */
-function SeasonTeams($season, $onlyvalid = true)
+function SeasonTeams($database, $season, $onlyvalid = true)
 {
   $query = sprintf(
     "SELECT team.*, ser.name AS seriesname
 		FROM uo_team team
 		LEFT JOIN uo_series ser ON(team.series=ser.series_id)
 		WHERE ser.season='%s'",
-    mysql_real_escape_string($season)
+    $database->RealEscapeString($season)
   );
 
   if ($onlyvalid) {
@@ -286,7 +286,7 @@ function SeasonTeams($season, $onlyvalid = true)
   }
   $query .= " ORDER BY ser.ordering, team.name";
 
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -295,22 +295,22 @@ function SeasonTeams($season, $onlyvalid = true)
  * @param string $seasonId uo_season.season_id
  * @return php array of reservations
  */
-function SeasonReservations($seasonId, $group = "all")
+function SeasonReservations($database, $seasonId, $group = "all")
 {
   $query = sprintf(
     "SELECT  pr.*, pl.name FROM uo_reservation pr 
 		LEFT JOIN uo_location pl ON (pr.location=pl.id)
 		WHERE pr.season='%s'",
-    mysql_real_escape_string($seasonId)
+    $database->RealEscapeString($seasonId)
   );
 
   if ($group != "all") {
-    $query .= sprintf(" AND pr.reservationgroup = '%s'",  mysql_real_escape_string($group));
+    $query .= sprintf(" AND pr.reservationgroup = '%s'",  $database->RealEscapeString($group));
   }
 
   $query .= " ORDER BY pr.starttime, pr.reservationgroup ASC, pl.name, pr.fieldname+0";
 
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -319,7 +319,7 @@ function SeasonReservations($seasonId, $group = "all")
  * @param string $seasonId uo_season.season_id
  * @return php array of reservations
  */
-function SeasonReservationgroups($seasonId)
+function SeasonReservationgroups($database, $seasonId)
 {
   $query = sprintf(
     "
@@ -327,10 +327,10 @@ function SeasonReservationgroups($seasonId)
 		FROM uo_reservation pr
 		WHERE pr.season='%s'
 		ORDER BY pr.starttime, pr.reservationgroup ASC, pr.fieldname+0",
-    mysql_real_escape_string($seasonId)
+    $database->RealEscapeString($seasonId)
   );
 
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -339,7 +339,7 @@ function SeasonReservationgroups($seasonId)
  * @param string $seasonId uo_season.season_id
  * @return php array of reservations
  */
-function SeasonReservationLocations($seasonId, $group = "all")
+function SeasonReservationLocations($database, $seasonId, $group = "all")
 {
   $query = sprintf(
     "
@@ -347,15 +347,15 @@ function SeasonReservationLocations($seasonId, $group = "all")
 		FROM uo_reservation pr
         LEFT JOIN uo_location pl ON (pr.location=pl.id)
 		WHERE pr.season='%s'",
-    mysql_real_escape_string($seasonId)
+    $database->RealEscapeString($seasonId)
   );
 
   if ($group != "all") {
-    $query .= sprintf(" AND pr.reservationgroup = '%s'", mysql_real_escape_string($group));
+    $query .= sprintf(" AND pr.reservationgroup = '%s'", $database->RealEscapeString($group));
   }
   $query .= "ORDER BY pr.location, pr.fieldname+0";
 
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -364,7 +364,7 @@ function SeasonReservationLocations($seasonId, $group = "all")
  * @param string $seasonId uo_season.season_id
  * @return php array of games
  */
-function SeasonGamesNotScheduled($seasonId)
+function SeasonGamesNotScheduled($database, $seasonId)
 {
   $query = sprintf(
     "
@@ -382,9 +382,9 @@ function SeasonGamesNotScheduled($seasonId)
 		LEFT JOIN uo_scheduling_name AS pvisitor ON (p.scheduling_name_visitor=pvisitor.scheduling_id)
 		WHERE ser.season='%s' AND (p.time IS NULL OR p.reservation IS NULL OR p.reservation='0')
 		ORDER BY time ASC ",
-    mysql_real_escape_string($seasonId)
+    $database->RealEscapeString($seasonId)
   );
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -393,7 +393,7 @@ function SeasonGamesNotScheduled($seasonId)
  * @param string $seasonId uo_season.season_id
  * @return php array of games
  */
-function SeasonAllGames($season)
+function SeasonAllGames($database, $season)
 {
   $query = sprintf(
     "
@@ -403,10 +403,10 @@ function SeasonAllGames($season)
 		LEFT JOIN uo_series ser ON (ser.series_id=pool.series)
 		WHERE ser.season='%s'
 		ORDER BY game.game_id",
-    mysql_real_escape_string($season)
+    $database->RealEscapeString($season)
   );
 
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
 /**
@@ -417,9 +417,9 @@ function SeasonAllGames($season)
  * @param string $seasonId uo_season.season_id
  * @return php array of users
  */
-function SeasonTeamAdmins($seasonId, $group = false)
+function SeasonTeamAdmins($database, $seasonId, $group = false)
 {
-  $seasonrights = getEditSeasons($_SESSION['uid']);
+  $seasonrights = getEditSeasons($database, $_SESSION['uid']);
   if (isset($seasonrights[$seasonId])) {
     if ($group) {
       $query = sprintf(
@@ -429,7 +429,7 @@ function SeasonTeamAdmins($seasonId, $group = false)
   			WHERE j.series IN (SELECT series_id FROM uo_series WHERE season='%s') AND up.value LIKE 'teamadmin:%%'
   			GROUP BY u.email
   			ORDER BY j.series, j.name",
-        mysql_real_escape_string($seasonId)
+        $database->RealEscapeString($seasonId)
       );
     } else {
       $query = sprintf(
@@ -438,10 +438,10 @@ function SeasonTeamAdmins($seasonId, $group = false)
   			LEFT JOIN uo_team j ON (SUBSTRING_INDEX(up.value, ':', -1)=j.team_id)
   			WHERE j.series IN (SELECT series_id FROM uo_series WHERE season='%s') AND up.value LIKE 'teamadmin:%%'
   			ORDER BY j.series, j.name",
-        mysql_real_escape_string($seasonId)
+        $database->RealEscapeString($seasonId)
       );
     }
-    return DBQueryToArray($query);
+    return $database->DBQueryToArray($query);
   } else {
     die('Insufficient rights');
   }
@@ -455,9 +455,9 @@ function SeasonTeamAdmins($seasonId, $group = false)
  * @param string $seasonId uo_season.season_id
  * @return php array of users
  */
-function SeasonAccreditationAdmins($seasonId, $group = false)
+function SeasonAccreditationAdmins($database, $seasonId, $group = false)
 {
-  $seasonrights = getEditSeasons($_SESSION['uid']);
+  $seasonrights = getEditSeasons($database, $_SESSION['uid']);
   if (isset($seasonrights[$seasonId])) {
     if ($group) {
       $query = sprintf(
@@ -467,7 +467,7 @@ function SeasonAccreditationAdmins($seasonId, $group = false)
   			WHERE j.series IN (SELECT series_id FROM uo_series WHERE season='%s') AND up.value LIKE 'accradmin:%%'
   			GROUP BY u.email
   			ORDER BY j.series, j.name",
-        mysql_real_escape_string($seasonId)
+        $database->RealEscapeString($seasonId)
       );
     } else {
       $query = sprintf(
@@ -476,10 +476,10 @@ function SeasonAccreditationAdmins($seasonId, $group = false)
   			LEFT JOIN uo_team j ON (SUBSTRING_INDEX(up.value, ':', -1)=j.team_id)
   			WHERE j.series IN (SELECT series_id FROM uo_series WHERE season='%s') AND up.value LIKE 'accradmin:%%'
   			ORDER BY j.series, j.name",
-        mysql_real_escape_string($seasonId)
+        $database->RealEscapeString($seasonId)
       );
     }
-    return DBQueryToArray($query);
+    return $database->DBQueryToArray($query);
   } else {
     die('Insufficient rights');
   }
@@ -492,9 +492,9 @@ function SeasonAccreditationAdmins($seasonId, $group = false)
  * @param string $seasonId uo_season.season_id
  * @return php array of users
  */
-function SeasonGameAdmins($seasonId)
+function SeasonGameAdmins($database, $seasonId)
 {
-  $seasonrights = getEditSeasons($_SESSION['uid']);
+  $seasonrights = getEditSeasons($database, $_SESSION['uid']);
   if (isset($seasonrights[$seasonId])) {
     $query = sprintf(
       "SELECT u.userid, u.name, u.email, COUNT(*) AS games FROM uo_users u
@@ -506,9 +506,9 @@ function SeasonGameAdmins($seasonId)
 				WHERE ser.season='%s' AND gp.timetable=1)
   			GROUP BY u.userid
 			ORDER BY u.name",
-      mysql_real_escape_string($seasonId)
+      $database->RealEscapeString($seasonId)
     );
-    return DBQueryToArray($query);
+    return $database->DBQueryToArray($query);
   } else {
     die('Insufficient rights');
   }
@@ -522,9 +522,9 @@ function SeasonGameAdmins($seasonId)
  * @param string $seasonId uo_season.season_id
  * @return php array of users
  */
-function SeasonAdmins($seasonId)
+function SeasonAdmins($database, $seasonId)
 {
-  $seasonrights = getEditSeasons($_SESSION['uid']);
+  $seasonrights = getEditSeasons($database, $_SESSION['uid']);
   if (isset($seasonrights[$seasonId])) {
     $query = sprintf(
       "SELECT u.userid, u.name, u.email
@@ -532,10 +532,10 @@ function SeasonAdmins($seasonId)
 			LEFT JOIN uo_userproperties up ON (u.userid=up.userid)
 			WHERE SUBSTRING_INDEX(up.value,':',1)='seasonadmin' AND SUBSTRING_INDEX(up.value, ':', -1)='%s'
 			GROUP BY u.userid, u.name, u.email",
-      mysql_real_escape_string($seasonId)
+      $database->RealEscapeString($seasonId)
     );
 
-    return DBQueryToArray($query);
+    return $database->DBQueryToArray($query);
   } else {
     die('Insufficient rights');
   }
@@ -549,15 +549,15 @@ function SeasonAdmins($seasonId)
  * @param string $seasonId uo_season.season_id
  * @return boolean TRUE on success or FALSE on error. 
  */
-function DeleteSeason($seasonId)
+function DeleteSeason($database, $seasonId)
 {
   if (isSuperAdmin()) {
-    Log2("season", "delete", SeasonName($seasonId));
+    Log2($database, "season", "delete", SeasonName($database, $seasonId));
     $query = sprintf(
       "DELETE FROM uo_season WHERE season_id='%s'",
-      mysql_real_escape_string($seasonId)
+      $database->RealEscapeString($seasonId)
     );
-    return DBQuery($query);
+    return $database->DBQuery($query);
   } else {
     die('Insufficient rights to delete season');
   }
@@ -573,7 +573,7 @@ function DeleteSeason($seasonId)
  * @param string $comment uo_comment for the season
  * @return boolean TRUE on success or FALSE on error. 
  */
-function AddSeason($seasonId, $params, $comment = null)
+function AddSeason($database, $seasonId, $params, $comment = null)
 {
   if (isSuperAdmin()) {
     $query = sprintf(
@@ -583,30 +583,30 @@ function AddSeason($seasonId, $params, $comment = null)
 			starttime, endtime, iscurrent, enrollopen, enroll_deadline,spiritmode,showspiritpoints,
 			timezone) 
 			VALUES ('%s', '%s', '%s', %d, %d, '%s', '%s', '%d', '%s', '%s', %d, %d, '%s', %d, %d, '%s')",
-      mysql_real_escape_string($seasonId),
-      mysql_real_escape_string($params['name']),
-      mysql_real_escape_string($params['type']),
+      $database->RealEscapeString($seasonId),
+      $database->RealEscapeString($params['name']),
+      $database->RealEscapeString($params['type']),
       (int)$params['istournament'],
       (int)$params['isinternational'],
-      mysql_real_escape_string($params['organizer']),
-      mysql_real_escape_string($params['category']),
+      $database->RealEscapeString($params['organizer']),
+      $database->RealEscapeString($params['category']),
       (int)$params['isnationalteams'],
-      mysql_real_escape_string($params['starttime']),
-      mysql_real_escape_string($params['endtime']),
+      $database->RealEscapeString($params['starttime']),
+      $database->RealEscapeString($params['endtime']),
       (int)$params['iscurrent'],
       (int)$params['enrollopen'],
-      mysql_real_escape_string($params['enroll_deadline']),
+      $database->RealEscapeString($params['enroll_deadline']),
       (int)$params['spiritmode'],
       (int)$params['showspiritpoints'],
-      mysql_real_escape_string($params['timezone'])
+      $database->RealEscapeString($params['timezone'])
     );
 
-    Log1("season", "add", $seasonId);
+    Log1($database, "season", "add", $seasonId);
 
-    $result = DBQuery($query);
+    $result = $database->DBQuery($query);
 
     if ($result && isset($comment)) {
-      SetComment(1, $seasonId, $comment);
+      SetComment($database, 1, $seasonId, $comment);
     }
     return $result;
   } else {
@@ -624,7 +624,7 @@ function AddSeason($seasonId, $params, $comment = null)
  * @param string $comment uo_comment for the season
  * @return boolean TRUE on success or FALSE on error. 
  */
-function SetSeason($seasonId, $params, $comment = null)
+function SetSeason($database, $seasonId, $params, $comment = null)
 {
   if (isSeasonAdmin($seasonId)) {
     $query = sprintf(
@@ -635,28 +635,28 @@ function SetSeason($seasonId, $params, $comment = null)
 			starttime='%s', endtime='%s', iscurrent=%d, enrollopen=%d, enroll_deadline='%s',
 			spiritmode=%d, showspiritpoints=%d, timezone='%s'
 			WHERE season_id='%s'",
-      mysql_real_escape_string($seasonId),
-      mysql_real_escape_string($params['name']),
-      mysql_real_escape_string($params['type']),
+      $database->RealEscapeString($seasonId),
+      $database->RealEscapeString($params['name']),
+      $database->RealEscapeString($params['type']),
       (int)$params['istournament'],
       (int)$params['isinternational'],
-      mysql_real_escape_string($params['organizer']),
-      mysql_real_escape_string($params['category']),
+      $database->RealEscapeString($params['organizer']),
+      $database->RealEscapeString($params['category']),
       (int)$params['isnationalteams'],
-      mysql_real_escape_string($params['starttime']),
-      mysql_real_escape_string($params['endtime']),
+      $database->RealEscapeString($params['starttime']),
+      $database->RealEscapeString($params['endtime']),
       (int)$params['iscurrent'],
       (int)$params['enrollopen'],
-      mysql_real_escape_string($params['enroll_deadline']),
+      $database->RealEscapeString($params['enroll_deadline']),
       (int)$params['spiritmode'],
       (int)$params['showspiritpoints'],
-      mysql_real_escape_string($params['timezone']),
-      mysql_real_escape_string($seasonId)
+      $database->RealEscapeString($params['timezone']),
+      $database->RealEscapeString($seasonId)
     );
 
-    $result = DBQuery($query);
+    $result = $database->DBQuery($query);
     if (isset($comment) && $result)
-      SetComment(1, $seasonId, $comment);
+      SetComment($database, 1, $seasonId, $comment);
     return $result;
   } else {
     die('Insufficient rights to edit season');
@@ -669,46 +669,46 @@ function SetSeason($seasonId, $params, $comment = null)
  * @param string $seasonId uo_season.season_id
  * @return boolean true if season can be deleted, false otherwise. 
  */
-function CanDeleteSeason($seasonId)
+function CanDeleteSeason($database, $seasonId)
 {
   $query = sprintf(
     "SELECT count(*) FROM uo_series WHERE season='%s'",
-    mysql_real_escape_string($seasonId)
+    $database->RealEscapeString($seasonId)
   );
-  $result = mysql_query($query);
+  $result = $database->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . $database->GetConnection()->error);
   }
-  if (!$row = mysql_fetch_row($result)) return false;
+  if (!$row = $result->fetch_row) return false;
   if ($row[0] == 0) {
     $query = sprintf(
       "SELECT season_id FROM uo_season WHERE iscurrent=1 AND season_id='%s'",
-      mysql_real_escape_string($seasonId)
+      $database->RealEscapeString($seasonId)
     );
-    $result = mysql_query($query);
+    $result = $database->DBQuery($query);
     if (!$result) {
-      die('Invalid query: ' . mysql_error());
+      die('Invalid query: ' . $database->GetConnection()->error);
     }
-    if (!$row = mysql_fetch_row($result)) return true;
+    if (!$row = $result->fetch_row) return true;
     return !($row[0] == $seasonId);
   } else return false;
 }
 
-function SpiritMode($mode_id)
+function SpiritMode($database, $mode_id)
 {
   $query = sprintf("SELECT mode, text AS name FROM `uo_spirit_category`
           WHERE `mode` = \"%d\" AND `index` = \"0\"", (int) $mode_id);
-  return DBQueryToRow($query);
+  return $database->DBQueryToRow($query);
 }
 
-function SpiritModes()
+function SpiritModes($database)
 {
   $query = sprintf("SELECT mode, text AS name FROM `uo_spirit_category`
           WHERE `index` = 0");
-  return DBQueryToArray($query);
+  return $database->DBQueryToArray($query);
 }
 
-function SpiritCategories($mode_id)
+function SpiritCategories($database, $mode_id)
 {
   $query = sprintf(
     "SELECT * FROM `uo_spirit_category` 
@@ -716,7 +716,7 @@ function SpiritCategories($mode_id)
       ORDER BY `group` ASC, `index` ASC",
     (int) $mode_id
   );
-  $cats = DBQueryToArray($query);
+  $cats = $database->DBQueryToArray($query);
   $categories = array();
   foreach ($cats as $cat) {
     $categories[$cat['category_id']] = $cat;

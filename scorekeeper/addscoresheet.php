@@ -6,11 +6,11 @@ $errors = false;
 $gameId = isset($_GET['game']) ? $_GET['game'] : $_SESSION['game'];
 $_SESSION['game'] = $gameId;
 
-$seasoninfo = SeasonInfo(GameSeason($gameId));
-$game_result = GameResult($gameId);
-$result = GameGoals($gameId);
+$seasoninfo = SeasonInfo($database, GameSeason($database, $gameId));
+$game_result = GameResult($database, $gameId);
+$result = GameGoals($database, $gameId);
 $scores = array();
-while ($row = mysql_fetch_assoc($result)) {
+while ($row = $database->FetchAssoc($result)) {
   $scores[] = $row;
 }
 $uo_goal = array(
@@ -103,11 +103,11 @@ if (isset($_POST['add']) || isset($_POST['forceadd'])) {
   }
 
   if (empty($errors) || isset($_POST['forceadd'])) {
-    GameAddScoreEntry($uo_goal);
-    $result = GameResult($gameId);
+    GameAddScoreEntry($database, $uo_goal);
+    $result = GameResult($database, $gameId);
     //save as result, if result is not already set
     if (($uo_goal['homescore'] + $uo_goal['visitorscore']) > ($result['homescore'] + $result['visitorscore'])) {
-      GameUpdateResult($gameId, $uo_goal['homescore'], $uo_goal['visitorscore']);
+      GameUpdateResult($database, $gameId, $uo_goal['homescore'], $uo_goal['visitorscore']);
     }
     header("location:?view=addscoresheet&game=" . $gameId);
   }
@@ -120,7 +120,7 @@ if (isset($_POST['add']) || isset($_POST['forceadd'])) {
     $home = $lastscore['homescore'];
     $away = $lastscore['visitorscore'];
   }
-  GameSetResult($gameId, $home, $away);
+  GameSetResult($database, $gameId, $home, $away);
   header("location:?view=gameplay&game=" . $gameId);
 }
 
@@ -146,11 +146,11 @@ if (count($scores) > 0) {
   if (intval($lastscore['iscallahan'])) {
     $lastpass = "xx";
   } else {
-    $lastpass = "#" . PlayerNumber($lastscore['assist'], $gameId) . " ";
-    $lastpass .= PlayerName($lastscore['assist']);
+    $lastpass = "#" . PlayerNumber($database, $lastscore['assist'], $gameId) . " ";
+    $lastpass .= PlayerName($database, $lastscore['assist']);
   }
-  $lastgoal = "#" . PlayerNumber($lastscore['scorer'], $gameId) . " ";
-  $lastgoal .= PlayerName($lastscore['scorer']);
+  $lastgoal = "#" . PlayerNumber($database, $lastscore['scorer'], $gameId) . " ";
+  $lastgoal .= PlayerName($database, $lastscore['scorer']);
   $html .= $lastpass . " --> " . $lastgoal . "";
   //$html .= "</div>";
   //$html .= "<div class='ui-block-b'>\n";
@@ -184,9 +184,9 @@ $html .= "</div>";
 $played_players = array();
 
 if ($team == 'H') {
-  $played_players = GamePlayers($gameId, $game_result['hometeam']);
+  $played_players = GamePlayers($database, $gameId, $game_result['hometeam']);
 } elseif ($team == 'A') {
-  $played_players = GamePlayers($gameId, $game_result['visitorteam']);
+  $played_players = GamePlayers($database, $gameId, $game_result['visitorteam']);
 }
 
 $html .= "<label for='pass' class='select'>" . _("Assist") . "</label>";
@@ -290,7 +290,7 @@ echo $html;
   var homelist = <?php
                   echo "\"";
                   echo "<option value='0'>-</option>";
-                  $played_players = GamePlayers($gameId, $game_result['hometeam']);
+                  $played_players = GamePlayers($database, $gameId, $game_result['hometeam']);
                   foreach ($played_players as $player) {
                     echo "<option value='" . utf8entities($player['player_id']) . "'>#" . $player['num'] . " " . utf8entities($player['firstname'] . " " . $player['lastname']) . "</option>";
                   }
@@ -300,7 +300,7 @@ echo $html;
 
   var awaylist = <?php
                   echo "\"";
-                  $played_players = GamePlayers($gameId, $game_result['visitorteam']);
+                  $played_players = GamePlayers($database, $gameId, $game_result['visitorteam']);
                   echo "<option value='0'>-</option>";
                   foreach ($played_players as $player) {
                     echo "<option value='" . utf8entities($player['player_id']) . "'>#" . $player['num'] . " " . utf8entities($player['firstname'] . " " . $player['lastname']) . "</option>";

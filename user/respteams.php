@@ -4,15 +4,17 @@ include_once $include_prefix . 'lib/common.functions.php';
 include_once $include_prefix . 'lib/season.functions.php';
 include_once $include_prefix . 'lib/series.functions.php';
 
+$database = new Database();
+
 $title = _("Team responsibilities");
 $html = "";
 
 if (isset($_GET['season'])) {
 	$season = $_GET['season'];
 } else {
-	$season = CurrentSeason();
+	$season = CurrentSeason($database);
 }
-$seasoninfo = SeasonInfo($season);
+$seasoninfo = SeasonInfo($database, $season);
 
 $html .= "<h1>" . _("Team responsibilities") . "</h1>";
 $html .= "<table width='500px'>";
@@ -28,7 +30,7 @@ $html .= "</tr>";
 
 if (isset($_SESSION['userproperties']['userrole']['teamadmin'])) {
 	foreach ($_SESSION['userproperties']['userrole']['teamadmin'] as $team => $param) {
-		$teaminfo = TeamInfo($team);
+		$teaminfo = TeamInfo($database, $team);
 		if ($teaminfo['season'] == $seasoninfo['season_id']) {
 
 			$html .= "<tr>";
@@ -46,4 +48,4 @@ if (isset($_SESSION['userproperties']['userrole']['teamadmin'])) {
 }
 $html .= "</table>";
 
-showPage($title, $html);
+showPage($database, $title, $html);

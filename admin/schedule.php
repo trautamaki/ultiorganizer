@@ -14,7 +14,7 @@ if (isset($_GET['reservations'])) {
 } else {
   $reservations = array_flip($_SESSION['userproperties']['userrole']['resadmin']);
 }
-$reservationData = ReservationInfoArray($reservations);
+$reservationData = ReservationInfoArray($database, $reservations);
 $numOfreservations = count($reservations);
 
 define("MIN_HEIGHT", 1.0);
@@ -50,17 +50,17 @@ $seasonfilter = array();
 $seriesfilter = array();
 $poolfilter = array();
 
-$seasons = Seasons();
-while ($season = mysql_fetch_assoc($seasons)) {
-  $seasonfilter[] = array('id' => $season['season_id'], 'name' => U_(SeasonName($season['season_id'])));
+$seasons = Seasons($database);
+while ($season = $database->FetchAssoc($seasons)) {
+  $seasonfilter[] = array('id' => $season['season_id'], 'name' => U_(SeasonName($database, $season['season_id'])));
 }
 
-$series = SeasonSeries($seasonId);
+$series = SeasonSeries($database, $seasonId);
 foreach ($series as $ser) {
   $seriesfilter[] = array('id' => $ser['series_id'], 'name' => U_($ser['name']));
 }
 
-$pools = SeriesPools($seriesId);
+$pools = SeriesPools($database, $seriesId);
 foreach ($pools as $tmppool) {
   $poolfilter[] = array('id' => $tmppool['pool_id'], 'name' => U_($tmppool['name']));
 }
@@ -255,14 +255,14 @@ echo "<a href='" . utf8entities($backurl) . "'>" . _("Return") . "</a>";
 
 echo "<table><tr><td class='scheduling_column'>";
 
-//$teams = UnscheduledTeams();
-//$unscheduledTeams = array_flip(UnscheduledTeams());
+//$teams = UnscheduledTeams($database);
+//$unscheduledTeams = array_flip(UnscheduledTeams($database));
 if ($poolId) {
-  $gameData = UnscheduledPoolGameInfo($poolId);
+  $gameData = UnscheduledPoolGameInfo($database, $poolId);
 } elseif ($seriesId) {
-  $gameData = UnscheduledSeriesGameInfo($seriesId);
+  $gameData = UnscheduledSeriesGameInfo($database, $seriesId);
 } elseif (!empty($seasonId)) {
-  $gameData = UnscheduledSeasonGameInfo($seasonId);
+  $gameData = UnscheduledSeasonGameInfo($database, $seasonId);
 } else {
   $gameData = array();
 }
@@ -286,8 +286,8 @@ function gameEntry($gameInfo, $height, $duration, $poolname, $editable = true)
   $color = $gameInfo['color'];
   $textColor = textColor($color);
   $gameId = $gameInfo['game_id'];
-  $gamename = utf8entities(getGameName($gameInfo, true));
-  $tooltip = utf8entities(getGameName($gameInfo));
+  $gamename = utf8entities(getGameName($database, $gameInfo, true));
+  $tooltip = utf8entities(getGameName($database, $gameInfo));
   if ($tooltip == $gamename)
     $tooltip = "";
   else
@@ -316,7 +316,7 @@ function getVName($gameInfo)
   return empty($gameInfo['visitorteamshortname']) ? $gameInfo['visitorteamname'] : $gameInfo['visitorteamshortname'];
 }
 
-function getGameName($gameInfo, $short = false)
+function getGameName($database, $gameInfo, $short = false)
 {
   if ($gameInfo['hometeam'] && $gameInfo['visitorteam']) {
     if ($short) {
@@ -330,7 +330,7 @@ function getGameName($gameInfo, $short = false)
   return $gametitle;
 }
 
-function gamePoolName($gameInfo)
+function gamePoolName($database, $gameInfo)
 {
   return U_($gameInfo['seriesname']) . ", " . U_($gameInfo['poolname']);
 }
@@ -414,13 +414,13 @@ $zeroGames = array();
 echo "<div class='workarea' >\n";
 echo "<ul class='draglist' id='unscheduled'  style='min-height:600px'>\n";
 foreach ($gameData as $gameId => $gameInfo) {
-  if (hasEditGamesRight($gameInfo['series'])) {
+  if (hasEditGamesRight($database, $gameInfo['series'])) {
     $duration = gameDuration($gameInfo);
     if ($duration <= 0) {
       $zeroGames[] = count($zeroGames) == 0 ? $gameInfo : $gameId;
     }
     $height = gameHeight($duration);
-    $poolname = gamePoolName($gameInfo);
+    $poolname = gamePoolName($database, $gameInfo);
     $maxtimeslot = max($maxtimeslot, $duration);
     if ($duration > 0)
       echo gameEntry($gameInfo, $height, $duration, $poolname);
@@ -476,9 +476,9 @@ if (count($reservationData) > 0) {
         }
         $nextStart = $gameStart + ($duration * 60);
         $height = gameHeight($duration);
-        $gametitle = getGameName($gameInfo);
-        $pooltitle = gamePoolName($gameInfo);
-        if ($duration > 0 && hasEditGamesRight($gameInfo['series'])) {
+        $gametitle = getGameName($database, $gameInfo);
+        $pooltitle = gamePoolName($database, $gameInfo);
+        if ($duration > 0 && hasEditGamesRight($database, $gameInfo['series'])) {
           echo gameEntry($gameInfo, $height, $duration, $pooltitle);
         } else {
           echo gameEntry($gameInfo, $height, $duration, $pooltitle, false);
@@ -541,9 +541,9 @@ if (count($reservationData) > 0) {
         }
         $nextStart = $gameStart + (max($duration, 60) * 60);
         $height = gameHeight($duration);
-        $gametitle = getGameName($gameInfo);
-        $pooltitle = gamePoolName($gameInfo);
-        if ($duration > 0 && hasEditGamesRight($gameInfo['series'])) {
+        $gametitle = getGameName($database, $gameInfo);
+        $pooltitle = gamePoolName($database, $gameInfo);
+        if ($duration > 0 && hasEditGamesRight($database, $gameInfo['series'])) {
           echo gameEntry($gameInfo, $height, $duration, $pooltitle);
         } else {
           echo gameEntry($gameInfo, $height, $duration, $pooltitle, false);
@@ -564,7 +564,7 @@ echo "<td class='center'><div id='responseStatus'></div>";
 if (!empty($zeroGames)) {
   echo "<p>" . sprintf(
     _("Warning: Games with duration 0 found. They can not be scheduled. Edit the game duration or the time slot length of pool %s ..."),
-    gamePoolName($zeroGames[0])
+    gamePoolName($database, $zeroGames[0])
   ) . "</p>";
 }
 echo "</td></tr></table>\n";
@@ -699,14 +699,14 @@ echo "<a href='" . utf8entities($backurl) . "'>" . _("Return") . "</a>";
           foreach ($dayArray as $reservationId => $reservationArray) {
             echo "		new YAHOO.util.DDTarget(\"res" . $reservationId . "\");\n";
             foreach ($reservationArray['games'] as $gameId => $gameInfo) {
-              if (hasEditGamesRight($gameInfo['series'])) {
+              if (hasEditGamesRight($database, $gameInfo['series'])) {
                 echo "		new YAHOO.example.DDList(\"game" . $gameId . "\");\n";
               }
             }
           }
         }
         foreach ($gameData as $gameId => $gameInfo) {
-          if (hasEditGamesRight($gameInfo['series'])) {
+          if (hasEditGamesRight($database, $gameInfo['series'])) {
             echo "		new YAHOO.example.DDList(\"game" . $gameId . "\");\n";
           }
         }

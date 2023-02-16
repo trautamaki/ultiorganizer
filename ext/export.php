@@ -11,7 +11,7 @@ $html = "";
 
 $encoding = "UTF-8";
 $separator = ",";
-$season = CurrentSeason();
+$season = CurrentSeason($database);
 
 if (isset($_POST['change'])) {
 	$separator = $_POST['separator'];
@@ -22,7 +22,7 @@ if (isset($_POST['change'])) {
 $html .= "<h2>" . _("CSV-files") . "</h2>\n";
 $html .= "<p>" . _("Get comma separated UTF-8 encoded files by clicking links below.");
 $html .= " " . _("You can also change encoding and separator.") . "</p>\n";
-$html .= "<p>" . SeasonName($season) . "<br/>";
+$html .= "<p>" . SeasonName($database, $season) . "<br/>";
 $html .= "<a href='ext/gamescsv.php?Season=$season&amp;Enc=$encoding&amp;Sep=$separator'>&raquo; " . _("All scheduled games") . "</a><br/>";
 $html .= "<a href='ext/resultscsv.php?Season=$season&amp;Enc=$encoding&amp;Sep=$separator'>&raquo; " . _("All results") . "</a><br/>";
 $html .= "<a href='ext/playerscsv.php?Season=$season&amp;Enc=$encoding&amp;Sep=$separator'>&raquo; " . _("Player statistics") . "</a><br/>";
@@ -33,9 +33,9 @@ $html .= "</p>";
 $html .= "<form method='post' action='?view=ext/export'>\n";
 $html .= "<p>" . _("Select event") . ":	<select class='dropdown' name='season'>\n";
 
-$seasons = Seasons();
+$seasons = Seasons($database);
 
-while ($row = mysql_fetch_assoc($seasons)) {
+while ($row = $database->FetchAssoc($seasons)) {
 	if ($row['season_id'] == $season)
 		$html .= "<option class='dropdown' selected='selected' value='" . utf8entities($row['season_id']) . "'>" . utf8entities($row['name']) . "</option>";
 	else
@@ -58,4 +58,4 @@ $html .= "<p>" . ("CSV separator") . ": <input class='input' maxlength='1' size=
 $html .= "<p><input class='button' type='submit' name='change' value='" . ("Change") . "'/></p>";
 $html .= "</form>";
 
-showPage($title, $html);
+showPage($database, $title, $html);

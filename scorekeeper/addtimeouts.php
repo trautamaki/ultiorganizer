@@ -5,14 +5,14 @@ $maxtimeouts = 4;
 $gameId = isset($_GET['game']) ? $_GET['game'] : $_SESSION['game'];
 $_SESSION['game'] = $gameId;
 
-$game_result = GameResult($gameId);
+$game_result = GameResult($database, $gameId);
 
 if (isset($_POST['save'])) {
   $time = "0.0";
   $time_delim = array(",", ";", ":", "#", "*");
 
   //remove all old timeouts (if any)
-  GameRemoveAllTimeouts($gameId);
+  GameRemoveAllTimeouts($database, $gameId);
 
   //insert home timeouts
   $j = 0;
@@ -23,7 +23,7 @@ if (isset($_POST['save'])) {
 
     if (($timemm + $timess) > 0) {
       $j++;
-      GameAddTimeout($gameId, $j, TimeToSec($time), 1);
+      GameAddTimeout($database, $gameId, $j, TimeToSec($time), 1);
     }
   }
 
@@ -36,7 +36,7 @@ if (isset($_POST['save'])) {
 
     if (($timemm + $timess) > 0) {
       $j++;
-      GameAddTimeout($gameId, $j, TimeToSec($time), 0);
+      GameAddTimeout($database, $gameId, $j, TimeToSec($time), 0);
     }
   }
 
@@ -61,9 +61,9 @@ $j = 0;
 $timemm = 0;
 $timess = 0;
 
-$timeouts = GameTimeouts($gameId);
+$timeouts = GameTimeouts($database, $gameId);
 
-while ($timeout = mysql_fetch_assoc($timeouts)) {
+while ($timeout = $database->FetchAssoc($timeouts)) {
   if (intval($timeout['ishome'])) {
     $html .= "<div class='ui-block-a'>\n";
 
@@ -133,9 +133,9 @@ $html .= "<div class='ui-grid-b'>";
 //used timeouts
 $j = 0;
 
-$timeouts = GameTimeouts($gameId);
+$timeouts = GameTimeouts($database, $gameId);
 
-while ($timeout = mysql_fetch_assoc($timeouts)) {
+while ($timeout = $database->FetchAssoc($timeouts)) {
   if (!intval($timeout['ishome'])) {
     $html .= "<div class='ui-block-a'>\n";
 

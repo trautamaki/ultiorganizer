@@ -7,6 +7,9 @@ include_once 'lib/configuration.functions.php';
 if (version_compare(PHP_VERSION, '5.0.0', '>')) {
   include_once 'lib/twitter.functions.php';
 }
+
+$database = new Database();
+
 $html = "";
 
 $errors = "";
@@ -14,17 +17,17 @@ if (!empty($_POST['save'])) {
   $game = intval($_POST['game']);
   $home = intval($_POST['home']);
   $away = intval($_POST['away']);
-  $errors = CheckGameResult($game, $home, $away);
+  $errors = CheckGameResult($database, $game, $home, $away);
   $gameId = (int) substr($game, 0, -1);
 }
 if (!empty($_POST['confirm'])) {
   $game = intval($_POST['game']);
   $home = intval($_POST['home']);
   $away = intval($_POST['away']);
-  $errors = CheckGameResult($game, $home, $away);
+  $errors = CheckGameResult($database, $game, $home, $away);
   if (empty($errors)) {
     $gameId = (int) substr($game, 0, -1);
-    GameSetResult($gameId, $home, $away, true, false);
+    GameSetResult($database, $gameId, $home, $away, true, false);
     header("location:?" . $_SERVER['QUERY_STRING']);
   }
 }
@@ -43,7 +46,7 @@ if (!empty($_POST['save']) && empty($errors)) {
   $html .= "<input class='input' type='hidden' id='game' name='game' value='$game'/> ";
   $html .= "<input class='input' type='hidden' id='home' name='home' value='$home'/> ";
   $html .= "<input class='input' type='hidden' id='away' name='away' value='$away'/> ";
-  $game_result = GameInfo($gameId);
+  $game_result = GameInfo($database, $gameId);
   $html .= "<p>";
   $html .= ShortDate($game_result['time']) . " " . DefHourFormat($game_result['time']) . " ";
   if (!empty($game_result['fieldname'])) {

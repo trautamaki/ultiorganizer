@@ -2,9 +2,9 @@
 $html = "";
 
 $gameId = intval(iget("game"));
-$game_result = GameResult($gameId);
-$goals = GameGoals($gameId);
-$gameevents = GameEvents($gameId);
+$game_result = GameResult($database, $gameId);
+$goals = GameGoals($database, $gameId);
+$gameevents = GameEvents($database, $gameId);
 
 $html .= "<div data-role='header'>\n";
 $html .= "<h1>" . _("Game play") . ": " . utf8entities($game_result['hometeamname']) . " - " . utf8entities($game_result['visitorteamname']) . "</h1>\n";
@@ -19,13 +19,13 @@ $html .= " - ";
 $html .= utf8entities($game_result['visitorteamname']);
 $html .= " " . intval($game_result['homescore']) . " - " . intval($game_result['visitorscore']) . "</b>";
 $html .= "</td></tr><tr><td>\n";
-if (mysql_num_rows($goals) <= 0) {
+if ($database->NumRows($goals) <= 0) {
 	$html .= _("Not fed in");
 	$html .= "</td></tr><tr><td>\n";
 	$html .=  "<a href='?view=addplayerlists&amp;game=" . $gameId . "&amp;team=" . $game_result['hometeam'] . "'>" . _("Feed in score sheet") . "</a>";
 } else {
 	$prevgoal = 0;
-	while ($goal = mysql_fetch_assoc($goals)) {
+	while ($goal = $database->FetchAssoc($goals)) {
 
 		if ((intval($game_result['halftime']) >= $prevgoal) &&
 			(intval($game_result['halftime']) < intval($goal['time']))

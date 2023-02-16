@@ -5,18 +5,20 @@ include_once 'lib/pool.functions.php';
 
 $LAYOUT_ID = SEASONPOOLS;
 
+$database = new Database();
+
 $season = $_GET["season"];
-$series_id = CurrentSeries($season);
+$series_id = CurrentSeries($database, $season);
 
 $html = "";
-$title = utf8entities(SeasonName($season)) . ": " . _("Pools");
+$title = utf8entities(SeasonName($database, $season)) . ": " . _("Pools");
 
 if ($series_id <= 0) {
-  showPage($title, "<p>" . _("No divisions defined. Define at least one division first.") . "</p>");
+  showPage($database, $title, "<p>" . _("No divisions defined. Define at least one division first.") . "</p>");
   die;
 }
 
-$seriesinfo = SeriesInfo($series_id);
+$seriesinfo = SeriesInfo($database, $series_id);
 
 //pool parameters
 $pp = array(
@@ -31,16 +33,16 @@ $pp = array(
 //remove
 if (!empty($_POST['remove_x'])) {
   $id = $_POST['hiddenDeleteId'];
-  if (CanDeletePool($id)) {
-    DeletePool($id);
+  if (CanDeletePool($database, $id)) {
+    DeletePool($database, $id);
   }
 }
 
 //clone
 if (!empty($_POST['clone_x'])) {
   $id = $_POST['hiddenDeleteId'];
-  $poolinfo = PoolInfo($id);
-  PoolFromAnotherPool($series_id, $poolinfo['name'], $poolinfo['ordering'], $id);
+  $poolinfo = PoolInfo($database, $id);
+  PoolFromAnotherPool($database, $series_id, $poolinfo['name'], $poolinfo['ordering'], $id);
 }
 
 //add
@@ -52,13 +54,13 @@ if (!empty($_POST['add'])) {
   $pp['continuingpool'] = isset($_POST["continuation0"]) ? 1 : 0;
   $pp['placementpool'] = isset($_POST["placement0"]) ? 1 : 0;
 
-  $poolId = PoolFromPoolTemplate($series_id, $pp['name'], $pp['ordering'], $_POST['new_pool_template']);
-  SetPoolDetails($poolId, $pp);
+  $poolId = PoolFromPoolTemplate($database, $series_id, $pp['name'], $pp['ordering'], $_POST['new_pool_template']);
+  SetPoolDetails($database, $poolId, $pp);
 }
 
 //save
 if (!empty($_POST['save'])) {
-  $pools = SeriesPools($series_id);
+  $pools = SeriesPools($database, $series_id);
   foreach ($pools as $pool) {
     $pool_id = $pool['pool_id'];
     $pp['name'] = !empty($_POST["name$pool_id"]) ? $_POST["name$pool_id"] : "no name";
@@ -67,18 +69,18 @@ if (!empty($_POST['save'])) {
     $pp['visible'] = isset($_POST["visible$pool_id"]) ? 1 : 0;
     $pp['continuingpool'] = isset($_POST["continuation$pool_id"]) ? 1 : 0;
     $pp['placementpool'] = isset($_POST["placement$pool_id"]) ? 1 : 0;
-    SetPoolDetails($pool_id, $pp);
+    SetPoolDetails($database, $pool_id, $pp);
   }
 }
 
-$series = SeasonSeries($season);
-$pools = SeriesPools($series_id);
+$series = SeasonSeries($database, $season);
+$pools = SeriesPools($database, $series_id);
 
 //common page
 pageTopHeadOpen($title);
 $setFocus = "onload=\"document.getElementById('name0').focus();\"";
 pageTopHeadClose($title, false, $setFocus);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 
@@ -92,7 +94,7 @@ $html .= "<form method='post' action='?view=admin/seasonpools&amp;season=$season
 
 $types = PoolTypes();
 
-$row = SeriesInfo($series_id);
+$row = SeriesInfo($database, $series_id);
 $html .= "<table class='admintable'>\n";
 $html .= "<tr><th>" . _("Name") . "</th>
 			<th>" . _("Order") . "</th>
@@ -112,32 +114,32 @@ $is_visible = "";
 $is_played = "";
 
 foreach ($pools as $pool) {
-  $info = PoolInfo($pool['pool_id']);
+  $info = PoolInfo($database, $pool['pool_id']);
   $id = $pool['pool_id'];
   $placements = "";
   $allmoved = true;
   $moves = 1;
-  $started = IsPoolStarted($pool['pool_id']);
-  $teams = count(PoolTeams($pool['pool_id']));
+  $started = IsPoolStarted($database, $pool['pool_id']);
+  $teams = count(PoolTeams($database, $pool['pool_id']));
 
   if (intval($info['continuingpool'])) {
-    $allmoved = PoolIsAllMoved($pool['pool_id']);
-    $moves = count(PoolMovingsToPool($pool['pool_id']));
+    $allmoved = PoolIsAllMoved($database, $pool['pool_id']);
+    $moves = count(PoolMovingsToPool($database, $pool['pool_id']));
     $movestotal += $moves;
   }
   if (intval($info['placementpool']) && !intval($info['follower'])) {
-    $ppools = SeriesPlacementPoolIds($series_id);
+    $ppools = SeriesPlacementPoolIds($database, $series_id);
     $placementfrom = 1;
     $placementto = 0;
     foreach ($ppools as $ppool) {
-      $teams = PoolTeams($ppool['pool_id']);
+      $teams = PoolTeams($database, $ppool['pool_id']);
       if (count($teams) == 0) {
-        $teams = PoolSchedulingTeams($ppool['pool_id']);
+        $teams = PoolSchedulingTeams($database, $ppool['pool_id']);
       }
       if ($pool['pool_id'] == $ppool['pool_id']) {
 
         for ($i = 1; $i <= count($teams); $i++) {
-          $moved = PoolMoveExist($ppool['pool_id'], $i);
+          $moved = PoolMoveExist($database, $ppool['pool_id'], $i);
           if (!$moved) {
             $placementto++;
           }
@@ -145,7 +147,7 @@ foreach ($pools as $pool) {
         break;
       }
       for ($i = 1; $i <= count($teams); $i++) {
-        $moved = PoolMoveExist($ppool['pool_id'], $i);
+        $moved = PoolMoveExist($database, $ppool['pool_id'], $i);
         if (!$moved) {
           $placementfrom++;
           $placementto++;
@@ -169,9 +171,9 @@ foreach ($pools as $pool) {
   $is_played = intval($info['played']) ? "checked='checked'" : "";
 
   if ($info['type'] == 2) {
-    $rootid = PoolPlayoffRoot($id);
+    $rootid = PoolPlayoffRoot($database, $id);
     if ($rootid != $id) {
-      $root_info = PoolInfo($rootid);
+      $root_info = PoolInfo($database, $rootid);
       $is_visible = intval($root_info['visible']) ? "checked='checked'" : "";
       $is_visible .= " disabled='disabled'";
       $is_continuation = intval($root_info['continuingpool']) ? "checked='checked'" : "";
@@ -214,7 +216,7 @@ foreach ($pools as $pool) {
     $html .= "<a href='?view=admin/serieteams&amp;season=$season&amp;series=" . $series_id . "&amp;pool=" . $info['pool_id'] . "'>" . _("Teams") . "</a> | ";
   } else {
     if ($moves) {
-      if (PoolIsMoveFromPoolsPlayed($info['pool_id'])) {
+      if (PoolIsMoveFromPoolsPlayed($database, $info['pool_id'])) {
         $html .= "<b><a href='?view=admin/serieteams&amp;season=$season&amp;series=" . $series_id . "&amp;pool=" . $info['pool_id'] . "'>" . _("Move teams") . "</a></b> | ";
       } else {
         $html .= "<a href='?view=admin/serieteams&amp;season=$season&amp;series=" . $series_id . "&amp;pool=" . $info['pool_id'] . "'>" . _("Move teams") . "</a> | ";
@@ -226,14 +228,14 @@ foreach ($pools as $pool) {
 
   //playoff pool
   if ($info['type'] == 2) {
-    if (CanGenerateGames($info['pool_id'])) {
+    if (CanGenerateGames($database, $info['pool_id'])) {
       $html .= "<b><a href='?view=admin/poolgames&amp;season=" . $info['season'] . "&amp;series=" . $info['series'] . "&amp;pool=" . $info['pool_id'] . "'>" . _("Play-off games") . "</a></b>";
     } else {
       $html .= "<a href='?view=admin/poolgames&amp;season=" . $info['season'] . "&amp;series=" . $info['series'] . "&amp;pool=" . $info['pool_id'] . "'>" . _("Play-off games") . "</a>";
       $cangenerateallgames = false;
     }
   } else {
-    if (CanGenerateGames($info['pool_id'])) {
+    if (CanGenerateGames($database, $info['pool_id'])) {
       $html .= "<b><a href='?view=admin/poolgames&amp;season=$season&amp;pool=" . $info['pool_id'] . "'>" . _("Game management") . "</a></b>";
     } else {
       $html .= "<a href='?view=admin/poolgames&amp;season=$season&amp;pool=" . $info['pool_id'] . "'>" . _("Game management") . "</a>";
@@ -245,7 +247,7 @@ foreach ($pools as $pool) {
   $html .= "<a href='?view=admin/addseasonpools&amp;pool=$id'><img class='deletebutton' src='images/settings.png' alt='D' title='" . _("edit details") . "'/></a>";
 
   $html .= "<input class='deletebutton' type='image' src='images/clone.png' alt='C' name='clone' title='" . _("clone") . "' value='" . _("C") . "' onclick=\"setId(" . $info['pool_id'] . ");\"/>";
-  if (CanDeletePool($info['pool_id'])) {
+  if (CanDeletePool($database, $info['pool_id'])) {
     $html .= "<input class='deletebutton' type='image' src='images/remove.png' alt='X' title='" . _("remove") . "' name='remove' value='" . _("X") . "' onclick=\"setId(" . $info['pool_id'] . ");\"/>";
   }
   $html .= "</td>";
@@ -275,7 +277,7 @@ foreach ($types as $type => $value) {
 $html .=  "</select></td>";
 
 $html .= "<td colspan='2' style='padding-top:15px'><select class='dropdown' name='new_pool_template'>\n";
-$templates = PoolTemplates();
+$templates = PoolTemplates($database);
 foreach ($templates as $template) {
   if ($template['template_id'] == $seriesinfo['pool_template'])
     $html .= "<option class='dropdown' selected='selected' value='" . utf8entities($template['template_id']) . "'>" . utf8entities(U_($template['name'])) . "</option>";

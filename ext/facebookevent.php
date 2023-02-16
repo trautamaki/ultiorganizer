@@ -23,7 +23,7 @@ include_once $include_prefix . 'lib/game.functions.php';
 include_once $include_prefix . 'lib/configuration.functions.php';
 
 if (IsFacebookEnabled() && !empty($_GET['game']) && !empty($_GET['event'])) {
-	$gameInfo = GameInfo($_GET['game']);
+	$gameInfo = GameInfo($database, $_GET['game']);
 	if (
 		$_GET['event'] == "game" && (GameHasStarted($gameInfo))
 		&& ($gameInfo['isongoing'] == 0)
@@ -44,7 +44,7 @@ if (IsFacebookEnabled() && !empty($_GET['game']) && !empty($_GET['event'])) {
 			$wonTeamScore = $gameInfo['visitorscore'];
 		}
 		$users = GetGameFacebookUsers($wonTeamId, "won");
-		$wonTeamPlayers = TeamPlayerAccreditationArray($wonTeamId);
+		$wonTeamPlayers = TeamPlayerAccreditationArray($database, $wonTeamId);
 		foreach ($users as $user) {
 			$fb_props = getFacebookUserProperties($user);
 			foreach ($fb_props['facebookplayer'] as $accrId => $conf) {
@@ -64,7 +64,7 @@ if (IsFacebookEnabled() && !empty($_GET['game']) && !empty($_GET['event'])) {
 			}
 		}
 		$users = GetGameFacebookUsers($lostTeamId, "lost");
-		$lostTeamPlayers = TeamPlayerAccreditationArray($lostTeamId);
+		$lostTeamPlayers = TeamPlayerAccreditationArray($database, $lostTeamId);
 		foreach ($users as $user) {
 			$fb_props = getFacebookUserProperties($user);
 			foreach ($fb_props['facebookplayer'] as $accrId => $conf) {
@@ -103,7 +103,7 @@ if (IsFacebookEnabled() && !empty($_GET['game']) && !empty($_GET['event'])) {
 			FacebookFeedPost($app_fb, $params);
 		}
 	} elseif ($_GET['event'] == "goal" && ($gameInfo['isongoing'] == 1) && isset($_GET['num'])) {
-		$goalInfo = GoalInfo($gameInfo['game_id'], $_GET['num']);
+		$goalInfo = GoalInfo($database, $gameInfo['game_id'], $_GET['num']);
 		if ($goalInfo) {
 			if ($goalInfo['ishomegoal'] == 1) {
 				$team = $gameInfo['hometeamname'];

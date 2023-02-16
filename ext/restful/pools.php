@@ -1,7 +1,7 @@
 <?php
 class Pools extends Restful
 {
-	function Pools()
+	function Pools($database)
 	{
 
 		$this->listsql = "SELECT pool_id, pool.name, pool.type, pool.series

@@ -309,12 +309,12 @@ class PDF extends FPDF
 
 		switch ($scope) {
 			case "season":
-				$this->PrintSeasonPools($id);
+				$this->PrintSeasonPools($database, $id);
 				$this->AddPage();
 				break;
 
 			case "series":
-				$this->PrintSeriesPools($id);
+				$this->PrintSeriesPools($database, $id);
 				$this->AddPage();
 				break;
 
@@ -337,7 +337,7 @@ class PDF extends FPDF
 		$this->SetFillColor(0);
 		$this->SetDrawColor(0);
 		//print all games in order
-		while ($game = mysql_fetch_assoc($games)) {
+		while ($game = $database->FetchAssoc($games)) {
 
 			if (!empty($game['place_id']) && $game['reservationgroup'] != $prevTournament) {
 				$txt = utf8_decode(U_($game['reservationgroup']));
@@ -420,13 +420,13 @@ class PDF extends FPDF
 		$this->SetFillColor(0);
 		$this->SetDrawColor(0);
 		//print all games in order
-		while ($game = mysql_fetch_assoc($games)) {
+		while ($game = $database->FetchAssoc($games)) {
 
 			//one reservation group per page
 			if (!empty($game['place_id']) && $game['reservationgroup'] != $prevTournament || $prevDate != JustDate($game['starttime'])) {
 				$this->AddPage("L", "A3");
 
-				$title = utf8_decode(SeasonName($id));
+				$title = utf8_decode(SeasonName($database, $id));
 				$title .= " " . utf8_decode($game['reservationgroup']);
 				$title .= " (" . utf8_decode(ShortDate($game['starttime'])) . ")";
 				$this->SetFont('Arial', 'BU', 12);
@@ -499,18 +499,18 @@ class PDF extends FPDF
 			$this->SetTextColor(0);
 			$this->Cell($gridx, 1, "", 0, 2, 'L', false);
 			if ($game['hometeam'] && $game['visitorteam']) {
-				$txt = $this->DynSetTeamName($game['hometeamname'], $game['homeshortname'], $gridx, $teamfont);
+				$txt = $this->DynSetTeamName($database, $game['hometeamname'], $game['homeshortname'], $gridx, $teamfont);
 				$this->Cell($gridx, 4, $txt, 0, 2, 'L', false);
 				$txt = utf8_decode($game['visitorteamname']);
-				$txt = $this->DynSetTeamName($game['visitorteamname'], $game['visitorshortname'], $gridx, $teamfont);
+				$txt = $this->DynSetTeamName($database, $game['visitorteamname'], $game['visitorshortname'], $gridx, $teamfont);
 				$this->Cell($gridx, 4, $txt, 0, 2, 'L', false);
 			} elseif ($game['gamename']) {
-				$txt = $this->DynSetTeamName($game['gamename'], "", $gridx, $teamfont);
+				$txt = $this->DynSetTeamName($database, $game['gamename'], "", $gridx, $teamfont);
 				$this->Cell($gridx, 8, $txt, 0, 2, 'L', false);
 			} else {
-				$txt = $this->DynSetTeamName($game['phometeamname'], "", $gridx, $teamfont);
+				$txt = $this->DynSetTeamName($database, $game['phometeamname'], "", $gridx, $teamfont);
 				$this->Cell($gridx, 4, $txt, 0, 2, 'L', false);
-				$txt = $this->DynSetTeamName($game['pvisitorteamname'], "", $gridx, $teamfont);
+				$txt = $this->DynSetTeamName($database, $game['pvisitorteamname'], "", $gridx, $teamfont);
 				$this->Cell($gridx, 4, $txt, 0, 2, 'L', false);
 			}
 			$this->SetFont('Arial', '', $teamfont);
@@ -576,7 +576,7 @@ class PDF extends FPDF
 		return $hsv->getRGB();
 	}
 
-	function DynSetTeamName($longname, $abbrev, $x, $fontsize)
+	function DynSetTeamName($database, $longname, $abbrev, $x, $fontsize)
 	{
 		$this->SetFont('Arial', 'B', $fontsize);
 		$text = utf8_decode($longname);
@@ -684,12 +684,12 @@ class PDF extends FPDF
 
 	}
 
-	function PrintSeasonPools($id)
+	function PrintSeasonPools($database, $id)
 	{
 		$left_margin = 10;
 		$top_margin = 10;
-		$title = utf8_decode(SeasonName($id));
-		$series = SeasonSeries($id, true);
+		$title = utf8_decode(SeasonName($database, $id));
+		$series = SeasonSeries($database, $id, true);
 
 		$this->SetFont('Arial', 'B', 16);
 		$this->SetTextColor(255);
@@ -709,13 +709,13 @@ class PDF extends FPDF
 			$this->Ln();
 			$this->Write(6, $name);
 			$this->Ln();
-			$pools = SeriesPools($row['series_id'], false);
-			$max_y = $this->PrintPools($pools);
+			$pools = SeriesPools($database, $row['series_id'], false);
+			$max_y = $this->PrintPools($database, $pools);
 			$this->SetXY($left_margin, $max_y);
 		}
 	}
 
-	function PrintSeriesPools($id)
+	function PrintSeriesPools($database, $id)
 	{
 
 		$this->SetFont('Arial', 'B', 16);
@@ -726,19 +726,19 @@ class PDF extends FPDF
 		if ($this->GetY() + 97 > 297) {
 			$this->AddPage();
 		}
-		$name = utf8_decode(U_(SeriesName($id)));
+		$name = utf8_decode(U_(SeriesName($database, $id)));
 		$this->SetFont('Arial', 'B', 14);
 		$this->SetTextColor(0);
 
 		$this->Ln();
 		$this->Write(6, $name);
 		$this->Ln();
-		$pools = SeriesPools($id, false);
-		$max_y = $this->PrintPools($pools);
+		$pools = SeriesPools($database, $id, false);
+		$max_y = $this->PrintPools($database, $pools);
 		$this->SetXY($left_margin, $max_y);
 	}
 
-	function PrintPools($pools)
+	function PrintPools($database, $pools)
 	{
 
 		$left_margin = 10;
@@ -749,12 +749,12 @@ class PDF extends FPDF
 		$i = 0;
 		foreach ($pools as $pool) {
 
-			$poolinfo = PoolInfo($pool['pool_id']);
-			$teams = PoolTeams($pool['pool_id']);
+			$poolinfo = PoolInfo($database, $pool['pool_id']);
+			$teams = PoolTeams($database, $pool['pool_id']);
 			$scheduling_teams = false;
 
 			if (!count($teams)) {
-				$teams = PoolSchedulingTeams($pool['pool_id']);
+				$teams = PoolSchedulingTeams($database, $pool['pool_id']);
 				$scheduling_teams = true;
 			}
 			$name = utf8_decode(U_($poolinfo['name']));

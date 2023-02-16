@@ -1,5 +1,5 @@
 <?php
-if (IsRegistered($_SESSION['uid'])) {
+if (IsRegistered($database, $_SESSION['uid'])) {
   header("location:?view=mobile/respgames");
 }
 
@@ -8,7 +8,7 @@ $userId = urldecode($_GET['user']);
 $html = "";
 
 if (isset($_POST['resetpassword'])) {
-  $ret = UserResetPassword(urldecode($userId));
+  $ret = UserResetPassword($database, urldecode($userId));
   if ($ret) {
     $html .= "<p>" . _("New password sent.") . "</p>";
   } else {
@@ -17,7 +17,7 @@ if (isset($_POST['resetpassword'])) {
 }
 
 if (empty($html)) {
-  $validuser = IsRegistered($userId);
+  $validuser = IsRegistered($database, $userId);
   if ($validuser) {
     $html .= "<form method='post' action='?view=mobile/login_failed&amp;user=" . urlencode($userId) . "'>\n";
     $html .= "<p>" . _("Check the username and password.") . " \n";
@@ -28,4 +28,4 @@ if (empty($html)) {
     $html .= "<p>" . sprintf(_("Invalid username %s."), $userId) . "</p>\n";
   }
 }
-showPage($title, $html, true);
+showPage($database, $title, $html, true);

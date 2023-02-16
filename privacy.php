@@ -3,6 +3,8 @@ $html = "";
 global $include_prefix;
 $print = iget("print");
 
+$database = new Database();
+
 $title = _("Privacy Policy");
 
 $htmlfile = 'locale/' . getSessionLocale() . '/LC_MESSAGES/privacy.html';
@@ -25,7 +27,7 @@ if ($print) {
   $html .= "<div style='text-align:right'><a href='?" . utf8entities($querystring) . "&amp;print=1'>" . _("Printable version") . "</a></div>";
 }
 if ($print) {
-  showPrintablePage($title, $html);
+  showPrintablePage($database, $title, $html);
 } else {
-  showPage($title, $html);
+  showPage($database, $title, $html);
 }

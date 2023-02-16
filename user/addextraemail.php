@@ -30,13 +30,13 @@ if (!empty($_POST['add'])) {
 		$error = 1;
 	}
 
-	if (emailUsed($newEmail)) {
+	if (emailUsed($database, $newEmail)) {
 		$message .= "<p>" . _("Email address already registered") . ".</p>";
 		$error = 1;
 	}
 
 	if ($error == 0) {
-		if (AddExtraEmailRequest($userid, $newEmail)) {
+		if (AddExtraEmailRequest($database, $userid, $newEmail)) {
 			$message .= "<p>" . _("Confirmation email has been sent to the email address provided") . ".</p>\n";
 			$mailsent = true;
 		}
@@ -47,7 +47,7 @@ if (!empty($_POST['add'])) {
 
 $confirmed = false;
 if (!empty($_GET['token'])) {
-	if (ConfirmEmail($_GET['token'])) {
+	if (ConfirmEmail($database, $_GET['token'])) {
 		$message = _("Extra email address was confirmed successfully");
 		$confirmed = true;
 	} else {
@@ -86,4 +86,4 @@ if (!$confirmed && !$mailsent) {
 	$html .= "</form>";
 }
 
-showPage($title, $html);
+showPage($database, $title, $html);

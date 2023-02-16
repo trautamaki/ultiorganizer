@@ -7,6 +7,8 @@ include_once $include_prefix . 'lib/pool.functions.php';
 include_once $include_prefix . 'lib/reservation.functions.php';
 include_once $include_prefix . 'lib/url.functions.php';
 
+$database = new Database();
+
 $max_file_size = 5 * 1024 * 1024; //5 MB
 $max_new_links = 3;
 $html = "";
@@ -18,7 +20,7 @@ if (isset($_SERVER['HTTP_REFERER']))
 else
 	$backurl = "?view=user/teamplayers&team=$teamId";
 
-$team = TeamInfo($teamId);
+$team = TeamInfo($database, $teamId);
 
 $title = _("Team details") . ": " . utf8entities($team['name']);
 
@@ -41,7 +43,7 @@ if (isset($_POST['save'])) {
 		$tp['abbreviation'] = $team['abbreviation'];
 		$html .= "<p class='warning'>" . _("Abbreviation too short.") . "</p>";
 	}
-	$allteams = SeriesTeams($team['series']);
+	$allteams = SeriesTeams($database, $team['series']);
 	foreach ($allteams as $t) {
 		if ($tp['team_id'] != $teamId && $tp['abbreviation'] == $t['abbreviation']) {
 			$tp['abbreviation'] = $team['abbreviation'];
@@ -52,7 +54,7 @@ if (isset($_POST['save'])) {
 	$tp['coach'] = $_POST['coach'];
 	$tp['story'] = $_POST['story'];
 	$tp['achievements'] = $_POST['achievements'];
-	SetTeamProfile($tp);
+	SetTeamProfile($database, $tp);
 
 	for ($i = 0; $i < $max_new_links; $i++) {
 
@@ -61,21 +63,21 @@ if (isset($_POST['save'])) {
 			if (!empty($_POST["urlname$i"])) {
 				$name = $_POST["urlname$i"];
 			}
-			AddTeamProfileUrl($teamId, $_POST["urltype$i"], $_POST["url$i"], $name);
+			AddTeamProfileUrl($database, $teamId, $_POST["urltype$i"], $_POST["url$i"], $name);
 		}
 	}
 
 	if (is_uploaded_file($_FILES['picture']['tmp_name'])) {
-		$html .= UploadTeamImage($teamId);
+		$html .= UploadTeamImage($database, $teamId);
 	}
 } elseif (isset($_POST['remove'])) {
-	RemoveTeamProfileImage($teamId);
+	RemoveTeamProfileImage($database, $teamId);
 } elseif (isset($_POST['removeurl_x'])) {
 	$id = $_POST['hiddenDeleteId'];
-	RemoveTeamProfileUrl($teamId, $id);
+	RemoveTeamProfileUrl($database, $teamId, $id);
 }
-$team = TeamInfo($teamId);
-$profile = TeamProfile($teamId);
+$team = TeamInfo($database, $teamId);
+$profile = TeamProfile($database, $teamId);
 if ($profile) {
 	$tp['captain'] = $profile['captain'];
 	$tp['abbreviation'] = $team['abbreviation'];
@@ -117,7 +119,7 @@ $html .= "<tr><td class='infocell' colspan='2'>" . _("Web pages (homepage, blogs
 $html .= "<tr><td colspan='2'>";
 $html .= "<table border='0'>";
 
-$urls = GetUrlList("team", $teamId);
+$urls = GetUrlList($database, "team", $teamId);
 
 foreach ($urls as $url) {
 	$html .= "<tr style='border-bottom-style:solid;border-bottom-width:1px;'>";
@@ -188,4 +190,4 @@ $html .= "<div><input type='hidden' id='hiddenDeleteId' name='hiddenDeleteId'/><
 $html .= "</form>";
 $html .= "<p><a href='?view=teamcard&amp;team=" . $teamId . "'>" . _("Check Team card") . "</a></p>";
 
-showPage($title, $html);
+showPage($database, $title, $html);

@@ -6,11 +6,13 @@ include_once 'lib/season.functions.php';
 include_once 'lib/statistical.functions.php';
 include_once 'lib/timetable.functions.php';
 
+$database = new Database();
+
 $html = "";
 
 $teamId = intval(iget("team"));
-$teaminfo = TeamInfo($teamId);
-$profile = TeamProfile($teamId);
+$teaminfo = TeamInfo($database, $teamId);
+$profile = TeamProfile($database, $teamId);
 
 $title = utf8entities($teaminfo['name']);
 
@@ -62,7 +64,7 @@ if ($profile) {
   $html .= "</table>";
 }
 
-$urls = GetUrlList("team", $teamId);
+$urls = GetUrlList($database, "team", $teamId);
 if (count($urls)) {
   $html .= "<table style='width:100%'>";
   $html .= "<tr><td colspan='2' class='profileheader' style='vertical-align:top'>" . _("Team pages") . ":</td></tr>";
@@ -81,7 +83,7 @@ if (count($urls)) {
   $html .= "</table>";
 }
 
-$urls = GetMediaUrlList("team", $teamId);
+$urls = GetMediaUrlList($database, "team", $teamId);
 if (count($urls)) {
   $html .= "<table style='width:100%'>";
   $html .= "<tr><td colspan='2' class='profileheader' style='vertical-align:top'>" . _("Photos and Videos") . ":</td></tr>";
@@ -104,9 +106,9 @@ if (count($urls)) {
 }
 
 if (ShowDefenseStats()) {
-  $playerswihtdef = TeamScoreBoardWithDefenses($teamId, 0, "name", 0);
-  if (mysql_num_rows($playerswihtdef)) {
-    $html .= "<p><span class='profileheader'>" . utf8entities(U_(SeasonName($teaminfo['season']))) . " " . _("roster") . ":</span></p>\n";
+  $playerswihtdef = TeamScoreBoardWithDefenses($database, $teamId, 0, "name", 0);
+  if ($database->NumRows($playerswihtdef)) {
+    $html .= "<p><span class='profileheader'>" . utf8entities(U_(SeasonName($database, $teaminfo['season']))) . " " . _("roster") . ":</span></p>\n";
 
     $html .= "<table style='width:80%'>\n";
     $html .= "<tr><th style='width:40%'>" . _("Name") . "</th>
@@ -116,8 +118,8 @@ if (ShowDefenseStats()) {
 		<th class='center' style='width:15%'>" . _("Tot.") . "</th>
 		<th class='center' style='width:15%'>" . _("Defenses") . "</th></tr>\n";
 
-    while ($player = mysql_fetch_assoc($playerswihtdef)) {
-      $playerinfo = PlayerInfo($player['player_id']);
+    while ($player = $database->FetchAssoc($playerswihtdef)) {
+      $playerinfo = PlayerInfo($database, $player['player_id']);
       $html .= "<tr><td>";
       if (!empty($playerinfo['profile_id'])) {
         if ($playerinfo['num'] > -1) {
@@ -148,9 +150,9 @@ if (ShowDefenseStats()) {
   }
 } else {
 
-  $players = TeamScoreBoard($teamId, 0, "name", 0);
-  if (mysql_num_rows($players)) {
-    $html .= "<p><span class='profileheader'>" . utf8entities(U_(SeasonName($teaminfo['season']))) . " " . _("roster") . ":</span></p>\n";
+  $players = TeamScoreBoard($database, $teamId, 0, "name", 0);
+  if ($database->NumRows($players)) {
+    $html .= "<p><span class='profileheader'>" . utf8entities(U_(SeasonName($database, $teaminfo['season']))) . " " . _("roster") . ":</span></p>\n";
 
     $html .= "<table style='width:80%'>\n";
     $html .= "<tr><th style='width:40%'>" . _("Name") . "</th>
@@ -159,8 +161,8 @@ if (ShowDefenseStats()) {
 		<th class='center' style='width:15%'>" . _("Goals") . "</th>
 		<th class='center' style='width:15%'>" . _("Tot.") . "</th></tr>\n";
 
-    while ($player = mysql_fetch_assoc($players)) {
-      $playerinfo = PlayerInfo($player['player_id']);
+    while ($player = $database->FetchAssoc($players)) {
+      $playerinfo = PlayerInfo($database, $player['player_id']);
       $html .= "<tr><td>";
       if (!empty($playerinfo['profile_id'])) {
         if ($playerinfo['num'] > -1) {
@@ -189,20 +191,20 @@ if (ShowDefenseStats()) {
     $html .= "</table>\n";
   }
 }
-$allgames = TimetableGames($teamId, "team", "all", "time");
-if (mysql_num_rows($allgames)) {
-  $html .= "<h2>" . U_(SeasonName($teaminfo['season'])) . ":</h2>\n";
+$allgames = TimetableGames($database, $teamId, "team", "all", "time");
+if ($database->NumRows($allgames)) {
+  $html .= "<h2>" . U_(SeasonName($database, $teaminfo['season'])) . ":</h2>\n";
   $html .=  "<p>" . _("Division") . ": <a href='?view=poolstatus&amp;series=" . $teaminfo['series'] . "'>" . utf8entities(U_($teaminfo['seriesname'])) . "</a></p>";
   $html .= "<table style='width:80%'>\n";
-  while ($game = mysql_fetch_assoc($allgames)) {
-    //function GameRow($game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
-    $html .= GameRow($game, false, false, false, false, false, true);
+  while ($game = $database->FetchAssoc($allgames)) {
+    //function GameRow($database, $game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
+    $html .= GameRow($database, $game, false, false, false, false, false, true);
   }
 
   $html .= "</table>\n";
 }
 
-$seasons = TeamStatisticsByName($teaminfo['name'], $teaminfo['type']);
+$seasons = TeamStatisticsByName($database, $teaminfo['name'], $teaminfo['type']);
 if (ShowDefenseStats()) {
   if (count($seasons)) {
     $html .= "<h2>" . _("History") . ":</h2>\n";
@@ -270,11 +272,11 @@ if (ShowDefenseStats()) {
       $tmphtml .= "<td>" . $pg['games'] . "</td>";
       $tmphtml .= "<td>" . $pg['wins'] . "</td>";
       $tmphtml .= "<td>" . $pg['losses'] . "</td>";
-      $tmphtml .= "<td>" . number_format((SafeDivide($pg['wins'], $pg['games']) * 100), 1) . "%</td>";
+      $tmphtml .= "<td>" . number_format((SafeDivide($database, $pg['wins'], $pg['games']) * 100), 1) . "%</td>";
       $tmphtml .= "<td>" . $pg['goals_made'] . "</td>";
-      $tmphtml .= "<td>" . number_format(SafeDivide($pg['goals_made'], $pg['games']), 1) . "</td>";
+      $tmphtml .= "<td>" . number_format(SafeDivide($database, $pg['goals_made'], $pg['games']), 1) . "</td>";
       $tmphtml .= "<td>" . $pg['goals_against'] . "</td>";
-      $tmphtml .= "<td>" . number_format(SafeDivide($pg['goals_against'], $pg['games']), 1) . "</td>";
+      $tmphtml .= "<td>" . number_format(SafeDivide($database, $pg['goals_against'], $pg['games']), 1) . "</td>";
       $tmphtml .= "<td>" . ($pg['goals_made'] - $pg['goals_against']) . "</td>";
       $tmphtml .= "<td>" . $pg['defenses'] . "</td>";
       $tmphtml .= "</tr>";
@@ -335,11 +337,11 @@ if (ShowDefenseStats()) {
       $html .= "<td>$games</td>";
       $html .= "<td>$wins</td>";
       $html .= "<td>$losses</td>";
-      $html .= "<td>" . (number_format((SafeDivide($wins, $games) * 100), 1)) . " %</td>";
+      $html .= "<td>" . (number_format((SafeDivide($database, $wins, $games) * 100), 1)) . " %</td>";
       $html .= "<td>$goals_made</td>";
-      $html .= "<td>" . (number_format(SafeDivide($goals_made, $games), 1)) . "</td>";
+      $html .= "<td>" . (number_format(SafeDivide($database, $goals_made, $games), 1)) . "</td>";
       $html .= "<td>$goals_against</td>";
-      $html .= "<td>" . (number_format(SafeDivide($goals_against, $games), 1)) . "</td>";
+      $html .= "<td>" . (number_format(SafeDivide($database, $goals_against, $games), 1)) . "</td>";
       $html .= "<td>" . ($goals_made - $goals_against) . "</td>";
       $html .= "<td>$defenses</td>";
       $html .= "</tr>";
@@ -350,11 +352,11 @@ if (ShowDefenseStats()) {
     $html .= "<td>$total_games</td>";
     $html .= "<td>$total_wins</td>";
     $html .= "<td>$total_losses</td>";
-    $html .= "<td>" . (number_format((SafeDivide($total_wins, $total_games) * 100), 1)) . " %</td>";
+    $html .= "<td>" . (number_format((SafeDivide($database, $total_wins, $total_games) * 100), 1)) . " %</td>";
     $html .= "<td>$total_goals_made</td>";
-    $html .= "<td>" . (number_format(SafeDivide($total_goals_made, $total_games), 1)) . "</td>";
+    $html .= "<td>" . (number_format(SafeDivide($database, $total_goals_made, $total_games), 1)) . "</td>";
     $html .= "<td>$total_goals_against</td>";
-    $html .= "<td>" . (number_format(SafeDivide($total_goals_against, $total_games), 1)) . "</td>";
+    $html .= "<td>" . (number_format(SafeDivide($database, $total_goals_against, $total_games), 1)) . "</td>";
     $html .= "<td>" . ($total_goals_made - $total_goals_against) . "</td>";
     $html .= "<td>$total_defenses</td>";
     $html .= "</tr>";
@@ -428,11 +430,11 @@ if (ShowDefenseStats()) {
       $tmphtml .= "<td>" . $pg['games'] . "</td>";
       $tmphtml .= "<td>" . $pg['wins'] . "</td>";
       $tmphtml .= "<td>" . $pg['losses'] . "</td>";
-      $tmphtml .= "<td>" . number_format((SafeDivide($pg['wins'], $pg['games']) * 100), 1) . "%</td>";
+      $tmphtml .= "<td>" . number_format((SafeDivide($database, $pg['wins'], $pg['games']) * 100), 1) . "%</td>";
       $tmphtml .= "<td>" . $pg['goals_made'] . "</td>";
-      $tmphtml .= "<td>" . number_format(SafeDivide($pg['goals_made'], $pg['games']), 1) . "</td>";
+      $tmphtml .= "<td>" . number_format(SafeDivide($database, $pg['goals_made'], $pg['games']), 1) . "</td>";
       $tmphtml .= "<td>" . $pg['goals_against'] . "</td>";
-      $tmphtml .= "<td>" . number_format(SafeDivide($pg['goals_against'], $pg['games']), 1) . "</td>";
+      $tmphtml .= "<td>" . number_format(SafeDivide($database, $pg['goals_against'], $pg['games']), 1) . "</td>";
       $tmphtml .= "<td>" . ($pg['goals_made'] - $pg['goals_against']) . "</td>";
       $tmphtml .= "</tr>";
 
@@ -487,11 +489,11 @@ if (ShowDefenseStats()) {
       $html .= "<td>$games</td>";
       $html .= "<td>$wins</td>";
       $html .= "<td>$losses</td>";
-      $html .= "<td>" . (number_format((SafeDivide($wins, $games) * 100), 1)) . " %</td>";
+      $html .= "<td>" . (number_format((SafeDivide($database, $wins, $games) * 100), 1)) . " %</td>";
       $html .= "<td>$goals_made</td>";
-      $html .= "<td>" . (number_format(SafeDivide($goals_made, $games), 1)) . "</td>";
+      $html .= "<td>" . (number_format(SafeDivide($database, $goals_made, $games), 1)) . "</td>";
       $html .= "<td>$goals_against</td>";
-      $html .= "<td>" . (number_format(SafeDivide($goals_against, $games), 1)) . "</td>";
+      $html .= "<td>" . (number_format(SafeDivide($database, $goals_against, $games), 1)) . "</td>";
       $html .= "<td>" . ($goals_made - $goals_against) . "</td>";
       $html .= "</tr>";
     }
@@ -501,11 +503,11 @@ if (ShowDefenseStats()) {
     $html .= "<td>$total_games</td>";
     $html .= "<td>$total_wins</td>";
     $html .= "<td>$total_losses</td>";
-    $html .= "<td>" . (number_format((SafeDivide($total_wins, $total_games) * 100), 1)) . " %</td>";
+    $html .= "<td>" . (number_format((SafeDivide($database, $total_wins, $total_games) * 100), 1)) . " %</td>";
     $html .= "<td>$total_goals_made</td>";
-    $html .= "<td>" . (number_format(SafeDivide($total_goals_made, $total_games), 1)) . "</td>";
+    $html .= "<td>" . (number_format(SafeDivide($database, $total_goals_made, $total_games), 1)) . "</td>";
     $html .= "<td>$total_goals_against</td>";
-    $html .= "<td>" . (number_format(SafeDivide($total_goals_against, $total_games), 1)) . "</td>";
+    $html .= "<td>" . (number_format(SafeDivide($database, $total_goals_against, $total_games), 1)) . "</td>";
     $html .= "<td>" . ($total_goals_made - $total_goals_against) . "</td>";
     $html .= "</tr>";
 
@@ -523,8 +525,8 @@ if (empty($sort)) {
   $sort = "serie";
 }
 
-$played = TeamPlayedGames($teaminfo['name'], $teaminfo['type'], $sort);
-if (mysql_num_rows($played)) {
+$played = TeamPlayedGames($database, $teaminfo['name'], $teaminfo['type'], $sort);
+if ($database->NumRows($played)) {
   $html .= "<h2>" . _("Game history") . "</h2>";
 
   $viewUrl = "?view=teamcard&amp;team=$teamId&amp;";
@@ -534,14 +536,14 @@ if (mysql_num_rows($played)) {
   $html .= "<th><a class='thsort' href=\"" . $viewUrl . "sort=team\">" . _("Team") . "</a></th>";
   $html .= "<th><a class='thsort' href=\"" . $viewUrl . "sort=result\">" . _("Result") . "</a></th>";
   $html .= "<th><a class='thsort' href=\"" . $viewUrl . "sort=serie\">" . _("Division") . "</a></th></tr>";
-  $curSeason = Currentseason();
+  $curSeason = CurrentSeason($database);
 
-  while ($row = mysql_fetch_assoc($played)) {
+  while ($row = $database->FetchAssoc($played)) {
     if ($row['season_id'] == $curSeason) {
       continue;
     }
     if (GameHasStarted($row)) {
-      $seasonName = SeasonName($row['season_id']);
+      $seasonName = SeasonName($database, $row['season_id']);
 
       if ($row['homescore'] > $row['visitorscore'])
         $html .= "<tr><td><b>" . utf8entities($row['hometeamname']) . "</b>";
@@ -566,4 +568,4 @@ if (mysql_num_rows($played)) {
 if ($_SESSION['uid'] != 'anonymous') {
   $html .= "<div style='float:left;'><hr/><a href='?view=user/addmedialink&amp;team=$teamId'>" . _("Add media") . "</a></div>";
 }
-showPage($title, $html);
+showPage($database, $title, $html);

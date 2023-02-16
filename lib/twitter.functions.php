@@ -4,7 +4,7 @@ include_once $include_prefix . 'lib/twitteroauth/twitteroauth.php';
 include_once $include_prefix . 'lib/game.functions.php';
 include_once $include_prefix . 'lib/player.functions.php';
 
-function TweetGameResult($gameId)
+function TweetGameResult($database, $gameId)
 {
 
 	if (!IsTwitterEnabled()) {
@@ -18,7 +18,7 @@ function TweetGameResult($gameId)
 		$_SESSION['TwitterOAuthCallback'] = $twitterconf['TwitterOAuthCallback'];
 	}
 
-	$gameinfo = GameInfo($gameId);
+	$gameinfo = GameInfo($database, $gameId);
 
 	$text = $gameinfo['seriesname'] . ", " . $gameinfo['poolname'] . ": ";
 	$text .= $gameinfo['hometeamname'] . " - " . $gameinfo['visitorteamname'];
@@ -58,7 +58,7 @@ function TweetText($gameId, $text)
 		$_SESSION['TwitterOAuthCallback'] = $twitterconf['TwitterOAuthCallback'];
 	}
 
-	$gameinfo = GameInfo($gameId);
+	$gameinfo = GameInfo($database, $gameId);
 
 	$text = TweetTextCheck($text);
 
@@ -84,8 +84,8 @@ function TweetGameScores($gameId)
 		$_SESSION['TwitterOAuthCallback'] = $twitterconf['TwitterOAuthCallback'];
 	}
 
-	$gameinfo = GameInfo($gameId);
-	$lastscore = GameLastGoal($gameId);
+	$gameinfo = GameInfo($database, $gameId);
+	$lastscore = GameLastGoal($database, $gameId);
 	$text = $gameinfo['seriesname'] . ", " . $gameinfo['poolname'] . ": ";
 	$text .= $gameinfo['hometeamname'] . " - " . $gameinfo['visitorteamname'];
 	$text .= ". " . _("Last score") . ": ";

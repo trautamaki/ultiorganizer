@@ -3,25 +3,27 @@ include_once 'lib/pool.functions.php';
 include_once 'lib/game.functions.php';
 include_once 'lib/common.functions.php';
 
+$database = new Database();
+
 $html = "";
 
 $gameId = intval(iget("game"));
 
-$game_result = GameResult($gameId);
-$seasoninfo = SeasonInfo(GameSeason($gameId));
-$homecaptain = GameCaptain($gameId, $game_result['hometeam']);
-$awaycaptain = GameCaptain($gameId, $game_result['visitorteam']);
+$game_result = GameResult($database, $gameId);
+$seasoninfo = SeasonInfo($database, GameSeason($database, $gameId));
+$homecaptain = GameCaptain($database, $gameId, $game_result['hometeam']);
+$awaycaptain = GameCaptain($database, $gameId, $game_result['visitorteam']);
 
 $title = _("Game play") . ": " . utf8entities($game_result['hometeamname']) . " vs. " . utf8entities($game_result['visitorteamname']);
 
-$home_team_score_board = GameTeamScoreBorad($gameId, $game_result['hometeam']);
-$guest_team_score_board = GameTeamScoreBorad($gameId, $game_result['visitorteam']);
+$home_team_score_board = GameTeamScoreBorad($database, $gameId, $game_result['hometeam']);
+$guest_team_score_board = GameTeamScoreBorad($database, $gameId, $game_result['visitorteam']);
 
-$poolinfo = PoolInfo($game_result['pool']);
+$poolinfo = PoolInfo($database, $game_result['pool']);
 
-$goals = GameGoals($gameId);
-$gameevents = GameEvents($gameId);
-$mediaevents = GameMediaEvents($gameId);
+$goals = GameGoals($database, $gameId);
+$gameevents = GameEvents($database, $gameId);
+$mediaevents = GameMediaEvents($database, $gameId);
 
 if (GameHasStarted($game_result) > 0) {
   $html .= "<h1>" . utf8entities($game_result['hometeamname']);
@@ -36,7 +38,7 @@ if (GameHasStarted($game_result) > 0) {
   }
   $html .= "</h1>\n";
 
-  if (mysql_num_rows($goals) <= 0) {
+  if ($database->NumRows($goals) <= 0) {
     $html .= "<h2>" . _("Not fed in") . "</h2>
 			  <p>" . _("Please check the status again later") . "</p>";
   } else {
@@ -52,7 +54,7 @@ if (GameHasStarted($game_result) > 0) {
     $html .= "<tr><th class='home'>#</th><th class='home'>" . _("Name") . "</th><th class='home center'>" . _("Assists") . "</th><th class='home center'>" . _("Goals") . "</th>
 		 <th class='home center'>" . _("Tot.") . "</th></tr>\n";
 
-    while ($row = mysql_fetch_assoc($home_team_score_board)) {
+    while ($row = $database->FetchAssoc($home_team_score_board)) {
       $html .= "<tr>";
       $html .= "<td style='text-align:right'>" . $row['num'] . "</td>";
       $html .= "<td><a href='?view=playercard&amp;series=0&amp;player=" . $row['player_id'];
@@ -80,7 +82,7 @@ if (GameHasStarted($game_result) > 0) {
     $html .= "</th><th class='guest center'>" . _("Tot.") . "</th></tr>\n";
 
 
-    while ($row = mysql_fetch_assoc($guest_team_score_board)) {
+    while ($row = $database->FetchAssoc($guest_team_score_board)) {
       $html .= "<tr>";
       $html .= "<td style='text-align:right'>" . $row['num'] . "</td>";
       $html .= "<td><a href='?view=playercard&amp;series=0&amp;player=" . $row['player_id'];
@@ -108,7 +110,7 @@ if (GameHasStarted($game_result) > 0) {
     $bHt = false;
     $total = 0;
 
-    while ($goal = mysql_fetch_assoc($goals)) {
+    while ($goal = $database->FetchAssoc($goals)) {
 
       if (!$bHt && $goal['time'] > $game_result['halftime']) {
         $points[$i][0] = (intval($game_result['halftime']) - $lprev);
@@ -182,8 +184,8 @@ if (GameHasStarted($game_result) > 0) {
     $bHt = false;
 
     $prevgoal = 0;
-    mysql_data_seek($goals, 0);
-    while ($goal = mysql_fetch_assoc($goals)) {
+    $database->dataseek($goals, 0);
+    while ($goal = $database->FetchAssoc($goals)) {
       if (!$bHt && $game_result['halftime'] > 0 && $goal['time'] > $game_result['halftime']) {
         $html .= "<tr><td colspan='6' class='halftime'>" . _("Half-time") . "</td></tr>";
         $bHt = 1;
@@ -271,7 +273,7 @@ if (GameHasStarted($game_result) > 0) {
       $html .= "<p>" . _("Game official") . ": " . utf8entities($game_result['official']) . "</p>";
     }
 
-    $urls = GetMediaUrlList("game", $gameId);
+    $urls = GetMediaUrlList($database, "game", $gameId);
 
     if (count($urls) > count($mediaevents)) {
       $html .= "<h2>" . _("Photos and Videos") . "</h2>\n";
@@ -304,7 +306,7 @@ if (GameHasStarted($game_result) > 0) {
       //statistics
       $html .= "<h2>" . _("Game statistics") . "</h2>\n";
 
-      $allgoals = GameAllGoals($gameId);
+      $allgoals = GameAllGoals($database, $gameId);
 
       $bHOffence = 0;
       $nHOffencePoint = 0;
@@ -323,13 +325,13 @@ if (GameHasStarted($game_result) > 0) {
       $nHLosesDisc = 0;
       $nVLosesDisc = 0;
 
-      $turnovers = GameTurnovers($gameId);
+      $turnovers = GameTurnovers($database, $gameId);
 
-      $goal = mysql_fetch_assoc($allgoals);
-      $turnover = mysql_fetch_assoc($turnovers);
+      $goal = $database->FetchAssoc($allgoals);
+      $turnover = $database->FetchAssoc($turnovers);
 
       //who start the game?
-      $ishome = GameIsFirstOffenceHome($gameId);
+      $ishome = GameIsFirstOffenceHome($database, $gameId);
       if ($ishome == 1) {
         $bHStartTheGame = true;
       } elseif ($ishome == 0) {
@@ -368,10 +370,10 @@ if (GameHasStarted($game_result) > 0) {
       $bHOffence = $bHStartTheGame;
 
       //return internal pointers to first row
-      mysql_data_seek($allgoals, 0);
+      $database->dataseek($allgoals, 0);
 
       //loop all goals
-      while ($goal = mysql_fetch_assoc($allgoals)) {
+      while ($goal = $database->FetchAssoc($allgoals)) {
         //halftime passed
         if (($nClockTime <= intval($game_result['halftime'])) && (intval($goal['time']) >= intval($game_result['halftime']))) {
           $nClockTime = intval($game_result['halftime']);
@@ -391,10 +393,10 @@ if (GameHasStarted($game_result) > 0) {
         }
         //If turnovers before goal
 
-        if (mysql_num_rows($turnovers)) {
-          $turnovers = GameTurnovers($gameId);
+        if ($database->NumRows($turnovers)) {
+          $turnovers = GameTurnovers($database, $gameId);
         }
-        while ($turnover = mysql_fetch_assoc($turnovers)) {
+        while ($turnover = $database->FetchAssoc($turnovers)) {
           if ((intval($turnover['time']) > $nClockTime) &&
             (intval($turnover['time']) < intval($goal['time']))
           ) {
@@ -439,9 +441,9 @@ if (GameHasStarted($game_result) > 0) {
       }
 
       //timeouts
-      $timeouts = GameTimeouts($gameId);
+      $timeouts = GameTimeouts($database, $gameId);
 
-      while ($timeout = mysql_fetch_assoc($timeouts)) {
+      while ($timeout = $database->FetchAssoc($timeouts)) {
         if (intval($timeout['ishome'])) {
           $nHTO++;
         } else {
@@ -457,8 +459,8 @@ if (GameHasStarted($game_result) > 0) {
 
       $html .= "<tr><td>" . _("Goals") . ":</td> <td class='home'>$nHGoals</td> <td class='guest'>$nVGoals</td></tr>\n";
 
-      $dblHAvg = SafeDivide($nHTotalTime, ($nHTotalTime + $nVTotalTime)) * 100;
-      $dblVAvg = SafeDivide($nVTotalTime, ($nHTotalTime + $nVTotalTime)) * 100;
+      $dblHAvg = SafeDivide($database, $nHTotalTime, ($nHTotalTime + $nVTotalTime)) * 100;
+      $dblVAvg = SafeDivide($database, $nVTotalTime, ($nHTotalTime + $nVTotalTime)) * 100;
 
       $html .= "<tr><td>" . _("Time on offence") . ":</td>
 			<td class='home'>" . SecToMin($nHTotalTime) . " min (" . number_format($dblHAvg, 1) . " %)</td>
@@ -469,22 +471,22 @@ if (GameHasStarted($game_result) > 0) {
 			<td class='guest'>" . SecToMin($nHTotalTime) . " min (" . number_format($dblHAvg, 1) . " %)</td></tr>\n";
 
       $html .= "<tr><td>" . _("Time on offence") . "/" . _("goal") . ":</td>
-			<td class='home'>" . SecToMin(SafeDivide($nHTotalTime, $nHGoals)) . " min</td>
-			<td class='guest'>" . SecToMin(SafeDivide($nVTotalTime, $nVGoals)) . " min</td></tr>\n";
+			<td class='home'>" . SecToMin(SafeDivide($database, $nHTotalTime, $nHGoals)) . " min</td>
+			<td class='guest'>" . SecToMin(SafeDivide($database, $nVTotalTime, $nVGoals)) . " min</td></tr>\n";
 
       $html .= "<tr><td>" . _("Time on defence") . "/" . _("goal") . ":</td>
-			<td class='home'>" . SecToMin(SafeDivide($nVTotalTime, $nVGoals)) . " min</td>
-			<td class='guest'>" . SecToMin(SafeDivide($nHTotalTime, $nHGoals)) . " min</td></tr>\n";
+			<td class='home'>" . SecToMin(SafeDivide($database, $nVTotalTime, $nVGoals)) . " min</td>
+			<td class='guest'>" . SecToMin(SafeDivide($database, $nHTotalTime, $nHGoals)) . " min</td></tr>\n";
 
-      $dblHAvg = SafeDivide(abs($nHGoals - $nHBreaks), $nHOffencePoint) * 100;
-      $dblVAvg = SafeDivide(abs($nVGoals - $nVBreaks), $nVOffencePoint) * 100;
+      $dblHAvg = SafeDivide($database, abs($nHGoals - $nHBreaks), $nHOffencePoint) * 100;
+      $dblVAvg = SafeDivide($database, abs($nVGoals - $nVBreaks), $nVOffencePoint) * 100;
 
       $html .= "<tr><td>" . _("Goals from starting on offence") . ":</td>
 			<td class='home'>" . abs($nHGoals - $nHBreaks) . "/" . $nHOffencePoint . " (" . number_format($dblHAvg, 1) . " %)</td>
 			<td class='guest'>" . abs($nVGoals - $nVBreaks) . "/" . $nVOffencePoint . " (" . number_format($dblVAvg, 1) . " %)</td></tr>";
 
-      $dblHAvg = SafeDivide($nHBreaks, $nVOffencePoint) * 100;
-      $dblVAvg = SafeDivide($nVBreaks, $nHOffencePoint) * 100;
+      $dblHAvg = SafeDivide($database, $nHBreaks, $nVOffencePoint) * 100;
+      $dblVAvg = SafeDivide($database, $nVBreaks, $nHOffencePoint) * 100;
 
       $html .= "<tr><td>" . _("Goals from starting on defence") . ":</td>
 			<td class='home'>" . $nHBreaks . "/" . $nVOffencePoint . " (" . number_format($dblHAvg, 1) . " %)</td>
@@ -522,9 +524,9 @@ if (GameHasStarted($game_result) > 0) {
     if (ShowDefenseStats()) {
       $html .= "<br><br>";
       $html .= "<h3>" . _("Defensive plays") . "</h3>\n";
-      $home_team_defense_board = GameTeamDefenseBoard($gameId,  $game_result['hometeam']);
-      $guest_team_defense_board = GameTeamDefenseBoard($gameId,  $game_result['visitorteam']);
-      $defenses = GameDefenses($gameId);
+      $home_team_defense_board = GameTeamDefenseBoard($database, $gameId,  $game_result['hometeam']);
+      $guest_team_defense_board = GameTeamDefenseBoard($database, $gameId,  $game_result['visitorteam']);
+      $defenses = GameDefenses($database, $gameId);
       $html .= "<table style='width:100%'><tr><td valign='top' style='width:45%'>\n";
 
       $html .= "<table width='100%' cellspacing='0' cellpadding='0' border='0'>\n";
@@ -533,7 +535,7 @@ if (GameHasStarted($game_result) > 0) {
       $html .= "</table><table width='100%' cellspacing='0' cellpadding='3' border='0'>";
       $html .= "<tr><th class='home'>#</th><th class='home'>" . _("Name") . "</th><th class='home center'>" . _("Defenses") . "</th></tr>\n";
 
-      while ($row = mysql_fetch_assoc($home_team_defense_board)) {
+      while ($row = $database->FetchAssoc($home_team_defense_board)) {
         $html .= "<tr>";
         $html .= "<td style='text-align:right'>" . $row['num'] . "</td>";
         $html .= "<td><a href='?view=playercard&amp;series=0&amp;player=" . $row['player_id'];
@@ -558,7 +560,7 @@ if (GameHasStarted($game_result) > 0) {
       $html .= "<tr><th class='guest'>#</th><th class='guest'>" . _("Name") . "</th><th class='guest center'>";
       $html .= _("Defenses") . "</th></tr>\n";
 
-      while ($row = mysql_fetch_assoc($guest_team_defense_board)) {
+      while ($row = $database->FetchAssoc($guest_team_defense_board)) {
         $html .= "<tr>";
         $html .= "<td style='text-align:right'>" . $row['num'] . "</td>";
         $html .= "<td><a href='?view=playercard&amp;series=0&amp;player=" . $row['player_id'];
@@ -583,8 +585,8 @@ if (GameHasStarted($game_result) > 0) {
       //$bHt=false;
 
       $prevdefense = 0;
-      mysql_data_seek($defenses, 0);
-      while ($defense = mysql_fetch_assoc($defenses)) {
+      $database->dataseek($defenses, 0);
+      while ($defense = $database->FetchAssoc($defenses)) {
         // 		if (!$bHt && $game_result['halftime']>0 && $goal['time'] > $game_result['halftime']){
         // 			$html .= "<tr><td colspan='6' class='halftime'>"._("Half-time")."</td></tr>";
         // 			$bHt = 1;
@@ -614,7 +616,7 @@ if (GameHasStarted($game_result) > 0) {
     }
   }
 } else {
-  $game_result = GameInfo($gameId);
+  $game_result = GameInfo($database, $gameId);
 
   if ($game_result['hometeam'] && $game_result['visitorteam']) {
     $html .= "<h1>";
@@ -644,4 +646,4 @@ if (GameHasStarted($game_result) > 0) {
   }
   $html .= "</p>";
 }
-showPage($title, $html);
+showPage($database, $title, $html);

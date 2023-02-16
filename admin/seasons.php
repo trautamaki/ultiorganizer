@@ -21,7 +21,7 @@ $sp = array(
 );
 
 if (!empty($_GET["season"])) {
-	$info = SeasonInfo($_GET["season"]);
+	$info = SeasonInfo($database, $_GET["season"]);
 	$sp['season_id'] = $info['season_id'];
 	$sp['name'] = $info['name'];
 	$sp['type'] = $info['type'];
@@ -35,12 +35,12 @@ if (!empty($_POST['remove_x']) && !empty($_POST['hiddenDeleteId'])) {
 	$id = $_POST['hiddenDeleteId'];
 	$ok = true;
 	//run some test to for safe deletion
-	$series = SeasonSeries($id);
+	$series = SeasonSeries($database, $id);
 	if (count($series)) {
-		$html .= "<p class='warning'>" . _("Event has") . " " . mysql_num_rows($series) . " " . _("Division(s)") . ". " . _("Divisions must be removed before removing the event") . ".</p>";
+		$html .= "<p class='warning'>" . _("Event has") . " " . $database->NumRows($series) . " " . _("Division(s)") . ". " . _("Divisions must be removed before removing the event") . ".</p>";
 		$ok = false;
 	}
-	$cur = CurrentSeason();
+	$cur = CurrentSeason($database);
 
 	if ($cur == $id) {
 		$html .= "<p class='warning'>" . _("You can not remove a current event") . ".</p>";
@@ -75,7 +75,7 @@ pageTopHeadOpen($title);
 </script>
 <?php
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 $html .=  "<form method='post' action='?view=admin/seasons'>";
@@ -95,10 +95,10 @@ $html .=  "<tr>
 	<th></th>
 	</tr>\n";
 
-$seasons = Seasons();
+$seasons = Seasons($database);
 
-while ($row = mysql_fetch_assoc($seasons)) {
-	$info = SeasonInfo($row['season_id']);
+while ($row = $database->FetchAssoc($seasons)) {
+	$info = SeasonInfo($database, $row['season_id']);
 
 	$html .=  "<tr>";
 	$html .=  "<td><a href='?view=admin/addseasons&amp;season=" . $info['season_id'] . "'>" . utf8entities(U_($info['name'])) . "</a></td>";
@@ -128,8 +128,8 @@ while ($row = mysql_fetch_assoc($seasons)) {
 	if (IsTwitterEnabled()) {
 		$html .=  "<a href='?view=admin/twitterconf&amp;season=" . $info['season_id'] . "'>" . _("Conf. Twitter") . "</a> | ";
 	}
-	if (!CanDeleteSeason($row['season_id'])) {
-		if (IsSeasonStatsCalculated($row['season_id'])) {
+	if (!CanDeleteSeason($database, $row['season_id'])) {
+		if (IsSeasonStatsCalculated($database, $row['season_id'])) {
 			$html .=  "<a href='?view=admin/stats&amp;season=" . $info['season_id'] . "'>" . _("Re-calc. stats") . "</a>";
 		} else {
 			$html .=  "<a href='?view=admin/stats&amp;season=" . $info['season_id'] . "'><b>" . _("Calc. stats") . "</b></a>";
@@ -138,7 +138,7 @@ while ($row = mysql_fetch_assoc($seasons)) {
 	$html .= " | <a href='?view=admin/eventdataexport&amp;season=" . $info['season_id'] . "'>" . _("Export") . "</a>";
 	$html .=  "</td>";
 
-	if (CanDeleteSeason($row['season_id'])) {
+	if (CanDeleteSeason($database, $row['season_id'])) {
 		$html .=  "<td class='center'><input class='deletebutton' type='image' src='images/remove.png' alt='X' name='remove' value='" . _("X") . "' onclick=\"setId('" . $row['season_id'] . "');\"/></td>";
 	}
 	$html .=  "</tr>\n";

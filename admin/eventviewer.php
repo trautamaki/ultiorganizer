@@ -24,14 +24,14 @@ if (isset($_POST['update'])) {
 	}
 } elseif (isset($_POST['delete']) && !empty($_POST["event_ids"])) {
 	$ids = $_POST["event_ids"];
-	ClearEventList($ids);
+	ClearEventList($database, $ids);
 }
 
 //common page
 pageTopHeadOpen($title);
 include 'script/common.js.inc';
 pageTopHeadClose($title, false);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 $html .= "<form method='post' action='?view=admin/eventviewer'>";
@@ -76,9 +76,9 @@ $html .= "<tr><th>" . _("Time") . "</th><th>" . _("User") . "</th>
 
 $event_ids = "";
 if (count($categoryfilter) > 0) {
-	$events = EventList($categoryfilter, $userfilter);
+	$events = EventList($database, $categoryfilter, $userfilter);
 
-	while ($event = mysql_fetch_assoc($events)) {
+	while ($event = $database->FetchAssoc($events)) {
 
 		if ($event['type'] == 'add' || ($event['category'] == 'security' && $event['description'] == 'success')) {
 			$html .= "<tr class='posvalue'>";
@@ -96,33 +96,33 @@ if (count($categoryfilter) > 0) {
 		$html .= "<td>" . $event['source'] . "&nbsp;</td>";
 		if ($resolve) {
 			if ($event['category'] == 'player') {
-				$html .= "<td>" . utf8entities(PlayerName($event['id1'])) . "&nbsp;</td>";
-				$html .= "<td>" . utf8entities(TeamName($event['id2'])) . "&nbsp;</td>";
+				$html .= "<td>" . utf8entities(PlayerName($database, $event['id1'])) . "&nbsp;</td>";
+				$html .= "<td>" . utf8entities(TeamName($database, $event['id2'])) . "&nbsp;</td>";
 			} elseif ($event['category'] == 'game') {
-				$html .= "<td>" . utf8entities(GameNameFromId($event['id1'])) . "&nbsp;</td>";
+				$html .= "<td>" . utf8entities(GameNameFromId($database, $event['id1'])) . "&nbsp;</td>";
 				$html .= "<td>" . $event['id2'] . "&nbsp;</td>";
 			} elseif ($event['category'] == 'club') {
-				$html .= "<td>" . utf8entities(ClubName($event['id1'])) . "&nbsp;</td>";
+				$html .= "<td>" . utf8entities(ClubName($database, $event['id1'])) . "&nbsp;</td>";
 				$html .= "<td>" . $event['id2'] . "&nbsp;</td>";
 			} elseif ($event['category'] == 'series') {
-				$html .= "<td>" . utf8entities(SeriesName($event['id1'])) . "&nbsp;</td>";
+				$html .= "<td>" . utf8entities(SeriesName($database, $event['id1'])) . "&nbsp;</td>";
 				$html .= "<td>" . $event['id2'] . "&nbsp;</td>";
 			} elseif ($event['category'] == 'enrolment') {
-				$html .= "<td>" . utf8entities(SeriesName($event['id1'])) . "&nbsp;</td>";
-				$html .= "<td>" . utf8entities(TeamName($event['id2'])) . "&nbsp;</td>";
+				$html .= "<td>" . utf8entities(SeriesName($database, $event['id1'])) . "&nbsp;</td>";
+				$html .= "<td>" . utf8entities(TeamName($database, $event['id2'])) . "&nbsp;</td>";
 			} elseif ($event['category'] == 'pool') {
-				$html .= "<td>" . utf8entities(PoolName($event['id1'])) . "&nbsp;</td>";
+				$html .= "<td>" . utf8entities(PoolName($database, $event['id1'])) . "&nbsp;</td>";
 				$html .= "<td>" . $event['id2'] . "&nbsp;</td>";
 			} elseif ($event['category'] == 'security') {
 				if ($event['type'] == 'add' && $event['description'] == 'teamadmin') {
 					$html .= "<td>" . utf8entities($event['id1']) . "&nbsp;</td>";
-					$html .= "<td>" . utf8entities(TeamName($event['id2'])) . "&nbsp;</td>";
+					$html .= "<td>" . utf8entities(TeamName($database, $event['id2'])) . "&nbsp;</td>";
 				} else {
 					$html .= "<td>" . $event['id1'] . "&nbsp;</td>";
 					$html .= "<td>" . $event['id2'] . "&nbsp;</td>";
 				}
 			} elseif ($event['category'] == 'team') {
-				$html .= "<td>" . utf8entities(TeamName($event['id1'])) . "&nbsp;</td>";
+				$html .= "<td>" . utf8entities(TeamName($database, $event['id1'])) . "&nbsp;</td>";
 				$html .= "<td>" . $event['id2'] . "&nbsp;</td>";
 			} else {
 				$html .= "<td>" . $event['id1'] . "&nbsp;</td>";

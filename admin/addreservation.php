@@ -43,7 +43,7 @@ if (isset($_POST['save']) || isset($_POST['add'])) {
   $res['season'] = isset($_POST['resseason']) ? $_POST['resseason'] : $season;
 
   if ($res['id'] > 0) {
-    SetReservation($res['id'], $res);
+    SetReservation($database, $res['id'], $res);
   } else {
     //check if adding more than 1 field
     $fields = array();
@@ -64,11 +64,11 @@ if (isset($_POST['save']) || isset($_POST['add'])) {
     $i = 0;
     $html .= "<p>" . _("Reservations added") . ":</p>";
     $html .= "<ul>";
-    $locinfo = LocationInfo($res['location']);
+    $locinfo = LocationInfo($database, $res['location']);
     $allfields = $res['fieldname'];
     foreach ($fields as $field) {
       $res['fieldname'] = $field;
-      $reservationId = AddReservation($res);
+      $reservationId = AddReservation($database, $res);
       $html .= "<li>" . $res['reservationgroup'] . ": " . DefWeekDateFormat($res['date']) . " ";
       if (!empty($res['timeslots'])) {
         $html .= $res['timeslots'] . " ";
@@ -147,10 +147,10 @@ echo yuiLoad(array("utilities", "datasource", "autocomplete", "calendar"));
 <?php
 $setFocus = "OnLoad=\"document.getElementById('date').focus();\"";
 pageTopHeadClose($title, false, $setFocus);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 if ($reservationId > 0) {
-  $reservationInfo = ReservationInfo($reservationId);
+  $reservationInfo = ReservationInfo($database, $reservationId);
   $res['id'] = $reservationId;
   $res['location'] = $reservationInfo['location'];
   $res['fieldname'] = $reservationInfo['fieldname'];
@@ -204,7 +204,7 @@ $html .= "</td></tr>\n";
 $html .= "<tr><td>&nbsp;</td><td><div id='locationAutocomplete' class='yui-skin-sam'>";
 $html .= "<input class='input' id='locationName' size='30' type='text' style='width:200px' name='locationName' value='";
 if ($res['location'] > 0) {
-  $location_info = LocationInfo($res['location']);
+  $location_info = LocationInfo($database, $res['location']);
   $html .= utf8entities($location_info['name']);
 }
 $html .= "'/><div style='width:400px' id='locationContainer'></div></div>\n";
@@ -216,9 +216,9 @@ if (isSuperAdmin()) {
   $html .= "<tr><td>" . _("Season") . ":</td><td>";
   $html .= "<select class='dropdown' name='resseason'>\n";
   $html .= "<option class='dropdown' value=''></option>";
-  $seasons = Seasons();
+  $seasons = Seasons($database);
 
-  while ($row = mysql_fetch_assoc($seasons)) {
+  while ($row = $database->FetchAssoc($seasons)) {
     if ($res['season'] == $row['season_id'] || $season == $row['season_id']) {
       $html .= "<option class='dropdown' selected='selected' value='" . utf8entities($row['season_id']) . "'>" . utf8entities($row['name']) . "</option>";
     } else {

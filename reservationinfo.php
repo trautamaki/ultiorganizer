@@ -4,8 +4,10 @@ include_once 'lib/season.functions.php';
 include_once 'lib/series.functions.php';
 include_once 'lib/configuration.functions.php';
 
+$database = new Database();
+
 $reservationId = intval(iget("reservation"));
-$place = ReservationInfo($reservationId);
+$place = ReservationInfo($database, $reservationId);
 $title = _("Reservation") . ": " . utf8entities($place['name']) . " " . _("Field") . " " . utf8entities($place['fieldname']);
 
 //common page
@@ -80,7 +82,7 @@ pageTopHeadOpen($title);
 </script>
 <?php
 pageTopHeadClose($title, false, "onload=\"load()\" onunload=\"GUnload()\"");
-leftMenu();
+leftMenu($database);
 contentStart();
 
 echo "<h1>" . utf8entities($place['name']) . " " . _("Field") . " " . utf8entities($place['fieldname']) . "</h1>\n";

@@ -6,13 +6,15 @@ include_once 'lib/series.functions.php';
 include_once 'lib/player.functions.php';
 include_once 'lib/statistical.functions.php';
 
+$database = new Database();
+
 $teamId = intval(iget("team"));
-$teaminfo = TeamInfo($teamId);
+$teaminfo = TeamInfo($database, $teamId);
 
 $title = _("Roster") . ": " . utf8entities($teaminfo['name']);
 $html = "";
 
-$players = TeamPlayerList($teamId);
+$players = TeamPlayerList($database, $teamId);
 
 $html .= "<h1>" . _("Roster") . "</h1>\n";
 $html .= "<h2>" . $teaminfo['name'] . " (" . U_($teaminfo['seriesname']) . ")</h2>\n";
@@ -27,8 +29,8 @@ $html .= "<tr><th>" . _("Name") . "</th>
 
 $stats = array(array());
 $i = 0;
-while ($player = mysql_fetch_assoc($players)) {
-  $playerinfo = PlayerInfo($player['player_id']);
+while ($player = $database->FetchAssoc($players)) {
+  $playerinfo = PlayerInfo($database, $player['player_id']);
   $stats[$i]['name'] = $playerinfo['firstname'] . " " . $playerinfo['lastname'];
   $stats[$i]['id'] = $player['player_id'];
   $stats[$i]['goals'] = 0;
@@ -37,7 +39,7 @@ while ($player = mysql_fetch_assoc($players)) {
   $stats[$i]['seasons'] = 0;
   $stats[$i]['total'] = 0;
   if (!empty($playerinfo['profile_id'])) {
-    $player_stats = PlayerStatistics($playerinfo['profile_id']);
+    $player_stats = PlayerStatistics($database, $playerinfo['profile_id']);
   } else {
     $player_stats = array();
   }
@@ -61,7 +63,7 @@ $teamtotal = 0;
 
 foreach ($stats as $player) {
   if (!empty($player)) {
-    $playerinfo = PlayerInfo($player['id']);
+    $playerinfo = PlayerInfo($database, $player['id']);
     $html .= "<tr><td>";
     if (!empty($playerinfo['profile_id'])) {
       $html .= "<a href='?view=playercard&amp;series=0&amp;player=" . $player['id'] . "'>" .
@@ -93,4 +95,4 @@ if ($teamseasons) {
   $html .= "</table>\n";
 }
 
-showPage($title, $html);
+showPage($database, $title, $html);

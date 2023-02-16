@@ -32,9 +32,9 @@ $html .= "<form method='post' enctype='multipart/form-data' action='?view=admin/
 
 $html .= "<p>" . ("Select event") . ": <select class='dropdown' name='season'>\n";
 
-$seasons = Seasons();
+$seasons = Seasons($database);
 
-while ($row = mysql_fetch_assoc($seasons)) {
+while ($row = $database->FetchAssoc($seasons)) {
 	$html .= "<option class='dropdown' value='" . utf8entities($row['season_id']) . "'>" . utf8entities($row['name']) . "</option>";
 }
 
@@ -44,4 +44,4 @@ $html .= "<p><input class='button' type='submit' name='select' value='" . ("Sele
 $html .= "</form>";
 
 if (empty($seasonId))
-	showPage($title, $html);
+	showPage($database, $title, $html);

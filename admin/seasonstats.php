@@ -11,7 +11,7 @@ $series_stats = ALLSeriesStatistics();
 $title = _("Event statistics");
 $LAYOUT_ID = HELP;
 pageTop($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 $html .= "<h3>" . _("Events") . "</h3>\n";

@@ -1,6 +1,8 @@
 <?php
 include_once 'lib/player.functions.php';
 
+$database = new Database();
+
 $title = _("All players");
 $html = "";
 $filter = "A";
@@ -11,7 +13,7 @@ if (iget("list")) {
 
 $html .= "<h1>" . $title . "</h1>\n";
 
-$players = PlayerListAll($filter);
+$players = PlayerListAll($database, $filter);
 
 $firstchar = " ";
 $listletter = " ";
@@ -36,7 +38,7 @@ $html .= "</tr></table>\n";
 
 $html .= "<table width='90%' style='white-space: nowrap;'>\n";
 
-while ($player = mysql_fetch_assoc($players)) {
+while ($player = $database->FetchAssoc($players)) {
 
   if ($filter == "ALL") {
     $firstchar = strtoupper(substr(utf8_decode($player['lastname']), 0, 1));
@@ -73,4 +75,4 @@ if ($counter > 0 && $counter <= $maxcols) {
 };
 $html .= "</table>\n";
 
-showPage($title, $html);
+showPage($database, $title, $html);

@@ -56,13 +56,13 @@ if (!is_numeric($gameId)) {
 }
 
 $sender = $_GET['sender'];
-$result = GameResult($gameId);
+$result = GameResult($database, $gameId);
 if (!$result) {
 	echo _("Unknown game number") . ": " . $_GET['game'];
 } else {
 	if ($action == "P" || $action == "G" || $action == "R") {
-		LogGameUpdate($gameId, "result:" . $result['homescore'] . "-" . $result['visitorscore'] . ">" . $home . "-" . $away, "SMS" . $sender);
-		$updresult = GameSetResult($gameId, $home, $away);
+		LogGameUpdate($database, $gameId, "result:" . $result['homescore'] . "-" . $result['visitorscore'] . ">" . $home . "-" . $away, "SMS" . $sender);
+		$updresult = GameSetResult($database, $gameId, $home, $away);
 
 		header("x-uo-oldscore: " . $result['homescore'] . "-" . $result['visitorscore']);
 		header("x-uo-su-status: OK");
@@ -82,7 +82,7 @@ if (!$result) {
 				$oldResultSplit = explode(":", $splitted[0]);
 				$oldresult = $oldResultSplit[1];
 				$oldResultSplit = explode("-", $oldresult);
-				GameSetResult($gameId, $oldResultSplit[0], $oldResultSplit[1]);
+				GameSetResult($database, $gameId, $oldResultSplit[0], $oldResultSplit[1]);
 				header("x-uo-oldscore: " . $result['homescore'] . "-" . $result['visitorscore']);
 				header("x-uo-su-status: OK");
 				echo $result['hometeamname'] . "-" . $result['visitorteamname'] . "\n";

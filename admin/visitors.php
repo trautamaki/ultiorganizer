@@ -6,11 +6,11 @@ $html = "";
 $title = _("Visitor statistics");
 pageTopHeadOpen($title);
 pageTopHeadClose($title, false);
-leftMenu(0);
+leftMenu($database, 0);
 contentStart();
 if (isSuperAdmin()) {
-	$visitors = LogGetVisitorCount();
-	$pageloads = LogGetPageLoads();
+	$visitors = LogGetVisitorCount($database, );
+	$pageloads = LogGetPageLoads($database, );
 	$loadstotal = 0;
 
 	foreach ($pageloads as $page) {

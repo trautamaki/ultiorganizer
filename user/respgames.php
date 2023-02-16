@@ -5,6 +5,8 @@ include_once $include_prefix . 'lib/season.functions.php';
 include_once $include_prefix . 'lib/series.functions.php';
 include_once $include_prefix . 'lib/timetable.functions.php';
 
+$database = new Database();
+
 $title = _("Game responsibilities");
 $group = "all";
 $tab = 0;
@@ -32,14 +34,14 @@ $html .= onPageHelpAvailable($help);
 if (isset($_GET['season'])) {
   $season = $_GET['season'];
 } else {
-  $season = CurrentSeason();
+  $season = CurrentSeason($database);
 }
 if (isset($_GET['series'])) {
   $series_id = $_GET['series'];
 } else {
   $series_id = null;
 }
-$series = SeasonSeries($season);
+$series = SeasonSeries($database, $season);
 
 
 $hidestarted = -1;
@@ -60,7 +62,7 @@ if (!empty($_GET["massinput"])) {
 //process itself on submit
 $feedback = "";
 if (!empty($_POST['save'])) {
-  $feedback = GameProcessMassInput($_POST);
+  $feedback = GameProcessMassInput($database, $_POST);
 }
 
 foreach ($series as $row) {
@@ -70,8 +72,8 @@ $menutabs[_("...")] = "?view=user/respgames&season=" . $season;
 $html .= pageMenu($menutabs, respgameslink($season, $series_id, $group, $hide, $mass, false), false);
 
 
-$seasoninfo = SeasonInfo($season);
-$groups = TimetableGrouping($season, "season", "all");
+$seasoninfo = SeasonInfo($database, $season);
+$groups = TimetableGrouping($database, $season, "season", "all");
 $html .= "<table width='100%'><tr><td>\n";
 
 function respgameslink($season, $series_id, $group, $hide, $mass, $htmlentities = true)
@@ -125,7 +127,7 @@ if ($_SESSION['massinput']) {
 $html .= "</td></tr></table>\n";
 
 
-$respGameArray = GameResponsibilityArray($season, $series_id);
+$respGameArray = GameResponsibilityArray($database, $season, $series_id);
 
 if (count($respGameArray) == 0) {
   $html .= "\n<p>" . _("No game responsibilities") . ".</p>\n";
@@ -219,4 +221,4 @@ if ($_SESSION['massinput']) {
 $html .= $feedback;
 
 
-showPage($title, $html);
+showPage($database, $title, $html);

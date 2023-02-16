@@ -14,7 +14,7 @@ $localeMap = array(
   "fi-fi" => "fi_FI.utf8"
 );
 
-function setSessionLocale()
+function setSessionLocale($database)
 {
   global $include_prefix;
 
@@ -52,9 +52,9 @@ function setSessionLocale()
     header("Content-type: text/html; charset=$encoding");
   }
   if ($oldlocale != $locale) {
-    loadDBTranslations($locale);
+    loadDBTranslations($database, $locale);
     if (isset($_SESSION['uid']) && $_SESSION['uid'] != "anonymous") {
-      SetUserLocale($_SESSION['uid'], $locale);
+      SetUserLocale($database, $_SESSION['uid'], $locale);
     }
   }
 }

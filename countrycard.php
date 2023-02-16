@@ -2,19 +2,21 @@
 include_once 'lib/team.functions.php';
 include_once 'lib/country.functions.php';
 
+$database = new Database();
+
 $html = "";
 $countryId = intval(iget("country"));
-$profile = CountryInfo($countryId);
+$profile = CountryInfo($database, $countryId);
 
 $title = utf8entities(_($profile['name']));
 
 $html .= "<h1>" . utf8entities(_($profile['name'])) . "</h1>";
 $html .= "<img class='flag' src='images/flags/medium/" . $profile['flagfile'] . "' alt=''/>";
-$season = CurrentSeason();
+$season = CurrentSeason($database);
 if (!empty($season)) {
-  $teams = CountryTeams($countryId, $season);
+  $teams = CountryTeams($database, $countryId, $season);
   if (count($teams)) {
-    $html .= "<h2>" . CurrentSeasonName() . ":</h2>\n";
+    $html .= "<h2>" . CurrentSeasonName($database) . ":</h2>\n";
     $html .= "<table style='white-space: nowrap;' border='0' cellspacing='0' cellpadding='2' width='90%'>\n";
     $html .= "<tr><th>" . _("Team") . "</th><th>" . _("Division") . "</th><th colspan='4'></th></tr>\n";
 
@@ -22,7 +24,7 @@ if (!empty($season)) {
       $html .= "<tr>\n";
       $html .= "<td style='width:30%'><a href='?view=teamcard&amp;team=" . $team['team_id'] . "'>" . utf8entities($team['name']) . "</a></td>";
       $html .=  "<td  style='width:30%'><a href='?view=poolstatus&amp;series=" . $team['series_id'] . "'>" . utf8entities(U_($team['seriesname'])) . "</a></td>";
-      if (IsStatsDataAvailable()) {
+      if (IsStatsDataAvailable($database)) {
         $html .=  "<td class='right' style='width:10%'><a href='?view=playerlist&amp;team=" . $team['team_id'] . "'>" . _("Roster") . "</a></td>";
         $html .=  "<td class='right' style='width:10%'><a href='?view=scorestatus&amp;team=" . $team['team_id'] . "'>" . _("Scoreboard") . "</a></td>";
       } else {
@@ -35,7 +37,7 @@ if (!empty($season)) {
   }
 }
 
-$teams = CountryTeams($countryId);
+$teams = CountryTeams($database, $countryId);
 if (count($teams)) {
 
   $national_html = "";
@@ -43,11 +45,11 @@ if (count($teams)) {
   foreach ($teams as $team) {
     $tmphtml = "";
     $tmphtml .= "<tr>\n";
-    $tmphtml .= "<td style='width:20%'>" . utf8entities(U_(SeasonName($team['season']))) . "</td>";
+    $tmphtml .= "<td style='width:20%'>" . utf8entities(U_(SeasonName($database, $team['season']))) . "</td>";
     $tmphtml .= "<td style='width:30%'><a href='?view=teamcard&amp;team=" . $team['team_id'] . "'>" . utf8entities($team['name']) . "</a></td>";
     $tmphtml .=  "<td style='width:20%'><a href='?view=poolstatus&amp;series=" . $team['series_id'] . "'>" . utf8entities(U_($team['seriesname'])) . "</a></td>";
 
-    if (IsStatsDataAvailable()) {
+    if (IsStatsDataAvailable($database)) {
       $tmphtml .=  "<td style='width:15%'><a href='?view=playerlist&amp;team=" . $team['team_id'] . "'>" . _("Roster") . "</a></td>";
       $tmphtml .=  "<td style='width:15%'><a href='?view=scorestatus&amp;team=" . $team['team_id'] . "'>" . _("Scoreboard") . "</a></td>";
     } else {
@@ -82,4 +84,4 @@ if (count($teams)) {
   }
 }
 
-showPage($title, $html);
+showPage($database, $title, $html);

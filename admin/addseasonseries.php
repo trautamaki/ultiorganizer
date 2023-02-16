@@ -37,7 +37,7 @@ if (!empty($_POST['add'])) {
 		else
 			$sp['valid'] = 0;
 
-		$seriesId = AddSeries($sp);
+		$seriesId = AddSeries($database, $sp);
 		session_write_close();
 		header("location:?view=admin/seasonseries&Season=$season");
 	} else {
@@ -69,12 +69,12 @@ include_once 'script/disable_enter.js.inc';
 include_once 'lib/yui.functions.php';
 echo yuiLoad(array("utilities", "datasource", "autocomplete"));
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 //retrieve values if series id known
 if ($seriesId) {
-	$info = SeriesInfo($seriesId);
+	$info = SeriesInfo($database, $seriesId);
 	$sp['series_id'] = $info['series_id'];
 	$sp['name'] = $info['name'];
 	$sp['type'] = $info['type'];

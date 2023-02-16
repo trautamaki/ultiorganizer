@@ -1,4 +1,7 @@
 <?php
+
+$database = new Database();
+
 $html = "";
 $title = _("Frontpage");
 
@@ -21,7 +24,7 @@ $html .= "<p>";
 $html .= "<a href='?view=user_guide'>" . _("User Guide") . "</a>\n";
 $html .= "</p>";
 
-$urls = GetUrlListByTypeArray(array("admin"), 0);
+$urls = GetUrlListByTypeArray($database, array("admin"), 0);
 if (!empty($urls)) {
   $html .= "<p>";
   $html .= _("In case of feedback, improvement ideas or any other questions, please contact:");
@@ -31,4 +34,4 @@ if (!empty($urls)) {
   $html .= "</p>";
 }
 
-showPage($title, $html);
+showPage($database, $title, $html);

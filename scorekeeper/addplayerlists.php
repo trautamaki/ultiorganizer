@@ -8,11 +8,11 @@ $teamId = isset($_GET['team']) ? $_GET['team'] : $_SESSION['team'];
 $_SESSION['game'] = $gameId;
 $_SESSION['team'] = $teamId;
 
-$game_result = GameResult($gameId);
+$game_result = GameResult($database, $gameId);
 
 if (isset($_POST['save'])) {
 
-  $played_players = GamePlayers($gameId, $teamId);
+  $played_players = GamePlayers($database, $gameId, $teamId);
 
   //delete unchecked players
   foreach ($played_players as $player) {
@@ -26,7 +26,7 @@ if (isset($_POST['save'])) {
       }
     }
     if (!$found)
-      GameRemovePlayer($gameId, $player['player_id']);
+      GameRemovePlayer($database, $gameId, $player['player_id']);
   }
 
   //handle checked players
@@ -36,7 +36,7 @@ if (isset($_POST['save'])) {
       //if number
       if (is_numeric($number)) {
         //check if already in list with correct number
-        $played_players = GamePlayers($gameId, $teamId);
+        $played_players = GamePlayers($database, $gameId, $teamId);
         $found = false;
         foreach ($played_players as $player) {
 
@@ -47,14 +47,14 @@ if (isset($_POST['save'])) {
           }
           //if found, but with different number
           if ($player['player_id'] == $playerId && $player['num'] != $number) {
-            GameSetPlayerNumber($gameId, $playerId, $number);
+            GameSetPlayerNumber($database, $gameId, $playerId, $number);
             $found = true;
             break;
           }
           //if two players with same number
           if ($player['player_id'] != $playerId && $player['num'] == $number) {
-            $playerinfo1 = PlayerInfo($playerId);
-            $playerinfo2 = PlayerInfo($player['player_id']);
+            $playerinfo1 = PlayerInfo($database, $playerId);
+            $playerinfo2 = PlayerInfo($database, $player['player_id']);
             $html .= "<p  class='warning'><i>" . utf8entities($playerinfo1['firstname'] . " " . $playerinfo1['lastname']) . "</i> " . _("and")
               . " <i>" . utf8entities($playerinfo2['firstname'] . " " . $playerinfo2['lastname']) . "</i> " . _("same number") . " '$number'.</p>";
             $found = true;
@@ -63,9 +63,9 @@ if (isset($_POST['save'])) {
         }
 
         if (!$found)
-          GameAddPlayer($gameId, $playerId, $number);
+          GameAddPlayer($database, $gameId, $playerId, $number);
       } else {
-        $playerinfo = PlayerInfo($playerId);
+        $playerinfo = PlayerInfo($database, $playerId);
         $html .= "<p  class='warning'><i>" . utf8entities($playerinfo['firstname'] . " " . $playerinfo['lastname']) . "</i> " . _("erroneous number") . " '$number'.</p>";
       }
     }
@@ -81,17 +81,17 @@ if (isset($_POST['save'])) {
 }
 
 $html .= "<div data-role='header'>\n";
-$html .= "<h1>" . _("Roster") . ": " . utf8entities(TeamName($teamId)) . "</h1>\n";
+$html .= "<h1>" . _("Roster") . ": " . utf8entities(TeamName($database, $teamId)) . "</h1>\n";
 $html .= "</div><!-- /header -->\n\n";
 
 $html .= "<div data-role='content'>\n";
 
 
-$playerlist = TeamPlayerList($teamId);
+$playerlist = TeamPlayerList($database, $teamId);
 
 $html .= "<form action='?view=addplayerlists' method='post' data-ajax='false'>\n";
 
-$played_players = GamePlayers($gameId, $teamId);
+$played_players = GamePlayers($database, $gameId, $teamId);
 
 $html .= "<div class='ui-grid-a'>";
 $html .= "<div class='ui-block-a'>\n";
@@ -101,10 +101,10 @@ $html .= "<div class='ui-block-b'>\n";
 $html .= "<h3>" . _("Jersey") . "</h3>";
 $html .= "</div>";
 $i = 0;
-while ($player = mysql_fetch_assoc($playerlist)) {
+while ($player = $database->FetchAssoc($playerlist)) {
   $i++;
-  $playerinfo = PlayerInfo($player['player_id']);
-  $number = PlayerNumber($player['player_id'], $gameId);
+  $playerinfo = PlayerInfo($database, $player['player_id']);
+  $number = PlayerNumber($database, $player['player_id'], $gameId);
   if ($number < 0) {
     $number = "";
   }

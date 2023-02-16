@@ -6,7 +6,7 @@ include_once 'lib/series.functions.php';
 $html = "";
 mobilePageTop(_("Game responsibilities"));
 
-$season = CurrentSeason();
+$season = CurrentSeason($database);
 $reservationgroup = "";
 $location = "";
 $showall = false;
@@ -50,11 +50,11 @@ if (!empty($_GET["massinput"])) {
 //process itself on submit
 $feedback = "";
 if (!empty($_POST['save'])) {
-	$feedback = GameProcessMassInput($_POST);
+	$feedback = GameProcessMassInput($database, $_POST);
 }
 
 
-$respGameArray = GameResponsibilityArray($season);
+$respGameArray = GameResponsibilityArray($database, $season);
 $html .= "<form action='?" . utf8entities($_SERVER['QUERY_STRING']) . "' method='post'>\n";
 $html .= "<table cellpadding='2'>\n";
 $html .= "<tr><td>\n";
@@ -84,7 +84,7 @@ if (count($respGameArray) == 0) {
 						$html .= "<hr/>\n";
 						$html .= "</td></tr><tr><td>\n";
 					}
-					$html .= gamerow($gameId, $game, $mass);
+					$html .= GameRow($database, $gameId, $game, $mass);
 					$prevdate = JustDate($game['time']);
 					continue;
 				}
@@ -118,7 +118,7 @@ if (count($respGameArray) == 0) {
 					}
 
 					if ($location == $gameloc && $day == JustDate($game['starttime'])) {
-						$html .= gamerow($gameId, $game, $mass);
+						$html .= GameRow($database, $gameId, $game, $mass);
 					}
 				}
 			}
@@ -145,7 +145,7 @@ echo $html;
 
 pageEnd();
 
-function gamerow($gameId, $game, $mass)
+function GameRow($database, $gameId, $game, $mass)
 {
 	$ret = "&nbsp;&nbsp;&nbsp;&nbsp;";
 	$ret .= DefTimeFormat($game['time']) . " ";

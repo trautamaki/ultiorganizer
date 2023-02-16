@@ -5,6 +5,8 @@ include_once 'lib/pool.functions.php';
 include_once 'lib/team.functions.php';
 $LAYOUT_ID = POOLMOVES;
 
+$database = new Database();
+
 $backurl = utf8entities($_SERVER['HTTP_REFERER']);
 $seriesId = 0;
 if (!empty($_GET["pool"]))
@@ -73,9 +75,9 @@ echo yuiLoad(array("utilities", "slider", "colorpicker", "datasource", "autocomp
 </script>
 <?php
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
-$poolinfo = PoolInfo($poolId);
+$poolinfo = PoolInfo($database, $poolId);
 $basepool = 0;
 $err = "";
 //process itself on submit
@@ -98,12 +100,12 @@ if (!empty($_POST['add'])) {
         } else {
           $err .= "<p class='warning'>" . _("No scheduling name given") . ".</p>\n";
         }
-        if (PoolMoveExist($frompool, $movefrom)) {
+        if (PoolMoveExist($database, $frompool, $movefrom)) {
           $err .= "<p class='warning'>" . _("Transfer already exists") . ".</p>\n";
         }
 
         if (empty($err)) {
-          PoolAddMove($frompool, $poolId, $movefrom, $moveto, $pteamname);
+          PoolAddMove($database, $frompool, $poolId, $movefrom, $moveto, $pteamname);
         }
       }
     }
@@ -118,7 +120,7 @@ if (!empty($_POST['add'])) {
       if (isset($_POST["frompool$i"]) && !empty($_POST["movefrom$i"])) {
         $frompool = intval($_POST["frompool$i"]);
         $movefrom = intval($_POST["movefrom$i"]);
-        $moves = PoolMovingsToPool($poolId);
+        $moves = PoolMovingsToPool($database, $poolId);
         $moveto = count($moves) + 1;
 
         if (!empty($_POST["pteamname$i"])) {
@@ -127,12 +129,12 @@ if (!empty($_POST['add'])) {
         } else {
           $err .= "<p class='warning'>" . _("No scheduling name given") . ".</p>\n";
         }
-        if (PoolMoveExist($frompool, $movefrom)) {
+        if (PoolMoveExist($database, $frompool, $movefrom)) {
           $err .= "<p class='warning'>" . _("Transfer already exists") . ".</p>\n";
         }
 
         if (empty($err)) {
-          PoolAddMove($frompool, $poolId, $movefrom, $moveto, $pteamname);
+          PoolAddMove($database, $frompool, $poolId, $movefrom, $moveto, $pteamname);
         }
       }
     }
@@ -142,20 +144,20 @@ if (!empty($_POST['add'])) {
 
   if ($poolinfo['type'] == 1) {
     $move = preg_split('/:/', $_POST['hiddenDeleteId']);
-    if (PoolIsMoved($move[0], $move[1])) {
+    if (PoolIsMoved($database, $move[0], $move[1])) {
       $err .= "<p class='warning'>" . _("Team has already moved.") . "</p>\n";
     } else {
-      PoolDeleteMove($move[0], $move[1]);
+      PoolDeleteMove($database, $move[0], $move[1]);
     }
   } else {
     $moves = preg_split('/:/', $_POST['hiddenDeleteId']);
 
     foreach ($moves as $m) {
       $move = preg_split('/,/', $m);
-      if (PoolIsMoved($move[0], $move[1])) {
+      if (PoolIsMoved($database, $move[0], $move[1])) {
         $err .= "<p class='warning'>" . _("Team has already moved.") . "</p>\n";
       } else {
-        PoolDeleteMove($move[0], $move[1]);
+        PoolDeleteMove($database, $move[0], $move[1]);
       }
     }
   }
@@ -164,11 +166,11 @@ echo "<form method='post' action='?view=admin/poolmoves&amp;series=$seriesId&amp
 
 echo $err;
 
-echo "<h1>" . utf8entities(U_(PoolSeriesName($poolId)) . ", " . U_(PoolName($poolId))) . "</h1>\n";
+echo "<h1>" . utf8entities(U_(PoolSeriesName($database, $poolId)) . ", " . U_(PoolName($database, $poolId))) . "</h1>\n";
 
 
-$poolinfo = PoolInfo($poolId);
-$pools = SeriesPools($seriesId);
+$poolinfo = PoolInfo($database, $poolId);
+$pools = SeriesPools($database, $seriesId);
 
 //round robin or swissdrawn pool
 if ($poolinfo['type'] == 1 || $poolinfo['type'] == 3) {
@@ -182,13 +184,13 @@ if ($poolinfo['type'] == 1 || $poolinfo['type'] == 3) {
 		<th>" . _("Name in Schedule") . "</th>
 		<th>" . _("Delete") . "</th></tr>";
 
-  $moves = PoolMovingsToPool($poolId);
+  $moves = PoolMovingsToPool($database, $poolId);
 
   foreach ($moves as $row) {
     echo "<tr>";
     echo "<td>" . utf8entities($row['name']) . "</td>";
     echo "<td class='center'>" . intval($row['fromplacing']) . "</td>";
-    echo "<td>" . utf8entities(PoolName($poolId)) . "</td>";
+    echo "<td>" . utf8entities(PoolName($database, $poolId)) . "</td>";
     echo "<td class='center'>" . intval($row['torank']) . "</td>";
     if (intval($poolinfo['mvgames']) == 0)
       echo "<td>" . _("all") . "</td>";
@@ -239,7 +241,7 @@ if ($poolinfo['type'] == 1 || $poolinfo['type'] == 3) {
   //playoff or crossmatch pool
 } else if ($poolinfo['type'] == 2 || $poolinfo['type'] == 4) {
 
-  $moves = PoolMovingsToPool($poolId);
+  $moves = PoolMovingsToPool($database, $poolId);
 
   echo "<table border='0' width='600'><tr>
 		<th>" . _("From pool") . "</th>

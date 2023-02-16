@@ -11,13 +11,13 @@ $html = "";
 //common page
 pageTopHeadOpen($title);
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 //process itself on submit
 if (!empty($_POST['remove_x'])) {
   $id = $_POST['hiddenDeleteId'];
-  DeletePoolTemplate($id);
+  DeletePoolTemplate($database, $id);
 }
 
 $html .= "<form method='post' action='?view=admin/serieformats'>";
@@ -27,7 +27,7 @@ $html .= "<tr>";
 $html .= "<th>" . _("Name") . "</th> <th class='center'>" . _("Winning points") . "</th> <th class='center'>" . _("Point cap") . "</th> <th class='center'>" . _("Draws allowed") . "</th>  <th class='center'>" . _("Time cap") . "</th><th class='center'>" . _("Time-outs") . "</th><th></th>";
 $html .= "</tr>\n";
 
-$templates = PoolTemplates();
+$templates = PoolTemplates($database);
 
 foreach ($templates as $row) {
   $html .= "<tr>";

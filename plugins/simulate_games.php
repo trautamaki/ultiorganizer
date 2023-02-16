@@ -25,14 +25,14 @@ include_once 'lib/standings.functions.php';
 
 function undoPoolMoves($poolId)
 {
-	$frompools = PoolMovingsToPool($poolId);
+	$frompools = PoolMovingsToPool($database, $poolId);
 
 	foreach ($frompools as $pool) {
-		$poolinfo = PoolInfo($pool['topool']);
+		$poolinfo = PoolInfo($database, $pool['topool']);
 
 		//     if($poolinfo['mvgames']==1){
 		$_SESSION['userproperties']['userrole']['seriesadmin'][$poolinfo['series']] = 1;
-		PoolUndoMove($pool['frompool'], $pool['fromplacing'], $poolId);
+		PoolUndoMove($database, $pool['frompool'], $pool['fromplacing'], $poolId);
 		unset($_SESSION['userproperties']['userrole']['seriesadmin'][$poolinfo['series']]);
 		//     }
 
@@ -54,30 +54,30 @@ if (isset($_POST['simulate']) && !empty($_POST['pools'])) {
 
 	foreach ($pools as $poolId) {
 
-		$poolinfo = PoolInfo($poolId);
-		$games = PoolGames($poolId);
+		$poolinfo = PoolInfo($database, $poolId);
+		$games = PoolGames($database, $poolId);
 		set_time_limit(300); //game simulation takes time because so much inserts
 
 		foreach ($games as $game) {
-			$info = GameInfo($game['game_id']);
+			$info = GameInfo($database, $game['game_id']);
 
 			//all players in roster are playing
-			$home_playerlist = TeamPlayerList($info['hometeam']);
+			$home_playerlist = TeamPlayerList($database, $info['hometeam']);
 			$hplayers = array();
-			while ($player = mysql_fetch_assoc($home_playerlist)) {
-				GameAddPlayer($game['game_id'], $player['player_id'], intval($player['num']));
+			while ($player = $database->FetchAssoc($home_playerlist)) {
+				GameAddPlayer($database, $game['game_id'], $player['player_id'], intval($player['num']));
 				$hplayers[] = intval($player['num']);
 			}
 			$hplayers[] = 'xx'; //callahan
-			$away_playerlist = TeamPlayerList($info['visitorteam']);
+			$away_playerlist = TeamPlayerList($database, $info['visitorteam']);
 			$aplayers = array();
-			while ($player = mysql_fetch_assoc($away_playerlist)) {
-				GameAddPlayer($game['game_id'], $player['player_id'], intval($player['num']));
+			while ($player = $database->FetchAssoc($away_playerlist)) {
+				GameAddPlayer($database, $game['game_id'], $player['player_id'], intval($player['num']));
 				$aplayers[] = intval($player['num']);
 			}
 			$aplayers[] = 'xx'; //callahan
 
-			GameSetStartingTeam($game['game_id'], rand(0, 1));
+			GameSetStartingTeam($database, $game['game_id'], rand(0, 1));
 
 			$h = 0;
 			$a = 0;
@@ -109,10 +109,10 @@ if (isset($_POST['simulate']) && !empty($_POST['pools'])) {
 						$iscallahan = 1;
 						$pass = -1;
 					} else {
-						$pass = GamePlayerFromNumber($game['game_id'], $info['hometeam'], $pass);
+						$pass = GamePlayerFromNumber($database, $game['game_id'], $info['hometeam'], $pass);
 					}
 					$goal = $hplayers[rand(0, count($hplayers) - 2)]; //-2 removes callahan
-					$goal = GamePlayerFromNumber($game['game_id'], $info['hometeam'], $goal);
+					$goal = GamePlayerFromNumber($database, $game['game_id'], $info['hometeam'], $goal);
 				} else {
 					$a++;
 					$pass = $aplayers[rand(0, count($aplayers) - 1)];
@@ -121,15 +121,15 @@ if (isset($_POST['simulate']) && !empty($_POST['pools'])) {
 						$iscallahan = 1;
 						$pass = -1;
 					} else {
-						$pass = GamePlayerFromNumber($game['game_id'], $info['visitorteam'], $pass);
+						$pass = GamePlayerFromNumber($database, $game['game_id'], $info['visitorteam'], $pass);
 					}
 					$goal = $aplayers[rand(0, count($aplayers) - 1)]; //-1 removes callahan
-					$goal = GamePlayerFromNumber($game['game_id'], $info['visitorteam'], $goal);
+					$goal = GamePlayerFromNumber($database, $game['game_id'], $info['visitorteam'], $goal);
 				}
-				GameAddScore($game['game_id'], $pass, $goal, $time, $i + 1, $h, $a, $home, $iscallahan);
+				GameAddScore($database, $game['game_id'], $pass, $goal, $time, $i + 1, $h, $a, $home, $iscallahan);
 				if ($h == $poolinfo['halftimescore'] || $a == $poolinfo['halftimescore']) {
 					$time = $time + $poolinfo['halftime'];
-					GameSetHalftime($game['game_id'], $time);
+					GameSetHalftime($database, $game['game_id'], $time);
 				}
 			}
 
@@ -142,7 +142,7 @@ if (isset($_POST['simulate']) && !empty($_POST['pools'])) {
 			sort($timeoutstime, SORT_NUMERIC);
 
 			for ($i = 0; $i <= $timeouts; $i++) {
-				GameAddTimeout($game['game_id'], $i + 1, $timeoutstime[$i], 1);
+				GameAddTimeout($database, $game['game_id'], $i + 1, $timeoutstime[$i], 1);
 			}
 
 			//away team timeouts
@@ -154,16 +154,16 @@ if (isset($_POST['simulate']) && !empty($_POST['pools'])) {
 			sort($timeoutstime, SORT_NUMERIC);
 
 			for ($i = 0; $i <= $timeouts; $i++) {
-				GameAddTimeout($game['game_id'], $i + 1, $timeoutstime[$i], 0);
+				GameAddTimeout($database, $game['game_id'], $i + 1, $timeoutstime[$i], 0);
 			}
 
 			//game official
-			GameSetScoreSheetKeeper($game['game_id'], "Game Simulator");
+			GameSetScoreSheetKeeper($database, $game['game_id'], "Game Simulator");
 
-			GameSetResult($game['game_id'], $h, $a, false);
+			GameSetResult($database, $game['game_id'], $h, $a, false);
 		}
-		ResolvePoolStandings($poolId);
-		PoolResolvePlayed($poolId);
+		ResolvePoolStandings($database, $poolId);
+		PoolResolvePlayed($database, $poolId);
 	}
 } elseif (isset($_POST['reset']) && !empty($_POST['pools'])) {
 
@@ -171,31 +171,31 @@ if (isset($_POST['simulate']) && !empty($_POST['pools'])) {
 
 	foreach ($pools as $poolId) {
 
-		$poolinfo = PoolInfo($poolId);
-		$games = PoolGames($poolId);
+		$poolinfo = PoolInfo($database, $poolId);
+		$games = PoolGames($database, $poolId);
 		set_time_limit(300); //game simulation takes time because so much inserts
 
 		foreach ($games as $game) {
 
-			GameRemoveAllPlayers($game['game_id']);
+			GameRemoveAllPlayers($database, $game['game_id']);
 
-			GameSetStartingTeam($game['game_id'], NULL);
+			GameSetStartingTeam($database, $game['game_id'], NULL);
 
-			GameRemoveAllScores($game['game_id']);
-			GameSetHalftime($game['game_id'], NULL);
+			GameRemoveAllScores($database, $game['game_id']);
+			GameSetHalftime($database, $game['game_id'], NULL);
 
-			GameRemoveAllTimeouts($game['game_id']);
+			GameRemoveAllTimeouts($database, $game['game_id']);
 
-			GameSetScoreSheetKeeper($game['game_id'], NULL);
+			GameSetScoreSheetKeeper($database, $game['game_id'], NULL);
 
-			GameClearResult($game['game_id'], false);
+			GameClearResult($database, $game['game_id'], false);
 		}
 
 		undoPoolMoves($poolId);
 
 
-		ResolvePoolStandings($poolId);
-		PoolResolvePlayed($poolId);
+		ResolvePoolStandings($database, $poolId);
+		PoolResolvePlayed($database, $poolId);
 		// TODO undo moves, uo_team_pool.activerank, special ranks, ...
 	}
 }
@@ -206,9 +206,9 @@ $html .= "<form method='post' id='tables' action='?view=plugins/simulate_games'>
 if (empty($seasonId)) {
 	$html .= "<p>" . ("Select event") . ": <select class='dropdown' name='season'>\n";
 
-	$seasons = Seasons();
+	$seasons = Seasons($database);
 
-	while ($row = mysql_fetch_assoc($seasons)) {
+	while ($row = $database->FetchAssoc($seasons)) {
 		$html .= "<option class='dropdown' value='" . utf8entities($row['season_id']) . "'>" . utf8entities($row['name']) . "</option>";
 	}
 
@@ -226,15 +226,15 @@ if (empty($seasonId)) {
 	$html .= "<th>" . ("Played/Total") . "</th>";
 	$html .= "</tr>\n";
 
-	$series = SeasonSeries($seasonId);
+	$series = SeasonSeries($database, $seasonId);
 	foreach ($series as $row) {
 
-		$pools = SeriesPools($row['series_id']);
+		$pools = SeriesPools($database, $row['series_id']);
 		foreach ($pools as $pool) {
 			$html .= "<tr>";
 			if (
-				PoolTotalPlayedGames($pool['pool_id']) < count(PoolGames($pool['pool_id']))
-				&& PoolIsMoveFromPoolsPlayed($pool['pool_id'])
+				PoolTotalPlayedGames($database, $pool['pool_id']) < count(PoolGames($database, $pool['pool_id']))
+				&& PoolIsMoveFromPoolsPlayed($database, $pool['pool_id'])
 			) {
 				$html .= "<td class='left'><input type='checkbox' checked='checked' name='pools[]' value='" . utf8entities($pool['pool_id']) . "' /></td>";
 			} else {
@@ -242,9 +242,9 @@ if (empty($seasonId)) {
 			}
 			$html .= "<td>" . $pool['name'] . "</td>";
 			$html .= "<td>" . $row['name'] . "</td>";
-			$html .= "<td class='center'>" . count(PoolTeams($pool['pool_id'])) . "</td>";
-			$html .= "<td class='center'>" . PoolTotalPlayedGames($pool['pool_id']);
-			$html .= "/" . count(PoolGames($pool['pool_id'])) . "</td>";
+			$html .= "<td class='center'>" . count(PoolTeams($database, $pool['pool_id'])) . "</td>";
+			$html .= "<td class='center'>" . PoolTotalPlayedGames($database, $pool['pool_id']);
+			$html .= "/" . count(PoolGames($database, $pool['pool_id'])) . "</td>";
 			$html .= "</tr>\n";
 		}
 	}
@@ -257,5 +257,5 @@ if (empty($seasonId)) {
 
 $html .= "</form>";
 
-showPage($title, $html);
+showPage($database, $title, $html);
 ?>

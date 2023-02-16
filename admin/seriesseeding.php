@@ -2,8 +2,8 @@
 include_once 'lib/series.functions.php';
 
 $seriesId = intval($_GET["series"]);
-$seasonInfo = SeasonInfo(SeriesSeasonId($seriesId));
-$teams = SeriesTeams($seriesId, true);
+$seasonInfo = SeasonInfo($database, SeriesSeasonId($database, $seriesId));
+$teams = SeriesTeams($database, $seriesId, true);
 $backurl = utf8entities($_SERVER['HTTP_REFERER']);
 
 $html = "";
@@ -13,11 +13,11 @@ if (isset($_POST['save'])) {
 	for ($i = 0; $i < count($teams); $i++) {
 		$teamId = $_POST["team$i"];
 		$seed = $_POST["seed$i"];
-		SetTeamSeeding($seriesId, $teamId, $seed);
+		SetTeamSeeding($database, $seriesId, $teamId, $seed);
 	}
 }
 
-$teams = SeriesTeams($seriesId, true);
+$teams = SeriesTeams($database, $seriesId, true);
 
 //common page
 $title = _("Division seeding");
@@ -25,10 +25,10 @@ $LAYOUT_ID = SERIESSEEDING;
 pageTopHeadOpen($title);
 include 'script/common.js.inc';
 pageTopHeadClose($title, false);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
-$series = SeasonSeries($seasonInfo['season_id']);
+$series = SeasonSeries($database, $seasonInfo['season_id']);
 foreach ($series as $row) {
 	$menutabs[U_($row['name'])] = "?view=admin/seriesseeding&season=" . $seasonInfo['season_id'] . "&series=" . $row['series_id'];
 }
@@ -36,7 +36,7 @@ $menutabs[_("...")] = "?view=admin/seasonseries&season=" . $seasonInfo['season_i
 pageMenu($menutabs);
 
 $html .= "<form method='post' action='?view=admin/seriesseeding&amp;series=$seriesId'>";
-$html .= "<h1>" . utf8entities(U_(SeriesName($seriesId))) . "</h1>";
+$html .= "<h1>" . utf8entities(U_(SeriesName($database, $seriesId))) . "</h1>";
 $html .=  "<table border='0' cellpadding='4px'>\n";
 
 $html .= "<tr>";

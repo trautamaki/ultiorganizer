@@ -246,8 +246,8 @@ class phpSVNclient
      *  @param integer $vend End Version
      *  @return Array Respository Logs
      */
-    function getRepositoryLogs($vini=0,$vend=-1) {
-        return $this->getFileLogs("/",$vini,$vend);
+    function getRepositoryLogs($database, $vini=0,$vend=-1) {
+        return $this->getFileLogs($database, "/",$vini,$vend);
     }
 
     /**
@@ -261,7 +261,7 @@ class phpSVNclient
      *  @param integer $vend End Version
      *  @return Array Respository Logs
      */
-    function getFileLogs($file, $vini=0,$vend=-1) {
+    function getFileLogs($database, $file, $vini=0,$vend=-1) {
         $actVersion = $this->getVersion();
         if ( $vend == -1 || $vend > $actVersion)
             $vend = $actVersion;

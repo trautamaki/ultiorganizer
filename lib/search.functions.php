@@ -2,11 +2,11 @@
 
 include_once $include_prefix . 'lib/season.functions.php';
 
-function SearchSeason($resultTarget, $hiddenProperties, $submitbuttons)
+function SearchSeason($database, $resultTarget, $hiddenProperties, $submitbuttons)
 {
 	$ret = "<form method='post' action='?" . $resultTarget . "'>\n";
 	$ret .= "<table><tr><td>" . _("Event") . ":</td><td>";
-	$ret .= SeasonControl();
+	$ret .= SeasonControl($database);
 	$ret .= "</td></tr>\n";
 	$ret .= "</table>\n";
 	$ret .= "<p>";
@@ -21,12 +21,12 @@ function SearchSeason($resultTarget, $hiddenProperties, $submitbuttons)
 	return $ret;
 }
 
-function SearchSeries($resultTarget, $hiddenProperties, $submitbuttons)
+function SearchSeries($database, $resultTarget, $hiddenProperties, $submitbuttons)
 {
 	$querystring = $_SERVER['QUERY_STRING'];
 	$ret = "<form method='post' action='?" . utf8entities($querystring) . "'>\n";
 	$ret .= "<table><tr><td>" . _("Event") . ":</td><td>";
-	$ret .= SeasonControl();
+	$ret .= SeasonControl($database);
 	$ret .= "</td></tr>\n";
 	$ret .= "<tr><td>";
 	$ret .= _("Division") . "</td><td>";
@@ -41,7 +41,7 @@ function SearchSeries($resultTarget, $hiddenProperties, $submitbuttons)
 	$ret .= "</form>";
 	$ret .= "<form method='post' id='series' action='?" . $resultTarget . "'>\n";
 	$ret .= "<p>";
-	$ret .= SeriesResults();
+	$ret .= SeriesResults($database);
 	foreach ($hiddenProperties as $name => $value) {
 		$ret .= "<input type='hidden' name='" . urlencode($name) . "' value='" . urlencode($value) . "'/>\n";
 	}
@@ -53,12 +53,12 @@ function SearchSeries($resultTarget, $hiddenProperties, $submitbuttons)
 	return $ret;
 }
 
-function SearchPool($resultTarget, $hiddenProperties, $submitbuttons)
+function SearchPool($database, $resultTarget, $hiddenProperties, $submitbuttons)
 {
 	$querystring = $_SERVER['QUERY_STRING'];
 	$ret = "<form method='post' action='?" . utf8entities($querystring) . "'>\n";
 	$ret .= "<table><tr><td>" . _("Event") . ":</td><td>";
-	$ret .= SeasonControl();
+	$ret .= SeasonControl($database);
 	$ret .= "</td></tr>\n";
 	$ret .= "<tr><td>";
 	$ret .= _("Division") . "</td><td>";
@@ -79,7 +79,7 @@ function SearchPool($resultTarget, $hiddenProperties, $submitbuttons)
 	$ret .= "</form>";
 	$ret .= "<form method='post' id='pools' action='?" . $resultTarget . "'>\n";
 	$ret .= "<p>";
-	$ret .= PoolResults();
+	$ret .= PoolResults($database);
 	foreach ($hiddenProperties as $name => $value) {
 		$ret .= "<input type='hidden' name='" . urlencode($name) . "' value='" . urlencode($value) . "'/>\n";
 	}
@@ -91,12 +91,12 @@ function SearchPool($resultTarget, $hiddenProperties, $submitbuttons)
 	return $ret;
 }
 
-function SearchTeam($resultTarget, $hiddenProperties, $submitbuttons)
+function SearchTeam($database, $resultTarget, $hiddenProperties, $submitbuttons)
 {
 	$querystring = $_SERVER['QUERY_STRING'];
 	$ret = "<form method='post' action='?" . utf8entities($querystring) . "'>\n";
 	$ret .= "<table><tr><td>" . _("Event") . ":</td><td>";
-	$ret .= SeasonControl();
+	$ret .= SeasonControl($database);
 	$ret .= "</td></tr>\n";
 	$ret .= "<tr><td>";
 	$ret .= _("Division") . "</td><td>";
@@ -117,7 +117,7 @@ function SearchTeam($resultTarget, $hiddenProperties, $submitbuttons)
 	$ret .= "</form>";
 	$ret .= "<form method='post' id='teams' action='?" . $resultTarget . "'>\n";
 	$ret .= "<p>";
-	$ret .= TeamResults();
+	$ret .= TeamResults($database);
 	foreach ($hiddenProperties as $name => $value) {
 		$ret .= "<input type='hidden' name='" . urlencode($name) . "' value='" . urlencode($value) . "'/>\n";
 	}
@@ -129,7 +129,7 @@ function SearchTeam($resultTarget, $hiddenProperties, $submitbuttons)
 	return $ret;
 }
 
-function SearchUser($resultTarget, $hiddenProperties, $submitbuttons)
+function SearchUser($database, $resultTarget, $hiddenProperties, $submitbuttons)
 {
 	$querystring = $_SERVER['QUERY_STRING'];
 	$ret = "<form method='post' action='?" . utf8entities($querystring) . "'>\n";
@@ -139,7 +139,7 @@ function SearchUser($resultTarget, $hiddenProperties, $submitbuttons)
 		$ret .= " checked='checked'";
 	}
 	$ret .= " name='useseasons' value='true' />";
-	$ret .= SeasonControl();
+	$ret .= SeasonControl($database);
 	$ret .= "</td></tr>\n";
 	$ret .= "<tr><td>";
 	$ret .= _("Name") . "</td><td>";
@@ -174,7 +174,7 @@ function SearchUser($resultTarget, $hiddenProperties, $submitbuttons)
 	$ret .= "</form>";
 	$ret .= "<form method='post' id='users' action='?" . $resultTarget . "'>\n";
 	$ret .= "<div>";
-	$ret .= UserResults();
+	$ret .= UserResults($database);
 	foreach ($hiddenProperties as $name => $value) {
 		$ret .= "<input type='hidden' name='" . urlencode($name) . "' value='" . urlencode($value) . "'/>\n";
 	}
@@ -189,7 +189,7 @@ function SearchUser($resultTarget, $hiddenProperties, $submitbuttons)
 	return $ret;
 }
 
-function SearchPlayer($resultTarget, $hiddenProperties, $submitbuttons)
+function SearchPlayer($database, $resultTarget, $hiddenProperties, $submitbuttons)
 {
 	$querystring = $_SERVER['QUERY_STRING'];
 	$ret = "<form method='post' action='?" . utf8entities($querystring) . "'>\n";
@@ -199,7 +199,7 @@ function SearchPlayer($resultTarget, $hiddenProperties, $submitbuttons)
 		$ret .= " checked='checked'";
 	}
 	$ret .= " name='useseasons' value='true' />";
-	$ret .= SeasonControl();
+	$ret .= SeasonControl($database);
 	$ret .= "</td></tr>\n";
 	$ret .= "<tr><td>";
 	$ret .= _("Name") . "</td><td>";
@@ -226,7 +226,7 @@ function SearchPlayer($resultTarget, $hiddenProperties, $submitbuttons)
 	$ret .= "</form>";
 	$ret .= "<form method='post' id='users' action='?" . $resultTarget . "'>\n";
 	$ret .= "<div>";
-	$ret .= PlayerResults();
+	$ret .= PlayerResults($database);
 	foreach ($hiddenProperties as $name => $value) {
 		$ret .= "<input type='hidden' name='" . urlencode($name) . "' value='" . urlencode($value) . "'/>\n";
 	}
@@ -241,7 +241,7 @@ function SearchPlayer($resultTarget, $hiddenProperties, $submitbuttons)
 	return $ret;
 }
 
-function SearchReservation($resultTarget, $hiddenProperties, $submitbuttons)
+function SearchReservation($database, $resultTarget, $hiddenProperties, $submitbuttons)
 {
 	$querystring = $_SERVER['QUERY_STRING'];
 	$ret = "<form method='post' action='?" . utf8entities($querystring) . "'>\n";
@@ -289,7 +289,7 @@ function SearchReservation($resultTarget, $hiddenProperties, $submitbuttons)
 	$ret .= "</form>";
 
 	$ret .= "<form method='post' id='reservations' action='?" . $resultTarget . "'>\n";
-	$ret .= ReservationResults();
+	$ret .= ReservationResults($database);
 	$ret .= "<p>";
 	foreach ($hiddenProperties as $name => $value) {
 		$ret .= "<input type='hidden' name='" . urlencode($name) . "' value='" . urlencode($value) . "'/>\n";
@@ -306,7 +306,7 @@ function SearchReservation($resultTarget, $hiddenProperties, $submitbuttons)
 	return $ret;
 }
 
-function SearchGame($resultTarget, $hiddenProperties, $submitbuttons)
+function SearchGame($database, $resultTarget, $hiddenProperties, $submitbuttons)
 {
 	$querystring = $_SERVER['QUERY_STRING'];
 	//leads to styles included on middle of page
@@ -361,7 +361,7 @@ function SearchGame($resultTarget, $hiddenProperties, $submitbuttons)
 	$ret .= "</form>";
 
 	$ret .= "<form method='post' id='games' action='?" . $resultTarget . "'>\n";
-	$ret .= GameResults();
+	$ret .= GameResults($database);
 	$ret .= "<p>";
 	foreach ($hiddenProperties as $name => $value) {
 		$ret .= "<input type='hidden' name='" . urlencode($name) . "' value='" . urlencode($value) . "'/>\n";
@@ -375,7 +375,7 @@ function SearchGame($resultTarget, $hiddenProperties, $submitbuttons)
 	return $ret;
 }
 
-function SeasonControl()
+function SeasonControl($database)
 {
 	if (!empty($_POST['searchseasons'])) {
 		$selected = array_flip($_POST['searchseasons']);
@@ -389,8 +389,8 @@ function SeasonControl()
 
 	$ret = "<select multiple='multiple' name='searchseasons[]' id='searchseasons' style='height:200px'>\n";
 
-	$seasons = Seasons();
-	while ($season = mysql_fetch_assoc($seasons)) {
+	$seasons = Seasons($database);
+	while ($season = $database->FetchAssoc($seasons)) {
 		$ret .= "<option value='" . urlencode($season['season_id']) . "'";
 		if (isset($selected[$season['season_id']])) {
 			$ret .=	" selected='selected'";
@@ -401,7 +401,7 @@ function SeasonControl()
 	return $ret;
 }
 
-function SeriesResults()
+function SeriesResults($database)
 {
 	if (empty($_POST['searchser'])) {
 		return "";
@@ -417,21 +417,21 @@ function SeriesResults()
 			$selected = $_SESSION['userproperties']['editseason'];
 		}
 		foreach ($selected as $seasonid => $value) {
-			$query .= "'" . mysql_real_escape_string($seasonid) . "', ";
+			$query .= "'" . $database->RealEscapeString($seasonid) . "', ";
 		}
 		$query = substr($query, 0, strlen($query) - 2);
 		$query .= ")";
 		if (!empty($_POST['seriesname']) && strlen(trim($_POST['seriesname'])) > 0) {
-			$query .= " AND ser.name like '%" . mysql_real_escape_string(trim($_POST['seriesname'])) . "%'";
+			$query .= " AND ser.name like '%" . $database->RealEscapeString(trim($_POST['seriesname'])) . "%'";
 		}
 
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 		$ret = "<table><tr><th><input type='checkbox' onclick='checkAll(\"series\");' /></th>";
 		$ret .= "<th>" . _("Event") . "</th><th>" . _("Division") . "</th></tr>\n";
-		while ($row = mysql_fetch_assoc($result)) {
+		while ($row = $database->FetchAssoc($result)) {
 			$ret .= "<tr><td><input type='checkbox' name='series[]' value='" . utf8entities($row['series']) . "' /></td>";
 			$ret .= "<td>" . utf8entities($row['season_name']) . "</td><td>";
 			$ret .= utf8entities($row['series_name']) . "</td></tr>\n";
@@ -441,7 +441,7 @@ function SeriesResults()
 	}
 }
 
-function PoolResults()
+function PoolResults($database)
 {
 	if (empty($_POST['searchpool'])) {
 		return "";
@@ -457,24 +457,24 @@ function PoolResults()
 			$selected = $_SESSION['userproperties']['editseason'];
 		}
 		foreach ($selected as $seasonid => $value) {
-			$query .= "'" . mysql_real_escape_string($seasonid) . "', ";
+			$query .= "'" . $database->RealEscapeString($seasonid) . "', ";
 		}
 		$query = substr($query, 0, strlen($query) - 2);
 		$query .= ")";
 		if (!empty($_POST['seriesname']) && strlen(trim($_POST['seriesname'])) > 0) {
-			$query .= " AND ser.name like '%" . mysql_real_escape_string(trim($_POST['seriesname'])) . "%'";
+			$query .= " AND ser.name like '%" . $database->RealEscapeString(trim($_POST['seriesname'])) . "%'";
 		}
 		if (!empty($_POST['poolname']) && strlen(trim($_POST['poolname'])) > 0) {
-			$query .= " AND pool.name like '%" . mysql_real_escape_string(trim($_POST['poolname'])) . "%'";
+			$query .= " AND pool.name like '%" . $database->RealEscapeString(trim($_POST['poolname'])) . "%'";
 		}
 
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 		$ret .= "<table><tr><th><input type='checkbox' onclick='checkAll(\"pools\");' /></th>";
 		$ret .= "<th>" . _("Event") . "</th><th>" . _("Division") . "</th><th>" . _("Division") . "</th></tr>\n";
-		while ($row = mysql_fetch_assoc($result)) {
+		while ($row = $database->FetchAssoc($result)) {
 			$ret .= "<tr><td><input type='checkbox' name='pools[]' value='" . utf8entities($row['pool']) . "' /></td>";
 			$ret .= "<td>" . utf8entities($row['season_name']) . "</td>";
 			$ret .= "<td>" . utf8entities($row['series_name']) . "</td>";
@@ -486,7 +486,7 @@ function PoolResults()
 	}
 }
 
-function TeamResults()
+function TeamResults($database)
 {
 	if (empty($_POST['searchteam'])) {
 		return "";
@@ -502,24 +502,24 @@ function TeamResults()
 			$selected = $_SESSION['userproperties']['editseason'];
 		}
 		foreach ($selected as $seasonid => $value) {
-			$query .= "'" . mysql_real_escape_string($seasonid) . "', ";
+			$query .= "'" . $database->RealEscapeString($seasonid) . "', ";
 		}
 		$query = substr($query, 0, strlen($query) - 2);
 		$query .= ")";
 		if (!empty($_POST['seriesname']) && strlen(trim($_POST['seriesname'])) > 0) {
-			$query .= " AND ser.name like '%" . mysql_real_escape_string(trim($_POST['seriesname'])) . "%'";
+			$query .= " AND ser.name like '%" . $database->RealEscapeString(trim($_POST['seriesname'])) . "%'";
 		}
 		if (!empty($_POST['teamname']) && strlen(trim($_POST['teamname'])) > 0) {
-			$query .= " AND team.name like '%" . mysql_real_escape_string(trim($_POST['teamname'])) . "%'";
+			$query .= " AND team.name like '%" . $database->RealEscapeString(trim($_POST['teamname'])) . "%'";
 		}
 
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 		$ret = "<table><tr><th><input type='checkbox' onclick='checkAll(\"teams\")' /></th>";
 		$ret .= "<th>" . _("Event") . "</th><th>" . _("Division") . "</th><th>" . _("Team") . "</th></tr>\n";
-		while ($row = mysql_fetch_assoc($result)) {
+		while ($row = $database->FetchAssoc($result)) {
 			$ret .= "<tr><td><input type='checkbox' name='teams[]' value='" . utf8entities($row['team']) . "' /></td>";
 			$ret .= "<td>" . utf8entities($row['season_name']) . "</td>";
 			$ret .= "<td>" . utf8entities($row['series_name']) . "</td>";
@@ -531,7 +531,7 @@ function TeamResults()
 	}
 }
 
-function UserResults()
+function UserResults($database)
 {
 	if (empty($_POST['searchuser'])) {
 		return "";
@@ -553,7 +553,7 @@ function UserResults()
 		if (!empty($_POST['useseasons'])) {
 			$criteria = "(userid in (select userid from uo_userproperties where name='editseason' and value in (";
 			foreach ($selected as $seasonid => $prop) {
-				$criteria .= "'" . mysql_real_escape_string($seasonid) . "', ";
+				$criteria .= "'" . $database->RealEscapeString($seasonid) . "', ";
 			}
 			$criteria = substr($criteria, 0, strlen($criteria) - 2);
 			$criteria .= ")))";
@@ -568,23 +568,23 @@ function UserResults()
 			$criteria .= "(select team_id from uo_team where series in ";
 			$criteria .= "(select series_id from uo_series where season in (";
 			foreach ($selected as $seasonid => $value) {
-				$criteria .= "'" . mysql_real_escape_string($seasonid) . "', ";
+				$criteria .= "'" . $database->RealEscapeString($seasonid) . "', ";
 			}
 			$criteria = substr($criteria, 0, strlen($criteria) - 2);
-			$criteria .= ")) and name like '%" . mysql_real_escape_string($_POST['teamname']) . "%')))";
+			$criteria .= ")) and name like '%" . $database->RealEscapeString($_POST['teamname']) . "%')))";
 		}
 		if (!empty($_POST['username'])) {
 			if (strlen($criteria) > 0) {
 				$criteria .= " and ";
 			}
-			$criteria .= "(name like '%" . mysql_real_escape_string($_POST['username']) . "%')";
+			$criteria .= "(name like '%" . $database->RealEscapeString($_POST['username']) . "%')";
 		}
 
 		if (!empty($_POST['email'])) {
 			if (strlen($criteria) > 0) {
 				$criteria .= " and ";
 			}
-			$criteria .= "(email like '%" . mysql_real_escape_string($_POST['email']) . "%')";
+			$criteria .= "(email like '%" . $database->RealEscapeString($_POST['email']) . "%')";
 		}
 
 		if (strlen($criteria) > 0) {
@@ -592,14 +592,14 @@ function UserResults()
 		}
 		$query .= " ORDER BY userid, name";
 
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 
 		$ret = "<table style='white-space: nowrap;'><tr><th><input type='checkbox' onclick='checkAll(\"users\");'/></th>";
 		$ret .= "<th>" . _("Name") . "</th><th>" . _("Username") . "</th><th>" . _("Email") . "</th><th>" . _("Rights") . "</th><th>" . _("Last login") . "</th></tr>\n";
-		while ($row = mysql_fetch_assoc($result)) {
+		while ($row = $database->FetchAssoc($result)) {
 			$ret .= "<tr><td style='vertical-align:text-top;'>";
 			if (urlencode($row['userid']) != 'anonymous') {
 				$ret .= "<input type='checkbox' name='users[]' value='" . urlencode($row['userid']) . "'/>";
@@ -611,7 +611,7 @@ function UserResults()
 			$ret .= "<td style='vertical-align:text-top;'>" . utf8entities($row['userid']) . "</td>";
 			$ret .= "<td style='vertical-align:text-top;'>" . utf8entities($row['email']) . "</td>";
 
-			$ret .= "<td style='vertical-align:text-top;'>" . UserListRightsHtml($row['userid']) . "</td>";
+			$ret .= "<td style='vertical-align:text-top;'>" . UserListRightsHtml($database, $row['userid']) . "</td>";
 
 			$ret .= "<td style='vertical-align:text-top;'>" . LongTimeFormat($row['last_login']) . "</td>";
 			$ret .= "</tr>\n";
@@ -621,7 +621,7 @@ function UserResults()
 	}
 }
 
-function PlayerResults()
+function PlayerResults($database)
 {
 	if (empty($_POST['searchplayer'])) {
 		return "";
@@ -643,7 +643,7 @@ function PlayerResults()
 			$criteria .= "(select team_id from uo_team where series in ";
 			$criteria .= "(select series_id from uo_series where season in (";
 			foreach ($selected as $seasonid => $prop) {
-				$criteria .= "'" . mysql_real_escape_string($seasonid) . "', ";
+				$criteria .= "'" . $database->RealEscapeString($seasonid) . "', ";
 			}
 			$criteria = substr($criteria, 0, strlen($criteria) - 2);
 			$criteria .= "))))";
@@ -657,25 +657,25 @@ function PlayerResults()
 			$criteria .= "(select team_id from uo_team where series in ";
 			$criteria .= "(select series_id from uo_series where season in (";
 			foreach ($selected as $seasonid => $value) {
-				$criteria .= "'" . mysql_real_escape_string($seasonid) . "', ";
+				$criteria .= "'" . $database->RealEscapeString($seasonid) . "', ";
 			}
 			$criteria = substr($criteria, 0, strlen($criteria) - 2);
-			$criteria .= ")) and name like '%" . mysql_real_escape_string($_POST['teamname']) . "%'))";
+			$criteria .= ")) and name like '%" . $database->RealEscapeString($_POST['teamname']) . "%'))";
 		}
 		if (!empty($_POST['username'])) {
 			if (strlen($criteria) > 0) {
 				$criteria .= " and ";
 			}
-			$criteria .= "(firstname like '%" . mysql_real_escape_string($_POST['username']) . "%'";
-			$criteria .= " or lastname like '%" . mysql_real_escape_string($_POST['username']) . "%'";
-			$criteria .= " or CONCAT(firstname, ' ', lastname) like '%" . mysql_real_escape_string($_POST['username']) . "%')";
+			$criteria .= "(firstname like '%" . $database->RealEscapeString($_POST['username']) . "%'";
+			$criteria .= " or lastname like '%" . $database->RealEscapeString($_POST['username']) . "%'";
+			$criteria .= " or CONCAT(firstname, ' ', lastname) like '%" . $database->RealEscapeString($_POST['username']) . "%')";
 		}
 
 		if (!empty($_POST['email'])) {
 			if (strlen($criteria) > 0) {
 				$criteria .= " and ";
 			}
-			$criteria .= "(email like '%" . mysql_real_escape_string($_POST['email']) . "%')";
+			$criteria .= "(email like '%" . $database->RealEscapeString($_POST['email']) . "%')";
 		}
 
 		if (strlen($criteria) > 0) {
@@ -683,14 +683,14 @@ function PlayerResults()
 		}
 		$query .= " GROUP BY CONCAT(firstname, ' ', lastname), accreditation_id";
 		$query .= " ORDER BY lastname, firstname, t.name";
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 
 		$ret = "<table><tr><th><input type='checkbox' onclick='checkAll(\"players[]\");'/></th>";
 		$ret .= "<th>" . _("Name") . "</th><th>" . _("Team") . "</th><th>" . _("Email") . "</th></tr>\n";
-		while ($row = mysql_fetch_assoc($result)) {
+		while ($row = $database->FetchAssoc($result)) {
 			$ret .= "<tr><td>";
 			$ret .= "<input type='checkbox' name='players[]' value='" . urlencode($row['accreditation_id']) . "'/>";
 			$ret .= "</td>";
@@ -704,7 +704,7 @@ function PlayerResults()
 	}
 }
 
-function ReservationResults()
+function ReservationResults($database)
 {
 	if (empty($_POST['searchreservation']) && empty($_GET['season'])) {
 		return "";
@@ -731,31 +731,31 @@ function ReservationResults()
 			$query .= "res.endtime<'" . ToInternalTimeFormat($end . " 23:59") . "' ";
 		}
 		if (isset($_POST['searchgroup']) && strlen($_POST['searchgroup']) > 0) {
-			$query .= "AND res.reservationgroup like '%" . mysql_real_escape_string($_POST['searchgroup']) . "%' ";
+			$query .= "AND res.reservationgroup like '%" . $database->RealEscapeString($_POST['searchgroup']) . "%' ";
 		}
 		if (isset($_POST['searchfield']) && strlen($_POST['searchfield']) > 0) {
-			$query .= "AND res.fieldname like '" . mysql_real_escape_string($_POST['searchfield']) . "' ";
+			$query .= "AND res.fieldname like '" . $database->RealEscapeString($_POST['searchfield']) . "' ";
 		}
 		if (isset($_POST['searchlocation']) && strlen($_POST['searchlocation']) > 0) {
-			$query .= "AND (loc.name like '%" . mysql_real_escape_string($_POST['searchlocation']) . "%' OR ";
-			$query .= "loc.address like '%" . mysql_real_escape_string($_POST['searchlocation']) . "%') ";
+			$query .= "AND (loc.name like '%" . $database->RealEscapeString($_POST['searchlocation']) . "%' OR ";
+			$query .= "loc.address like '%" . $database->RealEscapeString($_POST['searchlocation']) . "%') ";
 		}
 
 		if (isset($_GET['season']) && strlen($_GET['season']) > 0) {
-			$query .= "AND res.season='" . mysql_real_escape_string($_GET['season']) . "' ";
+			$query .= "AND res.season='" . $database->RealEscapeString($_GET['season']) . "' ";
 		}
 		$query .= "GROUP BY res.starttime, res.id, res.location, res.fieldname, res.reservationgroup, res.endtime, loc.name, loc.fields, loc.indoor, loc.address";
 
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 
 		$ret = "<table class='admintable'><tr><th><input type='checkbox' onclick='checkAll(\"reservations\");'/></th>";
 		$ret .= "<th>" . _("Group") . "</th><th>" . _("Location") . "</th><th>" . _("Date") . "</th>";
 		$ret .= "<th>" . _("Starts") . "</th><th>" . _("Ends") . "</th><th>" . _("Games") . "</th>";
 		$ret .= "<th>" . _("Scoresheets") . "</th><th></th></tr>\n";
-		while ($row = mysql_fetch_assoc($result)) {
+		while ($row = $database->FetchAssoc($result)) {
 			$ret .= "<tr class='admintablerow'><td><input type='checkbox' name='reservations[]' value='" . utf8entities($row['reservation_id']) . "'/></td>";
 			$ret .= "<td>" . utf8entities(U_($row['reservationgroup'])) . "</td>";
 			$ret .= "<td><a href='?view=admin/addreservation&amp;reservation=" . $row['reservation_id'] . "&amp;season=" . $row['season'] . "'>" . utf8entities(U_($row['name'])) . " " . _("Field") . " " . utf8entities(U_($row['fieldname'])) . "</a></td>";
@@ -775,7 +775,7 @@ function ReservationResults()
 	}
 }
 
-function GameResults()
+function GameResults($database)
 {
 
 	if (empty($_POST['searchgame'])) {
@@ -811,32 +811,32 @@ function GameResults()
 		}
 
 		if (isset($_POST['searchgroup']) && strlen($_POST['searchgroup']) > 0) {
-			$query .= "AND res.reservationgroup like '%" . mysql_real_escape_string($_POST['searchgroup']) . "%' ";
+			$query .= "AND res.reservationgroup like '%" . $database->RealEscapeString($_POST['searchgroup']) . "%' ";
 		}
 		if (isset($_POST['searchfield']) && strlen($_POST['searchfield']) > 0) {
-			$query .= "AND res.fieldname like '" . mysql_real_escape_string($_POST['searchfield']) . "' ";
+			$query .= "AND res.fieldname like '" . $database->RealEscapeString($_POST['searchfield']) . "' ";
 		}
 		if (isset($_POST['searchlocation']) && strlen($_POST['searchlocation']) > 0) {
-			$query .= "AND (loc.name like '%" . mysql_real_escape_string($_POST['searchlocation']) . "%' OR ";
-			$query .= "loc.address like '%" . mysql_real_escape_string($_POST['searchlocation']) . "%') ";
+			$query .= "AND (loc.name like '%" . $database->RealEscapeString($_POST['searchlocation']) . "%' OR ";
+			$query .= "loc.address like '%" . $database->RealEscapeString($_POST['searchlocation']) . "%') ";
 		}
 		if (isset($_POST['searchteams']) && strlen($_POST['searchteams'])) {
 			foreach (explode(',', $_POST['searchteams']) as $team) {
-				$query .= "AND (vj.name LIKE '%" . mysql_real_escape_string($team) . "%' OR kj.name LIKE '%" . mysql_real_escape_string($team) . "%') ";
+				$query .= "AND (vj.name LIKE '%" . $database->RealEscapeString($team) . "%' OR kj.name LIKE '%" . $database->RealEscapeString($team) . "%') ";
 			}
 		}
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 
 		$ret = "<table><tr><th><input type='checkbox' onclick='checkAll(\"games\");'/></th>";
 		$ret .= "<th>" . _("Tournament") . "</th><th>" . _("Location") . "</th><th>" . _("Game") . "</th></tr>\n";
-		while ($row = mysql_fetch_assoc($result)) {
+		while ($row = $database->FetchAssoc($result)) {
 			$ret .= "<tr><td><input type='checkbox' name='games[]' value='" . utf8entities($row['game_id']) . "'/></td>";
 			$ret .= "<td>" . utf8entities($row['reservationgroup']) . "</td>";
 			$ret .= "<td>" . utf8entities($row['locationname']) . "</td>";
-			$ret .= "<td>" . utf8entities(GameName($row)) . "</td>";
+			$ret .= "<td>" . utf8entities(GameName($database, $row)) . "</td>";
 			$ret .= "</tr>\n";
 		}
 		$ret .= "</table>\n";

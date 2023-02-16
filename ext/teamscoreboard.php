@@ -48,11 +48,11 @@ include_once 'localization.php';
 	echo "</tr>";
 
 	if ($teamId)
-		$scores = TeamScoreBoard($teamId, $seriesId, $sort, 0);
+		$scores = TeamScoreBoard($database, $seriesId, $sort, 0);
 	else
-		$scores = PoolScoreBoard($seriesId, $sort, 0);
+		$scores = PoolScoreBoard($database, $sort, 0);
 
-	while ($row = mysql_fetch_assoc($scores)) {
+	while ($row = $database->FetchAssoc($scores)) {
 		echo "<tr><td class='pk_scoreboard_td1'>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
 		echo "<td  class='pk_scoreboard_td2'>" . intval($row['games']) . "</td>";
 		echo "<td  class='pk_scoreboard_td2'>" . intval($row['fedin']) . "</td>";

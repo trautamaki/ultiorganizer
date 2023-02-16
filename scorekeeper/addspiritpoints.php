@@ -8,12 +8,12 @@ $teamId = isset($_GET['team']) ? $_GET['team'] : $_SESSION['team'];
 $_SESSION['team'] = $teamId;
 
 
-$season = SeasonInfo(GameSeason($gameId));
+$season = SeasonInfo($database, GameSeason($database, $gameId));
 if ($season['spiritmode'] > 0) {
-  $game_result = GameResult($gameId);
+  $game_result = GameResult($database, $gameId);
   $ishome = $teamId == $game_result['hometeam'] ? 1 : 0;
-  $mode = SpiritMode($season['spiritmode']);
-  $categories = SpiritCategories($mode['mode']);
+  $mode = SpiritMode($database, $season['spiritmode']);
+  $categories = SpiritCategories($database, $mode['mode']);
 
   // process itself if save button was pressed
   if (!empty($_POST['save'])) {
@@ -25,7 +25,7 @@ if ($season['spiritmode'] > 0) {
         else
           $missing = sprintf(_("Missing score for %s. "), $game_result['hometeamname']);
       }
-      GameSetSpiritPoints($gameId, $game_result['hometeam'], 1, $points, $categories);
+      GameSetSpiritPoints($database, $gameId, $game_result['hometeam'], 1, $points, $categories);
     } else {
       $points = array();
       foreach ($_POST['visvalueId'] as $cat) {
@@ -34,9 +34,9 @@ if ($season['spiritmode'] > 0) {
         else
           $missing = sprintf(_("Missing score for %s. "), $game_result['visitorteamname']);
       }
-      GameSetSpiritPoints($gameId, $game_result['visitorteam'], 0, $points, $categories);
+      GameSetSpiritPoints($database, $gameId, $game_result['visitorteam'], 0, $points, $categories);
 
-      $game_result = GameResult($gameId);
+      $game_result = GameResult($database, $gameId);
     }
   }
 
@@ -44,13 +44,13 @@ if ($season['spiritmode'] > 0) {
   if ($ishome) {
     $html .= "<h3>" . _("Spirit points given for") . ": " . utf8entities($game_result['hometeamname']) . "</h3>\n";
 
-    $points = GameGetSpiritPoints($gameId, $game_result['hometeam']);
-    $html .= SpiritTable($game_result, $points, $categories, true, false);
+    $points = GameGetSpiritPoints($database, $gameId, $game_result['hometeam']);
+    $html .= SpiritTable($database, $game_result, $points, $categories, true, false);
   } else {
     $html .= "<h3>" . _("Spirit points given for") . ": " . utf8entities($game_result['visitorteamname']) . "</h3>\n";
 
-    $points = GameGetSpiritPoints($gameId, $game_result['visitorteam']);
-    $html .= SpiritTable($game_result, $points, $categories, false, false);
+    $points = GameGetSpiritPoints($database, $gameId, $game_result['visitorteam']);
+    $html .= SpiritTable($database, $game_result, $points, $categories, false, false);
   }
 
   $html .= "<p>";

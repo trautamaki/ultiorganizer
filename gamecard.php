@@ -6,6 +6,8 @@ include_once 'lib/series.functions.php';
 include_once 'lib/player.functions.php';
 include_once 'lib/game.functions.php';
 
+$database = new Database();
+
 $html = "";
 
 $teamId1 = 0;
@@ -21,12 +23,12 @@ if (iget("team2")) {
 if (iget("sort")) {
   $sorting = iget("sort");
 }
-$team1 = TeamInfo($teamId1);
-$team2 = TeamInfo($teamId2);
+$team1 = TeamInfo($database, $teamId1);
+$team2 = TeamInfo($database, $teamId2);
 
 $title = _("Game card") . ": " . utf8entities($team1['name']) . " vs. " . utf8entities($team2['name']);
 
-//$seasons = TeamPlayedSeasons($team1['name'], $serie);
+//$seasons = TeamPlayedSeasons($database, $team1['name'], $serie);
 
 $nGames = 0;
 $nT1GoalsMade = 0;
@@ -42,9 +44,9 @@ $nT2Loses = 0;
 $t1 = preg_replace('/\s*/m', '', $team1['name']);
 $t2 = preg_replace('/\s*/m', '', $team2['name']);
 
-$games = GetAllPlayedGames($t1, $t2, $team1['type'], $sorting);
+$games = GetAllPlayedGames($database, $t1, $t2, $team1['type'], $sorting);
 
-while ($game = mysql_fetch_assoc($games)) {
+while ($game = $database->FetchAssoc($games)) {
   if (GameHasStarted($game)) {
     //ignore spaces from team name
     $t1 = preg_replace('/\s*/m', '', $team1['name']);
@@ -95,11 +97,11 @@ $html .= "<tr>
 	 <td>$nGames</td>
 	 <td>$nT1Wins</td>
 	 <td>$nT1Loses</td>
-	 <td>" . number_format((SafeDivide($nT1Wins, $nGames) * 100), 1) . " %</td>
+	 <td>" . number_format((SafeDivide($database, $nT1Wins, $nGames) * 100), 1) . " %</td>
 	 <td>$nT1GoalsMade</td>
-	 <td>" . number_format(SafeDivide($nT1GoalsMade, $nGames), 1) . "</td>
+	 <td>" . number_format(SafeDivide($database, $nT1GoalsMade, $nGames), 1) . "</td>
 	 <td>$nT1GoalsAgainst</td>
-	 <td>" . number_format(SafeDivide($nT1GoalsAgainst, $nGames), 1) . "</td>
+	 <td>" . number_format(SafeDivide($database, $nT1GoalsAgainst, $nGames), 1) . "</td>
 	 <td>" . ($nT1GoalsMade - $nT1GoalsAgainst) . "</td></tr>\n";
 
 $html .= "<tr>
@@ -107,11 +109,11 @@ $html .= "<tr>
 	 <td>$nGames</td>
 	 <td>$nT2Wins</td>
 	 <td>$nT2Loses</td>
-	 <td>" . number_format((SafeDivide($nT2Wins, $nGames) * 100), 1) . " %</td>
+	 <td>" . number_format((SafeDivide($database, $nT2Wins, $nGames) * 100), 1) . " %</td>
 	 <td>$nT2GoalsMade</td>
-	 <td>" . number_format(SafeDivide($nT2GoalsMade, $nGames), 1) . "</td>
+	 <td>" . number_format(SafeDivide($database, $nT2GoalsMade, $nGames), 1) . "</td>
 	 <td>$nT2GoalsAgainst</td>
-	 <td>" . number_format(SafeDivide($nT2GoalsAgainst, $nGames), 1) . "</td>
+	 <td>" . number_format(SafeDivide($database, $nT2GoalsAgainst, $nGames), 1) . "</td>
 	 <td>" . ($nT2GoalsMade - $nT2GoalsAgainst) . "</td></tr>\n";
 
 $html .= "</table>\n";
@@ -127,9 +129,9 @@ if ($nGames) {
   $html .= "<th><a class='thsort' href='" . $viewUrl . "sort=series'>" . _("Division") . "</a></th></tr>";
 
   $points = array(array());
-  mysql_data_seek($games, 0);
+  $database->dataseek($games, 0);
 
-  while ($game = mysql_fetch_assoc($games)) {
+  while ($game = $database->FetchAssoc($games)) {
     if (GameHasStarted($game)) {
       $arrayYear = strtok($game['season_id'], ".");
       $arraySeason = strtok(".");
@@ -149,10 +151,10 @@ if ($nGames) {
 
       $html .= "<td>" . utf8entities(U_($game['seasonname'])) . ": <a href='?view=poolstatus&amp;pool=" . $game['pool_id'] . "'>" . utf8entities($game['name']) . "</a></td></tr>";
 
-      $scores = GameScoreBoard($game['game_id']);
+      $scores = GameScoreBoard($database, $game['game_id']);
       $i = 0;
 
-      while ($row = mysql_fetch_assoc($scores)) {
+      while ($row = $database->FetchAssoc($scores)) {
         $bFound = false;
         for ($i = 0; ($i < 200) && !empty($points[$i][0]); $i++) {
           //ignore spaces from team name
@@ -274,4 +276,4 @@ if ($nGames) {
   $html .= "</table>\n";
 }
 
-showPage($title, $html);
+showPage($database, $title, $html);

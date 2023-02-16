@@ -7,7 +7,7 @@ header("Content-type: text/xml");
 header("Cache-Control: no-cache, must-revalidate");
 header("Expires: -1");
 
-$result = GetTeamPlayers();
+$result = GetTeamPlayers($database);
 
 // for php 5 onwards
 if (version_compare(PHP_VERSION, '5.0.0', '>')) {
@@ -16,7 +16,7 @@ if (version_compare(PHP_VERSION, '5.0.0', '>')) {
 	$parnode = $dom->appendChild($node);
 
 	// Iterate through the rows, adding XML nodes for each
-	while ($row = mysql_fetch_assoc($result)) {
+	while ($row = $database->FetchAssoc($result)) {
 		$node = $dom->createElement("Player");
 		$newNode = $parnode->appendChild($node);
 
@@ -59,7 +59,7 @@ if (version_compare(PHP_VERSION, '5.0.0', '>')) {
 	$parnode = $dom->append_child($node);
 
 	// Iterate through the rows, adding XML nodes for each
-	while ($row = mysql_fetch_assoc($result)) {
+	while ($row = $database->FetchAssoc($result)) {
 		$node = $dom->create_element("Player");
 		$newNode = $parnode->append_child($node);
 
@@ -101,7 +101,7 @@ if (version_compare(PHP_VERSION, '5.0.0', '>')) {
 	echo "<PlayerSet>\n";
 
 	// Iterate through the rows, adding XML nodes for each
-	while ($row = mysql_fetch_assoc($result)) {
+	while ($row = $database->FetchAssoc($result)) {
 		echo "<Player>\n";
 		echo "<playerId>" . $row['player_id'] . "</playerId>\n";
 		echo "<accrId>" . $row['accreditation_id'] . "</accrId>\n";

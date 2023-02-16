@@ -1,7 +1,7 @@
 <?php
 $html = "";
-$season = CurrentSeason();
-$seasoninfo = SeasonInfo($season);
+$season = CurrentSeason($database);
+$seasoninfo = SeasonInfo($database, $season);
 $reservationgroup = "";
 $location = "";
 $showall = false;
@@ -29,11 +29,11 @@ $html .= "</div><!-- /header -->\n\n";
 
 $html .= "<div data-role='content'>\n";
 
-$respGameArray = GameResponsibilityArray($season);
+$respGameArray = GameResponsibilityArray($database, $season);
 $html .= "<form action='?view=respgames' method='post' data-ajax='false'>\n";
 
 $html .= "<div class='ui-grid-solo'>";
-$seasons = SeasonsArray();
+$seasons = SeasonsArray($database);
 
 if (count($seasons)) {
   $html .=  "<label for='selseason' class='select'>" . _("Select event") . ":</label>\n";
@@ -43,7 +43,7 @@ if (count($seasons)) {
     if ($_SESSION['userproperties']['selseason'] == $row['season_id']) {
       $selected = "selected='selected'";
     }
-    $html .=   "<option class='dropdown' $selected value='" . utf8entities($row['season_id']) . "'>" . SeasonName($row['season_id']) . "</option>";
+    $html .=   "<option class='dropdown' $selected value='" . utf8entities($row['season_id']) . "'>" . SeasonName($database, $row['season_id']) . "</option>";
   }
   $html .=  "</select>";
 }

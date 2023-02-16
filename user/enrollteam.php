@@ -4,17 +4,19 @@ include_once $include_prefix . 'lib/series.functions.php';
 include_once $include_prefix . 'lib/club.functions.php';
 include_once $include_prefix . 'lib/country.functions.php';
 
+$database = new Database();
+
 $LAYOUT_ID = ENROLLTEAM;
 if (empty($_GET['season'])) {
 	die(_("Season mandatory"));
 }
 $season = $_GET['season'];
-$seasonInfo = SeasonInfo($season);
+$seasonInfo = SeasonInfo($database, $season);
 $title = _("Enrolled teams") . ": " . utf8entities($seasonInfo['name']);
 
 $orgarray = "";
-$result = ClubList(true);
-while ($row = @mysql_fetch_assoc($result)) {
+$result = ClubList($database, true);
+while ($row = @$database->FetchAssoc($result)) {
 	$orgarray .= "\"" . $row['name'] . "\",";
 }
 $orgarray = trim($orgarray, ',');
@@ -30,13 +32,13 @@ if (!empty($_POST['add'])) {
 	if (!empty($_POST['countryname'])) {
 		$countryname = $_POST['countryname'];
 	}
-	AddSeriesEnrolledTeam($_POST['series'], $_SESSION['uid'], $_POST['name' . $index], $clubname, $countryname);
+	AddSeriesEnrolledTeam($database, $_POST['series'], $_SESSION['uid'], $_POST['name' . $index], $clubname, $countryname);
 }
 if (isset($_POST['remenroll_x'])) {
-	RemoveSeriesEnrolledTeam($_POST['series'], $_SESSION['uid'], $_POST['deleteEnrollId']);
+	RemoveSeriesEnrolledTeam($database, $_POST['series'], $_SESSION['uid'], $_POST['deleteEnrollId']);
 }
 if (!empty($_POST['confirm'])) {
-	ConfirmEnrolledTeam($_POST['series'], $_POST['confirmEnrollId']);
+	ConfirmEnrolledTeam($database, $_POST['series'], $_POST['confirmEnrollId']);
 }
 
 //common page
@@ -63,10 +65,10 @@ echo yuiLoad(array("utilities", "datasource", "autocomplete"));
 </script>
 <?php
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 //content
-$result = SeasonSeries($season);
+$result = SeasonSeries($database, $season);
 
 if (!count($result)) {
 	echo "<p>" . _("No divisions.") . "</p>";
@@ -85,13 +87,13 @@ foreach ($result as $row) {
 		echo "<th>" . _("Country") . "</th>";
 	}
 	echo "<th>" . _("User") . "</th><th>" . _("Enrolled") . "</th><th>" . _("State") . "</th><th>&nbsp;</th></tr>\n";
-	if (hasEditTeamsRight($row['series_id'])) {
-		$result2 = SeriesEnrolledTeams($row['series_id']);
+	if (hasEditTeamsRight($database, $row['series_id'])) {
+		$result2 = SeriesEnrolledTeams($database, $row['series_id']);
 	} else {
-		$result2 = SeriesEnrolledTeamsByUser($row['series_id'], $_SESSION['uid']);
+		$result2 = SeriesEnrolledTeamsByUser($database, $row['series_id'], $_SESSION['uid']);
 	}
 
-	while ($row2 = mysql_fetch_assoc($result2)) {
+	while ($row2 = $database->FetchAssoc($result2)) {
 
 		echo "<tr><td>";
 		if (!intval($seasonInfo['isnationalteams'])) {
@@ -109,7 +111,7 @@ foreach ($result as $row) {
 		echo "<td>" . utf8entities($row2['username']) . "</td>";
 		echo "<td>" . ShortTimeFormat($row2['enroll_time']) . "</td>";
 		if ($row2['status'] == 0) {
-			if (hasEditTeamsRight($row['series_id'])) {
+			if (hasEditTeamsRight($database, $row['series_id'])) {
 				echo "<td><input type='submit' name='confirm' value='" . _("Confirm") . "' onclick='setId(" . $row2['id'] . ", \"confirmEnrollId" . $hiddenIndex . "\");'/></td>";
 			} else {
 				echo "<td>" . _("Unconfirmed") . "</td>";
@@ -117,7 +119,7 @@ foreach ($result as $row) {
 		} else {
 			echo "<td>" . _("Confirmed") . "</td>";
 		}
-		if (hasEditTeamsRight($row['series_id']) || $row2['status'] == 0) {
+		if (hasEditTeamsRight($database, $row['series_id']) || $row2['status'] == 0) {
 			echo "<td><input class='button' type='image' name='remenroll' src='images/remove.png' value='X' alt='X' onclick='setId(" . $row2['id'] . ", \"deleteEnrollId" . $hiddenIndex . "\");'/></td>";
 		}
 
@@ -133,10 +135,10 @@ foreach ($result as $row) {
 		echo "</td>\n";
 	}
 	if (intval($seasonInfo['isinternational'])) {
-		echo "<td>" . CountryDropList("countryname$hiddenIndex", "countryname") . "</td>";
+		echo "<td>" . CountryDropList($database, "countryname$hiddenIndex", "countryname") . "</td>";
 	}
 
-	$userinfo = UserInfo($_SESSION['uid']);
+	$userinfo = UserInfo($database, $_SESSION['uid']);
 	echo "<td>" . utf8entities($userinfo['name']) . "</td>";
 	echo "<td>" . _("Unconfirmed") . "</td>";
 	echo "<td><input type='submit' name='add' value='" . _("Add") . "'/></td></tr>\n";

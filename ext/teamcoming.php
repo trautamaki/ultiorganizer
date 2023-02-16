@@ -30,8 +30,8 @@ include_once 'localization.php';
 	$season = iget("season");
 
 	if ($teamId) {
-		$games = TimetableGames($teamId, "team", "coming", "tournaments");
-		if (!mysql_num_rows($games)) {
+		$games = TimetableGames($database, $teamId, "team", "coming", "tournaments");
+		if (!$database->NumRows($games)) {
 			echo "\n<p>" . _("No games") . ".</p>\n";
 		} else {
 			echo ExtGameView($games);

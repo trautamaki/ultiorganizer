@@ -3,6 +3,8 @@ include_once 'lib/season.functions.php';
 include_once 'lib/series.functions.php';
 include_once 'lib/pool.functions.php';
 
+$database = new Database();
+
 $LAYOUT_ID = SEASONPOOLS;
 $seriesId = 0;
 $season = 0;
@@ -14,7 +16,7 @@ if (!empty($_GET["season"]))
 if (!empty($_GET["series"])) {
 	$seriesId = $_GET["series"];
 	if (empty($season)) {
-		$season = SeriesSeasonId($seriesId);
+		$season = SeriesSeasonId($database, $seriesId);
 	}
 }
 
@@ -25,16 +27,16 @@ if (!empty($_POST["pool"]))
 //common page
 pageTopHeadOpen($title);
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 
 
 //process itself on submit
 if (!empty($poolId)) {
-	$poolinfo = PoolInfo($poolId);
+	$poolinfo = PoolInfo($database, $poolId);
 	if ($poolinfo['placementpool']) { // create SMS for final rankings
-		$teams = PoolTeams($poolId);
+		$teams = PoolTeams($database, $poolId);
 		if (count($teams)) {
 			echo "<table border='0' width='500'><tr>
 				<th>" . _("Pool") . "</th>
@@ -47,12 +49,12 @@ if (!empty($poolId)) {
 			$sms = "";
 
 			echo "<tr>";
-			echo "<td>" . utf8entities(PoolName($poolId)) . "</td>";
-			echo "<td class='center'>" . PoolPlacementString($poolId, $row['activerank'], false) . "</td>";
+			echo "<td>" . utf8entities(PoolName($database, $poolId)) . "</td>";
+			echo "<td class='center'>" . PoolPlacementString($database, $poolId, $row['activerank'], false) . "</td>";
 			echo "<td class='center'>" . utf8entities($row['name']) . "</td>";
 
 			// get this pool's last result
-			$lastgame = TeamPoolLastGame($row['team_id'], $poolId);
+			$lastgame = TeamPoolLastGame($database, $row['team_id'], $poolId);
 			if (!empty($lastgame)) {
 				if ($lastgame['hometeam'] == $row['team_id']) {
 					$lastgame['ownscore'] = $lastgame['homescore'];
@@ -75,10 +77,10 @@ if (!empty($poolId)) {
 
 			// create SMS
 			if (!empty($lastgame)) {
-				$sms = "After a " . $lastgame['outcome'] . " in the final game, you finish Windmill 2011 in place " . PoolPlacementString($poolId, $row['activerank'], false) . ".";
+				$sms = "After a " . $lastgame['outcome'] . " in the final game, you finish Windmill 2011 in place " . PoolPlacementString($database, $poolId, $row['activerank'], false) . ".";
 				$sms .= "Congratulations! Please hand in today's spirit scores, see you next year!";
 			} else { // team just had a BYE in playoffs
-				$sms = "After a BYE in the final game, you finish Windmill 2011 in place " . PoolPlacementString($poolId, $row['activerank'], false) . ".";
+				$sms = "After a BYE in the final game, you finish Windmill 2011 in place " . PoolPlacementString($database, $poolId, $row['activerank'], false) . ".";
 				$sms .= "Congratulations! Please hand in today's spirit scores, see you next year!";
 			}
 
@@ -92,7 +94,7 @@ if (!empty($poolId)) {
 			echo "</table>\n";
 		}
 	} else { // create SMS from moves
-		$moves = PoolMovingsFromPoolWithTeams($poolId);
+		$moves = PoolMovingsFromPoolWithTeams($database, $poolId);
 
 		if (count($moves)) {
 			echo "<table border='0' width='500'><tr>
@@ -110,21 +112,21 @@ if (!empty($poolId)) {
 		}
 
 		$smscount = 0;
-		//		while($row = mysql_fetch_assoc($moves))	{
+		//		while($row = $database->FetchAssoc($moves))	{
 		foreach ($moves as $row) {
-			//		$poolinfo = PoolInfo($row['topool']);
+			//		$poolinfo = PoolInfo($database, $row['topool']);
 
 			$sms = "";
 
 			echo "<tr>";
-			echo "<td>" . utf8entities(PoolName($row['frompool'])) . "</td>";
+			echo "<td>" . utf8entities(PoolName($database, $row['frompool'])) . "</td>";
 			echo "<td class='center'>" . intval($row['fromplacing']) . "</td>";
-			echo "<td>" . utf8entities(PoolName($row['topool'])) . "</td>";
+			echo "<td>" . utf8entities(PoolName($database, $row['topool'])) . "</td>";
 			echo "<td class='center'>" . intval($row['torank']) . "</td>";
 			echo "<td class='center'>" . utf8entities($row['teamname']) . "</td>";
 
 			// get this pool's last result
-			$lastgame = TeamPoolLastGame($row['team_id'], $poolId);
+			$lastgame = TeamPoolLastGame($database, $row['team_id'], $poolId);
 			if (!empty($lastgame)) {
 				if ($lastgame['hometeam'] == $row['team_id']) {
 					$lastgame['ownscore'] = $lastgame['homescore'];
@@ -146,7 +148,7 @@ if (!empty($poolId)) {
 			echo "<td>" . utf8entities($lastgame['outcome']) . "</td>";
 
 			// get next opponent
-			$nextgame = TeamGetNextGames($row['team_id'], $row['topool']);
+			$nextgame = TeamGetNextGames($database, $row['team_id'], $row['topool']);
 			if ($nextgame['hometeam'] == $row['team_id']) {
 				$nextgame['opp_id'] = $nextgame['visitorteam'];
 			} elseif ($nextgame['visitorteam'] == $row['team_id']) {
@@ -155,7 +157,7 @@ if (!empty($poolId)) {
 
 
 			// opponent's rank in CURRENT pool
-			$oppinfo = TeamPoolInfo($nextgame['opp_id'], $row['topool']); //$poolId);
+			$oppinfo = TeamPoolInfo($database, $nextgame['opp_id'], $row['topool']); //$poolId);
 			echo "<td>" . utf8entities($oppinfo['name']) . "</td>";
 			echo "<td>" . utf8entities($oppinfo['activerank']) . "</td>";
 
@@ -174,19 +176,19 @@ if (!empty($poolId)) {
 
 			// create SMS
 			if (!empty($oppinfo) && !empty($lastgame)) {
-				$sms = "After a " . $lastgame['outcome'] . " in " . PoolShortName($row['frompool']) . ",you're ranked " . ordinal(intval($row['fromplacing'])) . ".";
-				$sms .= "In" . PoolShortName($row['topool']) . ",you'll play " . $oppinfo['name'] . " (ranked " . ordinal(intval($oppinfo['activerank'])) . ")";
+				$sms = "After a " . $lastgame['outcome'] . " in " . PoolShortName($database, $row['frompool']) . ",you're ranked " . ordinal(intval($row['fromplacing'])) . ".";
+				$sms .= "In" . PoolShortName($database, $row['topool']) . ",you'll play " . $oppinfo['name'] . " (ranked " . ordinal(intval($oppinfo['activerank'])) . ")";
 				if (!empty($nextgame['fieldname'])) {
 					$sms .= " on Field " . $nextgame['fieldname'] . $timestring . ".";
 				} else {
 					$sms .= ", field yet unknown.";
 				}
 			} elseif (!empty($lastgame)) { // team will have a BYE in playoffs
-				$sms = "After a " . $lastgame['outcome'] . " in " . PoolShortName($row['frompool']) . ",you're ranked " . ordinal(intval($row['fromplacing'])) . ".";
-				$sms .= "In" . PoolShortName($row['topool']) . ",you'll have a BYE. Go see another game!";
+				$sms = "After a " . $lastgame['outcome'] . " in " . PoolShortName($database, $row['frompool']) . ",you're ranked " . ordinal(intval($row['fromplacing'])) . ".";
+				$sms .= "In" . PoolShortName($database, $row['topool']) . ",you'll have a BYE. Go see another game!";
 			} elseif (!empty($oppinfo)) { // team just had a BYE in playoffs
-				$sms = "After a BYE in " . PoolShortName($row['frompool']) . ",you're ranked " . ordinal(intval($row['fromplacing'])) . ".";
-				$sms .= "In" . PoolShortName($row['topool']) . ",you'll play " . $oppinfo['name'] . "(ranked " . ordinal(intval($oppinfo['activerank'])) . ")";
+				$sms = "After a BYE in " . PoolShortName($database, $row['frompool']) . ",you're ranked " . ordinal(intval($row['fromplacing'])) . ".";
+				$sms .= "In" . PoolShortName($database, $row['topool']) . ",you'll play " . $oppinfo['name'] . "(ranked " . ordinal(intval($oppinfo['activerank'])) . ")";
 				if (!empty($nextgame['fieldname'])) {
 					$sms .= " on Field " . $nextgame['fieldname'] . $timestring . ".";
 				} else {
@@ -228,23 +230,23 @@ if (!empty($poolId)) {
 	$serieslist = array();
 	//all series from season
 	if (!$seriesId) {
-		$series = SeasonSeries($season);
+		$series = SeasonSeries($database, $season);
 		foreach ($series as $row) {
 			$serieslist[] = $row;
 		}
 	} else {
-		$serieslist[] = array("series_id" => $seriesId, "name" => SeriesName($seriesId));
+		$serieslist[] = array("series_id" => $seriesId, "name" => SeriesName($database, $seriesId));
 	}
 
 	foreach ($serieslist as $series) {
-		$pools = SeriesPools($series['series_id']);
+		$pools = SeriesPools($database, $series['series_id']);
 
 		if (count($pools)) {
 			echo "<h2>" . utf8entities(U_($series['name'])) . "</h2>\n";
 			foreach ($pools as $pool) {
-				$moves = PoolMovingsFromPool($pool['pool_id']);
+				$moves = PoolMovingsFromPool($database, $pool['pool_id']);
 
-				if (PoolIsAllMoved($pool['pool_id'])) {
+				if (PoolIsAllMoved($database, $pool['pool_id'])) {
 					$pool['moves'] = count($moves);
 					$selectablepools[] = $pool;
 				}

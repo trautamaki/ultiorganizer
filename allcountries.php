@@ -1,11 +1,13 @@
 <?php
 include_once 'lib/country.functions.php';
 
+$database = new Database();
+
 $title = _("Countries");
 $html = "";
 $counter = 0;
 $maxcols = 5;
-$countries = CountryList(true, true);
+$countries = CountryList($database, true, true);
 $html .= "<h1>" . _("Countries") . "</h1>\n";
 $html .= "<table width='100%' border='0' cellspacing='0' cellpadding='2'>\n";
 foreach ($countries as $country) {
@@ -30,4 +32,4 @@ if ($counter > 0 && $counter <= $maxcols) {
 };
 $html .= "</table>\n";
 
-showPage($title, $html);
+showPage($database, $title, $html);

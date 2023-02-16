@@ -11,16 +11,18 @@ include_once 'lib/yui.functions.php';
 
 $LAYOUT_ID = SEASONGAMES;
 
+$database = new Database();
+
 $html = "";
 $season = $_GET["season"];
-$series = SeasonSeries($season);
-$series_id = CurrentSeries($season);
-$seasoninfo = SeasonInfo($season);
+$series = SeasonSeries($database, $season);
+$series_id = CurrentSeries($database, $season);
+$seasoninfo = SeasonInfo($database, $season);
 
-$title = utf8entities(SeasonName($season)) . ": " . _("Games");
+$title = utf8entities(SeasonName($database, $season)) . ": " . _("Games");
 
 if ($series_id <= 0) {
-  showPage($title, "<p>" . _("No divisions defined. Define at least one division first.") . "</p>");
+  showPage($database, $title, "<p>" . _("No divisions defined. Define at least one division first.") . "</p>");
   die;
 }
 
@@ -63,16 +65,16 @@ if (!empty($_POST['remove_x'])) {
   $ok = true;
 
   //run some test to for safe deletion
-  $goals = GameAllGoals($id);
-  if (mysql_num_rows($goals)) {
-    $html .= "<p class='warning'>" . _("Game has") . " " . mysql_num_rows($goals) . " " . _("goals") . ". " . _("Goals must be removed before removing the team") . ".</p>";
+  $goals = GameAllGoals($database, $id);
+  if ($database->NumRows($goals)) {
+    $html .= "<p class='warning'>"._("Game has")." ".$database->NumRows($goals)." "._("goals").". "._("Goals must be removed before removing the team").".</p>";
     $ok = false;
   }
   if ($ok) {
-    DeleteGame($id);
+    DeleteGame($database, $id);
   }
 } elseif (!empty($_POST['save'])) {
-  $feedback = GameProcessMassInput($_POST);
+  $feedback = GameProcessMassInput($database, $_POST);
 }
 
 //common page
@@ -95,7 +97,7 @@ $html .= yuiLoad(array("utilities"));
 </script>
 <?php
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 function seasongameslink($season, $series, $group, $switchvisible, $mass, $showpool = null)
@@ -144,7 +146,7 @@ if ($mass) {
 
 $html .= "<form method='post' action='?view=admin/seasongames&amp;season=$season&amp;group=$group'>";
 
-$pools = SeriesPools($series_id);
+$pools = SeriesPools($database, $series_id);
 
 $html .= "<table class='admintable'>\n";
 
@@ -152,18 +154,18 @@ foreach ($pools as $pool) {
   if ($showpool && $showpool != $pool['pool_id'])
     continue;
 
-  $poolinfo = PoolInfo($pool['pool_id']);
+  $poolinfo = PoolInfo($database, $pool['pool_id']);
   if (!$showpool && $_SESSION['hide_played_pools'] && $poolinfo['played']) {
     continue;
   }
 
-  $games = TimetableGames($pool['pool_id'], "pool", "all", "time", $group);
+  $games = TimetableGames($database, $pool['pool_id'], "pool", "all", "time", $group);
 
   $html .= "<tr><th colspan='4'>" . utf8entities(U_($pool['name'])) . "</th>";
   $html .= "<th class='right' colspan='3' ><a class='thlink' href='?view=user/pdfscoresheet&amp;season=$season&amp;pool=" . $pool['pool_id'] . "'>" . _("Print scoresheets") . "</a></th>";
   $html .= "</tr>";
 
-  while ($game = mysql_fetch_assoc($games)) {
+  while ($game = $database->FetchAssoc($games)) {
     $i = $game['game_id'];
 
     if (GameHasStarted($game)) {
@@ -179,13 +181,13 @@ foreach ($pools as $pool) {
     $html .= utf8entities($game['placename']) . " " . utf8entities($game['fieldname']) . "</td>";
 
     if ($game['hometeam']) {
-      $html .= "<td  style='width:20%'>" . utf8entities(TeamName($game['hometeam'])) . "</td>";
+      $html .= "<td  style='width:20%'>" . utf8entities(TeamName($database, $game['hometeam'])) . "</td>";
     } else {
       $html .= "<td class='lowlight'  style='width:20%'>" . utf8entities(U_($game['phometeamname'])) . "</td>";
     }
     $html .= "<td style='width:1%'>-</td>";
     if ($game['visitorteam']) {
-      $html .= "<td  style='width:20%'>" . utf8entities(TeamName($game['visitorteam'])) . "</td>";
+      $html .= "<td  style='width:20%'>" . utf8entities(TeamName($database, $game['visitorteam'])) . "</td>";
     } else {
       $html .= "<td class='lowlight'  style='width:20%'>" . utf8entities(U_($game['pvisitorteamname'])) . "</td>";
     }
@@ -224,7 +226,7 @@ foreach ($pools as $pool) {
     $html .= "<td>";
     $html .= "<a href='?view=admin/editgame&amp;season=$season&amp;game=" . $game['game_id'] . "'><img class='deletebutton' src='images/settings.png' alt='D' title='" . _("edit details") . "'/></a>";
 
-    if (CanDeleteGame($game['game_id'])) {
+    if (CanDeleteGame($database, $game['game_id'])) {
       $html .= "<input class='deletebutton' type='image' src='images/remove.png' alt='X' name='remove' value='" . _("X") . "' onclick=\"setId(" . $game['game_id'] . ");\"/>";
     }
     $html .= "</td>\n";

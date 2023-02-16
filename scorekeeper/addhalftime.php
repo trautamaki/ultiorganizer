@@ -4,7 +4,7 @@ $html = "";
 $gameId = isset($_GET['game']) ? $_GET['game'] : $_SESSION['game'];
 $_SESSION['game'] = $gameId;
 
-$game_result = GameResult($gameId);
+$game_result = GameResult($database, $gameId);
 $timemm = "";
 $timess = "";
 
@@ -19,7 +19,7 @@ if (isset($_POST['save'])) {
     $timess = intval($_POST['timess']);
   }
   $htime = TimeToSec($timemm . "." . $timess);
-  GameSetHalftime($gameId, $htime);
+  GameSetHalftime($database, $gameId, $htime);
 
   header("location:?view=addscoresheet&game=" . $gameId);
 }

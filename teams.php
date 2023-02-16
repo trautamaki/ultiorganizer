@@ -4,22 +4,26 @@ include_once $include_prefix . 'lib/series.functions.php';
 include_once $include_prefix . 'lib/pool.functions.php';
 include_once $include_prefix . 'lib/statistical.functions.php';
 
+$database = new Database();
+
 $title = _("Teams");
 $html = "";
 
 $list = iget("list");
 $season = iget("season");
 
+$database = new Database();
+
 if (empty($season)) {
-  $season = CurrentSeason();
+  $season = CurrentSeason($database);
 }
 
 if (empty($list)) {
   $list = "allteams";
 }
 
-$seasonInfo = SeasonInfo($season);
-$series = SeasonSeries($season, true);
+$seasonInfo = SeasonInfo($database, $season);
+$series = SeasonSeries($database, $season, true);
 
 $menutabs[_("By division")] = "?view=teams&season=$season&list=allteams";
 $menutabs[_("By pool")] = "?view=teams&season=$season&list=bypool";
@@ -37,11 +41,11 @@ if (intval($seasonInfo['isinternational'])) {
 if ($list == "byseeding") {
   $cols++;
 }
-$isstatdata = IsStatsDataAvailable();
+$isstatdata = IsStatsDataAvailable($database);
 
 $html .= "<h1>" . _("Teams") . "</h1>";
 
-$html .= CommentHTML(1, $season);
+$html .= CommentHTML($database, 1, $season);
 
 if ($list == "allteams" || $list == "byseeding") {
 
@@ -53,9 +57,9 @@ if ($list == "allteams" || $list == "byseeding") {
     $html .= utf8entities(U_($row['name'])) . "</th>\n";
     $html .= "</tr>\n";
     if ($list == "byseeding") {
-      $teams = SeriesTeams($row['series_id'], true);
+      $teams = SeriesTeams($database, $row['series_id'], true);
     } else {
-      $teams = SeriesTeams($row['series_id']);
+      $teams = SeriesTeams($database, $row['series_id']);
     }
     $i = 0;
     foreach ($teams as $team) {
@@ -105,7 +109,7 @@ if ($list == "allteams" || $list == "byseeding") {
   foreach ($series as $row) {
     $html .= "<h2>" . utf8entities(U_($row['name'])) . "</h2>\n";
 
-    $pools = SeriesPools($row['series_id'], true);
+    $pools = SeriesPools($database, $row['series_id'], true);
     if (!count($pools)) {
       $html .= "<p>" . _("Pools not yet created") . "</p>";
       continue;
@@ -113,17 +117,17 @@ if ($list == "allteams" || $list == "byseeding") {
     foreach ($pools as $pool) {
       $html .= "<table border='0' cellspacing='0' cellpadding='2' width='100%'>\n";
       $html .= "<tr>";
-      $html .= "<th colspan='" . ($cols - 1) . "'>" . utf8entities(U_(PoolSeriesName($pool['pool_id'])) . ", " . U_($pool['name'])) . "</th><th class='right'>" . _("Scoreboard") . "</th>\n";
+      $html .= "<th colspan='" . ($cols - 1) . "'>" . utf8entities(U_(PoolSeriesName($database, $pool['pool_id'])) . ", " . U_($pool['name'])) . "</th><th class='right'>" . _("Scoreboard") . "</th>\n";
       $html .= "</tr>\n";
       if ($pool['type'] == 2) {
         //find out sub pools
         $pools = array();
         $pools[] = $pool['pool_id'];
-        $followers = PoolFollowersArray($pool['pool_id']);
+        $followers = PoolFollowersArray($database, $pool['pool_id']);
         $pools = array_merge($pools, $followers);
         $playoffpools = implode(",", $pools);
       }
-      $teams = PoolTeams($pool['pool_id']);
+      $teams = PoolTeams($database, $pool['pool_id']);
 
       foreach ($teams as $team) {
         $html .= "<tr>";
@@ -165,10 +169,10 @@ if ($list == "allteams" || $list == "byseeding") {
   $htmlseries = array();
   $maxplacements = 0;
 
-  $series = SeasonSeries($seasonInfo['season_id'], true);
+  $series = SeasonSeries($database, $seasonInfo['season_id'], true);
   foreach ($series as $ser) {
     $htmlteams = array();
-    $teams  = SeriesRanking($ser['series_id']);
+    $teams  = SeriesRanking($database, $ser['series_id']);
     foreach ($teams as $team) {
       if ($team) {
         $htmltmp = "";
@@ -190,7 +194,7 @@ if ($list == "allteams" || $list == "byseeding") {
   foreach ($series as $ser) {
     $html .= "<th style='width:" . (80 / count($series)) . "%;'><a href='?view=seriesstatus&series=" .
       $ser['series_id'] . "'>" . utf8entities(U_($ser['name'])) . "</a></th>";
-    $maxplacements = max(count(SeriesTeams($ser['series_id'])), $maxplacements);
+    $maxplacements = max(count(SeriesTeams($database, $ser['series_id'])), $maxplacements);
   }
   $html .= "</tr>\n";
   for ($i = 0; $i < $maxplacements; $i++) {
@@ -224,4 +228,4 @@ if ($list == "allteams" || $list == "byseeding") {
   $html .= "</table>\n";
 }
 
-showPage($title, $html);
+showPage($database, $title, $html);

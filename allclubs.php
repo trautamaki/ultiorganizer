@@ -1,6 +1,8 @@
 <?php
 include_once 'lib/club.functions.php';
 
+$database = new Database();
+
 $title = _("All clubs");
 $html = "";
 
@@ -30,13 +32,13 @@ if ($filter == "ALL") {
 $html .= "</tr></table>\n";
 
 $html .= "<table style='white-space: nowrap;width:100%;'>\n";
-$clubs = ClubList(true, $filter);
+$clubs = ClubList($database, true, $filter);
 
 $firstchar = " ";
 $listletter = " ";
 $counter = 0;
 
-while ($club = mysql_fetch_assoc($clubs)) {
+while ($club = $database->FetchAssoc($clubs)) {
 
   if ($filter == "ALL") {
     $firstchar = strtoupper(substr(utf8_decode($club['name']), 0, 1));
@@ -72,4 +74,4 @@ if ($counter > 0 && $counter <= $maxcols) {
 }
 $html .= "</table>\n";
 
-showPage($title, $html);
+showPage($database, $title, $html);

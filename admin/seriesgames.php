@@ -10,17 +10,19 @@ include_once 'lib/reservation.functions.php';
 
 $LAYOUT_ID = POOLGAMES;
 
+$database = new Database();
+
 if (!empty($_GET["season"]))
 	$season = $_GET["season"];
 
 if (!empty($_GET["series"])) {
 	$seriesId = $_GET["series"];
 	if (empty($season)) {
-		$season = SeriesSeasonId($seriesId);
+		$season = SeriesSeasonId($database, $seriesId);
 	}
 }
 
-$seriesinfo = SeriesInfo($seriesId);
+$seriesinfo = SeriesInfo($database, $seriesId);
 $rounds = 1;
 $nomutual = 0;
 $matches = 1;
@@ -38,25 +40,25 @@ if (!empty($_POST['generate'])) {
 	}
 	$nomutual = isset($_POST["nomutual"]);
 
-	$pools = SeriesPools($seriesId);
+	$pools = SeriesPools($database, $seriesId);
 
 	foreach ($pools as $pool) {
-		$info = PoolInfo($pool['pool_id']);
+		$info = PoolInfo($database, $pool['pool_id']);
 		if ($info['type'] == 1) {
 
 			if ($info['mvgames'] == 2) {
-				GenerateGames($pool['pool_id'], $rounds, true, $nomutual, $homeresp);
+				GenerateGames($database, $pool['pool_id'], $rounds, true, $nomutual, $homeresp);
 			} else {
-				GenerateGames($pool['pool_id'], $rounds, true, false, $homeresp);
+				GenerateGames($database, $pool['pool_id'], $rounds, true, false, $homeresp);
 			}
 		} elseif ($info['type'] == 2) {
-			GenerateGames($pool['pool_id'], $matches, true);
+			GenerateGames($database, $pool['pool_id'], $matches, true);
 			//generate pools needed to solve standings
-			$generatedpools = GeneratePlayoffPools($pool['pool_id'], true);
+			$generatedpools = GeneratePlayoffPools($database, $pool['pool_id'], true);
 
 			//generate games into generated pools
 			foreach ($generatedpools as $gpool) {
-				GenerateGames($gpool['pool_id'], $matches, true);
+				GenerateGames($database, $gpool['pool_id'], $matches, true);
 			}
 		}
 	}
@@ -67,7 +69,7 @@ if (!empty($_POST['generate'])) {
 //common page
 pageTopHeadOpen($title);
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 $html .= "<form method='post' action='?view=admin/seriesgames&amp;season=$season&amp;series=$seriesId'>";

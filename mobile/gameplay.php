@@ -4,9 +4,9 @@ include_once 'lib/game.functions.php';
 $html = "";
 
 $gameId = intval(iget("game"));
-$game_result = GameResult($gameId);
-$goals = GameGoals($gameId);
-$gameevents = GameEvents($gameId);
+$game_result = GameResult($database, $gameId);
+$goals = GameGoals($database, $gameId);
+$gameevents = GameEvents($database, $gameId);
 
 mobilePageTop(_("Game play"));
 
@@ -17,7 +17,7 @@ $html .= " - ";
 $html .= utf8entities($game_result['visitorteamname']);
 $html .= " " . intval($game_result['homescore']) . " - " . intval($game_result['visitorscore']) . "</b>";
 $html .= "</td></tr><tr><td>\n";
-if (mysql_num_rows($goals) <= 0) {
+if ($database->NumRows($goals) <= 0) {
 	$html .= _("Not fed in");
 	$html .= "</td></tr><tr><td>\n";
 	$html .=  "<a href='?view=mobile/addplayerlists&amp;game=" . $gameId . "&amp;team=" . $game_result['hometeam'] . "'>" . _("Feed in score sheet") . "</a>";
@@ -26,7 +26,7 @@ if (mysql_num_rows($goals) <= 0) {
 	$html .= "<a href='?view=mobile/scoreboard&amp;game=$gameId&amp;team=" . $game_result['visitorteam'] . "'>" . _("guest team") . "</a>";
 
 	$prevgoal = 0;
-	while ($goal = mysql_fetch_assoc($goals)) {
+	while ($goal = $database->FetchAssoc($goals)) {
 
 		if ((intval($game_result['halftime']) >= $prevgoal) &&
 			(intval($game_result['halftime']) < intval($goal['time']))

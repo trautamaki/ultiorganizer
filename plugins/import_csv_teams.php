@@ -30,9 +30,9 @@ if (isset($_POST['import'])) {
 	$utf8 = !empty($_POST['utf8']);
 	$season = $_POST['season'];
 	$separator = $_POST['separator'];
-	$series = SeasonSeries($season);
+	$series = SeasonSeries($database, $season);
 	$ser = array();
-	while ($row = mysql_fetch_assoc($series)) {
+	while ($row = $database->FetchAssoc($series)) {
 		$ser[] = array('id' => $row['series_id'], 'name' => $row['seriesname']);
 	}
 
@@ -64,13 +64,13 @@ if (isset($_POST['import'])) {
 							"valid" => "1"
 						);
 
-						$id = AddSeries($sp);
+						$id = AddSeries($database, $sp);
 						$ser[] = array('id' => $id, 'name' => $series);
 						$series = $id;
 					}
 				}
-				$id = AddSeriesEnrolledTeam($series, $_SESSION['uid'], $team, $club, $country);
-				ConfirmEnrolledTeam($series, $id);
+				$id = AddSeriesEnrolledTeam($database, $series, $_SESSION['uid'], $team, $club, $country);
+				ConfirmEnrolledTeam($database, $series, $id);
 			}
 			fclose($handle);
 		}
@@ -83,9 +83,9 @@ if (isset($_POST['import'])) {
 $html .= "<form method='post' enctype='multipart/form-data' action='?view=plugins/import_csv_teams'>\n";
 $html .= "<p>" . ("Select event") . ": <select class='dropdown' name='season'>\n";
 
-$seasons = Seasons();
+$seasons = Seasons($database);
 
-while ($row = mysql_fetch_assoc($seasons)) {
+while ($row = $database->FetchAssoc($seasons)) {
 	$html .= "<option class='dropdown' value='" . utf8entities($row['season_id']) . "'>" . utf8entities($row['name']) . "</option>";
 }
 
@@ -99,5 +99,5 @@ $html .= "<p><input class='button' type='submit' name='import' value='" . ("Impo
 $html .= "<div><input type='hidden' name='MAX_FILE_SIZE' value='50000000' /></div>\n";
 $html .= "</form>";
 
-showPage($title, $html);
+showPage($database, $title, $html);
 ?>

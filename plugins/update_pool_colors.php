@@ -51,7 +51,7 @@ if (isset($_POST['simulate']) && !empty($_POST['pools'])) {
 	foreach ($pools as $poolId) {
 		$color = $colors[rand(0, count($colors) - 1)];
 		$query = "UPDATE uo_pool SET color='" . $color . "' WHERE pool_id=" . $poolId;
-		DBQuery($query);
+		$database->DBQuery($query);
 	}
 }
 
@@ -61,9 +61,9 @@ $html .= "<form method='post' id='tables' action='?view=plugins/update_pool_colo
 if (empty($seasonId)) {
 	$html .= "<p>" . ("Select event") . ": <select class='dropdown' name='season'>\n";
 
-	$seasons = Seasons();
+	$seasons = Seasons($database);
 
-	while ($row = mysql_fetch_assoc($seasons)) {
+	while ($row = $database->FetchAssoc($seasons)) {
 		$html .= "<option class='dropdown' value='" . utf8entities($row['season_id']) . "'>" . utf8entities($row['name']) . "</option>";
 	}
 
@@ -78,12 +78,12 @@ if (empty($seasonId)) {
 	$html .= "<th>" . ("Series") . "</th>";
 	$html .= "</tr>\n";
 
-	$series = SeasonSeries($seasonId);
+	$series = SeasonSeries($database, $seasonId);
 	foreach ($series as $row) {
 
-		$pools = SeriesPools($row['series_id']);
+		$pools = SeriesPools($database, $row['series_id']);
 		foreach ($pools as $pool) {
-			$poolinfo = PoolInfo($pool['pool_id']);
+			$poolinfo = PoolInfo($database, $pool['pool_id']);
 			$html .= "<tr style='background-color:#" . $poolinfo['color'] . "'>";
 			$html .= "<td class='center'><input type='checkbox' name='pools[]' value='" . utf8entities($pool['pool_id']) . "' /></td>";
 			$html .= "<td>" . $pool['name'] . "</td>";
@@ -100,5 +100,5 @@ if (empty($seasonId)) {
 
 $html .= "</form>";
 
-showPage($title, $html);
+showPage($database, $title, $html);
 ?>

@@ -35,7 +35,7 @@ if (isset($_POST['import'])) {
 	$utf8 = !empty($_POST['utf8']);
 	$seriesId = $_POST['seriesid'];
 	$separator = $_POST['separator'];
-	$teams = SeriesTeams($seriesId);
+	$teams = SeriesTeams($database, $seriesId);
 
 	if (is_uploaded_file($_FILES['file']['tmp_name'])) {
 		$row = 1;
@@ -53,7 +53,7 @@ if (isset($_POST['import'])) {
 					}
 				}
 				if ($teamId != -1) {
-					$id = AddPlayer($teamId, $first, $last, "", $number);
+					$id = AddPlayer($database, $teamId, $first, $last, "", $number);
 				}
 			}
 			fclose($handle);
@@ -69,9 +69,9 @@ $html .= "<form method='post' enctype='multipart/form-data' action='?view=plugin
 if (empty($seasonId)) {
 	$html .= "<p>" . ("Select event") . ": <select class='dropdown' name='season'>\n";
 
-	$seasons = Seasons();
+	$seasons = Seasons($database);
 
-	while ($row = mysql_fetch_assoc($seasons)) {
+	while ($row = $database->FetchAssoc($seasons)) {
 		$html .= "<option class='dropdown' value='" . utf8entities($row['season_id']) . "'>" . utf8entities($row['name']) . "</option>";
 	}
 
@@ -80,7 +80,7 @@ if (empty($seasonId)) {
 } else {
 
 	$html .= "<p>" . ("Select division") . ":	<select class='dropdown' name='seriesid'>\n";
-	$series = SeasonSeries($seasonId);
+	$series = SeasonSeries($database, $seasonId);
 	foreach ($series as $row) {
 		$html .= "<option class='dropdown' value='" . utf8entities($row['series_id']) . "'>" . utf8entities($row['name']) . "</option>";
 	}
@@ -100,5 +100,5 @@ if (empty($seasonId)) {
 
 $html .= "</form>";
 
-showPage($title, $html);
+showPage($database, $title, $html);
 ?>

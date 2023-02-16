@@ -1,5 +1,7 @@
 <?php
 
+$database = new Database();
+
 $title = _("User Guide");
 $html = "";
 $print = iget("print");
@@ -20,7 +22,7 @@ if ($print) {
   $html .= "<hr/><div style='text-align:right'><a href='?" . utf8entities($querystring) . "&amp;print=1'>" . _("Printable version") . "</a></div>";
 }
 if ($print) {
-  showPrintablePage($title, $html);
+  showPrintablePage($database, $title, $html);
 } else {
-  showPage($title, $html);
+  showPage($database, $title, $html);
 }

@@ -6,7 +6,7 @@ $html = "";
 $title = "";
 $LAYOUT_ID = SUCCESS;
 pageTop($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 if (isset($_SESSION['title'])) {

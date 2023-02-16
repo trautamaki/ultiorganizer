@@ -9,7 +9,7 @@ include_once $include_prefix . 'lib/common.functions.php';
 include_once $include_prefix . 'lib/user.functions.php';
 include_once $include_prefix . 'lib/restful.functions.php';
 
-function printSeasons($seasons)
+function printSeasons($database, $seasons)
 {
 	restHeader(_("Ultiorganizer") . " " . _("Seasons"));
 	echo "	<div class=\"list\">\n";
@@ -23,18 +23,18 @@ function printSeasons($seasons)
 
 //if ($_SERVER['REQUEST_METHOD'] == "GET") {
 if (count($_GET) === 0) {
-	$seasons = Seasons();
-	printSeasons($seasons);
+	$seasons = Seasons($database);
+	printSeasons($database, $seasons);
 } else {
 	$elements = explode("/", $_SERVER['QUERY_STRING']);
 	$season = $elements[0];
-	$seasonInfo = SeasonInfo($season);
+	$seasonInfo = SeasonInfo($database, $season);
 	if (count($elements) == 1) {
 		if (isset($_GET['filter'])) {
 			$filter = $_GET['filter'];
 			if ($filter == "active") {
-				$seasons = CurrentSeasons();
-				printSeasons($seasons);
+				$seasons = CurrentSeasons($database);
+				printSeasons($database, $seasons);
 			}
 		} else {
 			$id = $_SERVER['QUERY_STRING'];

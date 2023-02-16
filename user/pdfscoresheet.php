@@ -6,6 +6,8 @@ include_once $include_prefix . 'lib/game.functions.php';
 include_once $include_prefix . 'lib/user.functions.php';
 include_once $include_prefix . 'lib/timetable.functions.php';
 
+$database = new Database();
+
 if (is_file('cust/' . CUSTOMIZATIONS . '/pdfprinter.php')) {
 	include_once 'cust/' . CUSTOMIZATIONS . '/pdfprinter.php';
 } else {
@@ -19,13 +21,13 @@ $teamId = 0;
 $seriesId = 0;
 
 if (!empty($_GET["game"])) {
-	$games = TimetableGames($_GET["game"], "game", "all", "place");
+	$games = TimetableGames($database, $_GET["game"], "game", "all", "place");
 }
 
 if (!empty($_GET["season"])) {
 	$season = $_GET["season"];
 } else {
-	$season = CurrentSeason();
+	$season = CurrentSeason($database);
 }
 
 if (!empty($_GET["series"])) {
@@ -34,7 +36,7 @@ if (!empty($_GET["series"])) {
 
 if (!empty($_GET["pool"])) {
 	$poolId = $_GET["pool"];
-	$games = TimetableGames($poolId, "pool", "all", "time", "");
+	$games = TimetableGames($database, $poolId, "pool", "all", "time", "");
 }
 
 if (!empty($_GET["filter1"])) {
@@ -46,14 +48,14 @@ if (!empty($_GET["filter2"])) {
 }
 
 if (!empty($_GET["reservation"])) {
-	$gameResponsibilities = GameResponsibilities($season);
-	$games = ResponsibleReservationGames($_GET["reservation"] == "none" ? null : $_GET["reservation"], $gameResponsibilities);
+	$gameResponsibilities = GameResponsibilities($database, $season);
+	$games = ResponsibleReservationGames($database, $_GET["reservation"] == "none" ? null : $_GET["reservation"], $gameResponsibilities);
 }
 if (!empty($_GET["group"])) {
 	if ($filter1 == "coming") {
-		$games = TimetableGames($season, "season", "coming", "places", $_GET["group"]);
+		$games = TimetableGames($database, $season, "season", "coming", "places", $_GET["group"]);
 	} else {
-		$games = TimetableGames($season, "season", "all", "places", $_GET["group"]);
+		$games = TimetableGames($database, $season, "season", "all", "places", $_GET["group"]);
 	}
 }
 
@@ -65,32 +67,32 @@ $pdf = new PDF();
 
 
 if ($teamId) {
-	$teaminfo = TeamInfo($teamId);
+	$teaminfo = TeamInfo($database, $teamId);
 	$players = array();
-	if ($result = TeamPlayerList($teamId)) {
-		while ($row = mysql_fetch_assoc($result)) {
+	if ($result = TeamPlayerList($database, $teamId)) {
+		while ($row = $database->FetchAssoc($result)) {
 			$players[] = $row;
 		}
 	}
 	$pdf->PrintRoster($teaminfo['name'], $teaminfo['seriesname'], $teaminfo['poolname'], $players);
 } elseif ($seriesId) {
 
-	$teams = SeriesTeams($seriesId, true);
+	$teams = SeriesTeams($database, $seriesId, true);
 
 	foreach ($teams as $team) {
-		$teaminfo = TeamInfo($team['team_id']);
+		$teaminfo = TeamInfo($database, $team['team_id']);
 		$players = array();
-		if ($result = TeamPlayerList($team['team_id'])) {
-			while ($row = mysql_fetch_assoc($result)) {
+		if ($result = TeamPlayerList($database, $team['team_id'])) {
+			while ($row = $database->FetchAssoc($result)) {
 				$players[] = $row;
 			}
 		}
 		$pdf->PrintRoster($teaminfo['name'], $teaminfo['seriesname'], $teaminfo['poolname'], $players);
 	}
 } else {
-	$seasonname = SeasonName($season);
+	$seasonname = SeasonName($database, $season);
 
-	while ($gameRow = mysql_fetch_assoc($games)) {
+	while ($gameRow = $database->FetchAssoc($games)) {
 
 		if ($filter2 == "teams") {
 			if (!$gameRow['hometeam'] || !$gameRow['visitorteam']) {
@@ -103,18 +105,18 @@ if ($teamId) {
 
 		$homeplayers = array();
 
-		$playerlist = TeamPlayerList($gameRow["hometeam"]);
+		$playerlist = TeamPlayerList($database, $gameRow["hometeam"]);
 		$i = 0;
-		while ($player = mysql_fetch_assoc($playerlist)) {
+		while ($player = $database->FetchAssoc($playerlist)) {
 			$homeplayers[$i]['name'] = $player['firstname'] . " " . $player['lastname'];
 			$homeplayers[$i]['accredited'] = $player['accredited'];
 			$homeplayers[$i]['num'] = $player['num'];
 			$i++;
 		}
 		$visitorplayers = array();
-		$playerlist = TeamPlayerList($gameRow["visitorteam"]);
+		$playerlist = TeamPlayerList($database, $gameRow["visitorteam"]);
 		$i = 0;
-		while ($player = mysql_fetch_assoc($playerlist)) {
+		while ($player = $database->FetchAssoc($playerlist)) {
 			$visitorplayers[$i]['name'] = $player['firstname'] . " " . $player['lastname'];
 			$visitorplayers[$i]['accredited'] = $player['accredited'];
 			$visitorplayers[$i]['num'] = $player['num'];

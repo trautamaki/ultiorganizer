@@ -37,11 +37,11 @@ include_once 'localization.php';
 	if (!empty($season)) {
 		$query .= sprintf(
 			"WHERE ser.season='%s'",
-			mysql_real_escape_string($season)
+			$database->RealEscapeString($season)
 		);
 	}
 
-	$scores = DBQueryToValue($query);
+	$scores = $database->DBQueryToValue($query);
 
 	$chars = str_split($scores);
 	for ($i = count($chars); $i < $lenght; $i++) {

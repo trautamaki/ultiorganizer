@@ -7,12 +7,14 @@ include_once $include_prefix . 'lib/pool.functions.php';
 include_once $include_prefix . 'lib/reservation.functions.php';
 include_once $include_prefix . 'lib/url.functions.php';
 
+$database = new Database();
+
 $LAYOUT_ID = ADDMEDIALINK;
 $max_file_size = 5 * 1024 * 1024; //5 MB
 $max_new_links = 3;
 $html = "";
 $title = _("Add links");
-$userinfo = UserInfo($_SESSION['uid']);
+$userinfo = UserInfo($database, $_SESSION['uid']);
 $teamId = 0;
 $palyerId = 0;
 $clubId = 0;
@@ -82,12 +84,12 @@ if (isset($_POST['save'])) {
 			if (!empty($_POST["mediaowner$i"])) {
 				$url['mediaowner'] = $_POST["mediaowner$i"];
 			}
-			$url_id = AddMediaUrl($url);
+			$url_id = AddMediaUrl($database, $url);
 			$_SESSION["var$i"] = utf8entities($_POST["url$i"]);
 
 			if ($owner == "game" && !empty($_POST["time$i"])) {
 				$time = TimeToSec($_POST["time$i"]);
-				AddGameMediaEvent($owner_id, $time, $url_id);
+				AddGameMediaEvent($database, $owner_id, $time, $url_id);
 			}
 		}
 
@@ -99,7 +101,7 @@ if (isset($_POST['save'])) {
 } elseif (isset($_POST['removeurl_x'])) {
 	$backurl = utf8entities($_POST['backurl']);
 	$id = $_POST['hiddenDeleteId'];
-	RemoveMediaUrl($id);
+	RemoveMediaUrl($database, $id);
 }
 
 
@@ -118,14 +120,14 @@ include_once 'script/common.js.inc';
 </script>
 <?php
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 //content
 $html .= "<form method='post' enctype='multipart/form-data' action='$pageurl'>\n";
 
 
-$urls = GetMediaUrlList($owner, $owner_id);
+$urls = GetMediaUrlList($database, $owner, $owner_id);
 
 if (count($urls)) {
 	$html .= "<table width='100%'>";
@@ -152,16 +154,16 @@ if (count($urls)) {
 	$html .= "</table>";
 }
 if ($owner == "game") {
-	$events = GameMediaEvents($owner_id);
+	$events = GameMediaEvents($database, $owner_id);
 
 	//remove if url deleted
 	foreach ($events as $event) {
 		if (empty($event['url'])) {
-			RemoveGameMediaEvent($owner_id, $event['info']);
+			RemoveGameMediaEvent($database, $owner_id, $event['info']);
 		}
 	}
 
-	$events = GameMediaEvents($owner_id);
+	$events = GameMediaEvents($database, $owner_id);
 
 	if (count($events)) {
 		$html .= "<table>";

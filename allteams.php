@@ -1,6 +1,8 @@
 <?php
 include_once 'lib/team.functions.php';
 
+$database = new Database();
+
 $title = _("All teams");
 $html = "";
 
@@ -31,13 +33,13 @@ if ($filter == "ALL") {
 $html .= "</tr></table>\n";
 
 $html .= "<table style='white-space: nowrap;width:100%;'>\n";
-$teams = TeamListAll(true, true, $filter);
+$teams = TeamListAll($database, true, true, $filter);
 
 $firstchar = " ";
 $listletter = " ";
 $counter = 0;
 
-while ($team = mysql_fetch_assoc($teams)) {
+while ($team = $database->FetchAssoc($teams)) {
 
   if ($filter == "ALL") {
     $firstchar = strtoupper(substr(utf8_decode($team['name']), 0, 1));
@@ -73,4 +75,4 @@ if ($counter > 0 && $counter <= $maxcols) {
 };
 $html .= "</table>\n";
 
-showPage($title, $html);
+showPage($database, $title, $html);

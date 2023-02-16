@@ -10,6 +10,8 @@ if (version_compare(PHP_VERSION, '5.0.0', '>')) {
   include_once 'lib/twitter.functions.php';
 }
 
+$database = new Database();
+
 $gameId = intval($_GET["game"]);
 
 $LAYOUT_ID = ADDSCORESHEET;
@@ -146,11 +148,11 @@ echo yuiLoad(array("yahoo-dom-event"));
   -->
 </script>
 <?php
-$season = GameSeason($gameId);
-$seasoninfo = SeasonInfo($season);
+$season = GameSeason($database, $gameId);
+$seasoninfo = SeasonInfo($database, $season);
 $scrolling = "onkeypress='chgFocus(event);'";
 pageTopHeadClose($title, false, $scrolling);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 //content
 $menutabs[_("Result")] = "?view=user/addresult&game=$gameId";
@@ -165,7 +167,7 @@ if (ShowDefenseStats()) {
 
 pageMenu($menutabs);
 
-$game_result = GameResult($gameId);
+$game_result = GameResult($database, $gameId);
 $homecaptain = -1;
 $awaycaptain = -1;
 
@@ -175,33 +177,33 @@ if (!empty($_POST['save'])) {
   LogGameUpdate($gameId, "scoresheet saved", "addscoresheet");
   $time_delim = array(",", ";", ":");
   //set score sheet keeper
-  GameSetScoreSheetKeeper($gameId, $_POST['secretary']);
+  GameSetScoreSheetKeeper($database, $gameId, $_POST['secretary']);
 
   //set captains
   if (intval($_POST['homecaptain'])) {
-    GameSetCaptain($gameId, $game_result['hometeam'], intval($_POST['homecaptain']));
+    GameSetCaptain($database, $gameId, $game_result['hometeam'], intval($_POST['homecaptain']));
   }
   if (intval($_POST['awaycaptain'])) {
-    GameSetCaptain($gameId, $game_result['visitorteam'], intval($_POST['awaycaptain']));
+    GameSetCaptain($database, $gameId, $game_result['visitorteam'], intval($_POST['awaycaptain']));
   }
 
   //set halftime
   $htime = $_POST['halftime'];
   $htime = str_replace($time_delim, ".", $htime);
   $htime = TimeToSec($htime);
-  GameSetHalftime($gameId, $htime);
+  GameSetHalftime($database, $gameId, $htime);
 
   if (!empty($_POST['starting'])) {
     $starting = $_POST['starting'];
     if ($starting == "H") {
-      GameSetStartingTeam($gameId, 1);
+      GameSetStartingTeam($database, $gameId, 1);
     } elseif ($starting == "V") {
-      GameSetStartingTeam($gameId, 0);
+      GameSetStartingTeam($database, $gameId, 0);
     }
   }
 
   //remove all old timeouts (if any)
-  GameRemoveAllTimeouts($gameId);
+  GameRemoveAllTimeouts($database, $gameId);
 
   //insert home timeouts
   $j = 0;
@@ -211,7 +213,7 @@ if (!empty($_POST['save'])) {
 
     if (!empty($time)) {
       $j++;
-      GameAddTimeout($gameId, $j, TimeToSec($time), 1);
+      GameAddTimeout($database, $gameId, $j, TimeToSec($time), 1);
     }
   }
 
@@ -223,12 +225,12 @@ if (!empty($_POST['save'])) {
 
     if (!empty($time)) {
       $j++;
-      GameAddTimeout($gameId, $j, TimeToSec($time), 0);
+      GameAddTimeout($database, $gameId, $j, TimeToSec($time), 0);
     }
   }
 
   //remove all old scores (if any)
-  GameRemoveAllScores($gameId);
+  GameRemoveAllScores($database, $gameId);
 
   //insert scores
   $h = 0;
@@ -269,7 +271,7 @@ if (!empty($_POST['save'])) {
     if (!empty($team) && $team == 'H') {
       $h++;
       if (!$iscallahan) {
-        $pass = GamePlayerFromNumber($gameId, $game_result['hometeam'], $pass);
+        $pass = GamePlayerFromNumber($database, $gameId, $game_result['hometeam'], $pass);
         if ($pass == -1) {
           echo "<p class='warning'>" . _("Point") . " ", $i + 1, ": " . _("assisting player's number") . " '" . $_POST['pass' . $i] . "' " . _("Not on the roster") . "!</p>";
           $errIds[] = "pass$i";
@@ -277,7 +279,7 @@ if (!empty($_POST['save'])) {
       } else
         $pass = -1;
 
-      $goal = GamePlayerFromNumber($gameId, $game_result['hometeam'], $goal);
+      $goal = GamePlayerFromNumber($database, $gameId, $game_result['hometeam'], $goal);
       if ($goal == -1) {
         echo "<p class='warning'>" . _("Point") . " ", $i + 1, ": " . _("scorer's number") . " '" . $_POST['goal' . $i] . "' " . _("Not on the roster") . "!</p>";
         $errIds[] = "goal$i";
@@ -289,11 +291,11 @@ if (!empty($_POST['save'])) {
         $errIds[] = "goal$i";
       }
 
-      GameAddScore($gameId, $pass, $goal, $time, $i + 1, $h, $a, 1, $iscallahan);
+      GameAddScore($database, $gameId, $pass, $goal, $time, $i + 1, $h, $a, 1, $iscallahan);
     } elseif (!empty($team) && $team == 'A') {
       $a++;
       if (!$iscallahan) {
-        $pass = GamePlayerFromNumber($gameId, $game_result['visitorteam'], $pass);
+        $pass = GamePlayerFromNumber($database, $gameId, $game_result['visitorteam'], $pass);
         if ($pass == -1) {
           echo "<p class='warning'>" . _("Point") . " ", $i + 1, ": " . _("assisting player's number") . " '" . $_POST['pass' . $i] . "' " . _("Not on the roster") . "!</p>";
           $errIds[] = "pass$i";
@@ -301,21 +303,21 @@ if (!empty($_POST['save'])) {
       } else
         $pass = -1;
 
-      $goal = GamePlayerFromNumber($gameId, $game_result['visitorteam'], $goal);
+      $goal = GamePlayerFromNumber($database, $gameId, $game_result['visitorteam'], $goal);
       if ($goal == -1) {
         echo "<p class='warning'>" . _("Point") . " ", $i + 1, ": " . _("scorer's number") . " '" . $_POST['goal' . $i] . "' " . _("Not on the roster") . "!</p>";
         $errIds[] = "goal$i";
       }
 
-      GameAddScore($gameId, $pass, $goal, $time, $i + 1, $h, $a, 0, $iscallahan);
+      GameAddScore($database, $gameId, $pass, $goal, $time, $i + 1, $h, $a, 0, $iscallahan);
     }
   }
   $isongoing = isset($_POST['isongoing']) ? 1 : 0;
   if ($isongoing) {
     echo "<p>" . sprintf(_("Game ongoing. Current score: %s - %s."), $h, $a) . ".</p>";
-    $ok = GameUpdateResult($gameId, $h, $a);
+    $ok = GameUpdateResult($database, $gameId, $h, $a);
   } elseif ($game_result['isongoing']) {
-    $ok = GameSetResult($gameId, $h, $a);
+    $ok = GameSetResult($database, $gameId, $h, $a);
     if ($ok) {
       echo "<p>" . sprintf(_("Final result saved: %s - %s."), $h, $a) . ".</p>";
     }
@@ -323,12 +325,12 @@ if (!empty($_POST['save'])) {
   echo "<p>" . _("Score sheet saved") . " (" . _("Time") . ": " . DefTimestamp() . ")!</p>";
   echo "<a href='?view=gameplay&amp;game=$gameId'>" . _("Game play") . "</a>";
 }
-$game_result = GameResult($gameId);
-$place = ReservationInfo($game_result['reservation']);
-$homecaptain = GameCaptain($gameId, $game_result['hometeam']);
-$awaycaptain = GameCaptain($gameId, $game_result['visitorteam']);
-$home_playerlist = GamePlayers($gameId, $game_result['hometeam']);
-$away_playerlist = GamePlayers($gameId, $game_result['visitorteam']);
+$game_result = GameResult($database, $gameId);
+$place = ReservationInfo($database, $game_result['reservation']);
+$homecaptain = GameCaptain($database, $gameId, $game_result['hometeam']);
+$awaycaptain = GameCaptain($database, $gameId, $game_result['visitorteam']);
+$home_playerlist = GamePlayers($database, $gameId, $game_result['hometeam']);
+$away_playerlist = GamePlayers($database, $gameId, $game_result['visitorteam']);
 
 if (count($home_playerlist) == 0) {
   echo "<p class='warning'>" . utf8entities(sprintf(_("No players given for team %s."), $game_result['hometeamname'])) . "<a href='?view=user/addplayerlists&amp;game=" . $gameId . "'>" . _("Feed in the players in the game.") . "</a></p>";
@@ -361,7 +363,7 @@ echo "</table>\n";
 //starting team
 $hoffence = "";
 $voffence = "";
-$ishome = GameIsFirstOffenceHome($gameId);
+$ishome = GameIsFirstOffenceHome($database, $gameId);
 if ($ishome == 1) {
   $hoffence = "checked='checked'";
 } elseif ($ishome == 0) {
@@ -385,8 +387,8 @@ echo "<tr><th>" . _("Home") . "</th>\n";
 
 //home team used timeouts
 $i = 0;
-$timeouts = GameTimeouts($gameId);
-while ($timeout = mysql_fetch_assoc($timeouts)) {
+$timeouts = GameTimeouts($database, $gameId);
+while ($timeout = $database->FetchAssoc($timeouts)) {
   if (intval($timeout['ishome'])) {
     echo "<td><input class='input' onkeyup=\"validTime(this);\" type='text' size='5' maxlength='8' id='hto$i' name='hto$i' value='" . SecToMin($timeout['time']) . "' /></td>\n";
     $i++;
@@ -407,8 +409,8 @@ echo "<tr><th>" . _("Away") . "</th>\n";
 
 //away team used timeouts
 $i = 0;
-$timeouts = GameTimeouts($gameId);
-while ($timeout = mysql_fetch_assoc($timeouts)) {
+$timeouts = GameTimeouts($database, $gameId);
+while ($timeout = $database->FetchAssoc($timeouts)) {
   if (!intval($timeout['ishome'])) {
     echo "<td><input class='input' onkeyup=\"validTime(this);\" type='text' size='5' maxlength='8' id='ato$i' name='ato$i' value='" . SecToMin($timeout['time']) . "' /></td>\n";
     $i++;
@@ -450,7 +452,7 @@ echo "<tr><td>" . utf8entities($game_result['hometeamname']) . "</td>";
 echo "<td><select style='width:100%' class='dropdown' name='homecaptain'>\n";
 echo "<option class='dropdown' value=''></option>\n";
 foreach ($home_playerlist as $player) {
-  $playerInfo = PlayerInfo($player['player_id']);
+  $playerInfo = PlayerInfo($database, $player['player_id']);
   if ($homecaptain == $player['player_id'])
     echo "<option class='dropdown' selected='selected' value='" . utf8entities($player['player_id']) . "'>" . utf8entities($playerInfo['firstname'] . " " . $playerInfo['lastname']) . "</option>\n";
   else
@@ -462,7 +464,7 @@ echo "<td>" . utf8entities($game_result['visitorteamname']) . "</td>";
 echo "<td><select style='width:100%' class='dropdown' name='awaycaptain'>\n";
 echo "<option class='dropdown' value=''></option>\n";
 foreach ($away_playerlist as $player) {
-  $playerInfo = PlayerInfo($player['player_id']);
+  $playerInfo = PlayerInfo($database, $player['player_id']);
   if ($awaycaptain == $player['player_id'])
     echo "<option class='dropdown' selected='selected' value='" . utf8entities($player['player_id']) . "'>" . utf8entities($playerInfo['firstname'] . " " . $playerInfo['lastname']) . "</option>\n";
   else
@@ -523,10 +525,10 @@ echo "<th style='$style_left'>" . _("Home") . "</th><th style='$style_mid'>" . _
 echo "<th style='$style_mid'>" . _("Assist") . "</th><th style='$style_mid'>" . _("Goal") . "</th><th style='$style_mid'>" . _("Time") . "</th>";
 echo "<th style='$style_right'>" . _("Score") . "</th></tr>\n";
 
-$scores = GameGoals($gameId);
+$scores = GameGoals($database, $gameId);
 
 $i = 0;
-while ($row = mysql_fetch_assoc($scores)) {
+while ($row = $database->FetchAssoc($scores)) {
 
   echo "<tr>";
   echo "<td class='center' style='width: 25px;color:#B0B0B0;'>", $i + 1, "</td>\n";
@@ -542,14 +544,14 @@ while ($row = mysql_fetch_assoc($scores)) {
   if (intval($row['iscallahan'])) {
     echo "<td class='center' style='width:50px;$style_mid'><input class='input' $input_assist id='pass$i' name='pass$i' maxlength='3' size='4' value='-'/></td>";
   } else {
-    $n = PlayerNumber($row['assist'], $gameId);
+    $n = PlayerNumber($database, $row['assist'], $gameId);
     if ($n < 0)
       $n = "";
 
     echo "<td class='center' style='width:50px;$style_mid'><input class='input' $input_assist id='pass$i' name='pass$i' maxlength='3' size='4' value='$n'/></td>";
   }
 
-  $n = PlayerNumber($row['scorer'], $gameId);
+  $n = PlayerNumber($database, $row['scorer'], $gameId);
   if ($n < 0)
     $n = "";
 

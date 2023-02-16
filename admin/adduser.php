@@ -18,7 +18,7 @@ if (!empty($_POST['save'])) {
     $html .= "<p>" . _("Username is too short (min. 3 letters)") . ".</p>";
     $error = 1;
   }
-  if (IsRegistered($newUsername)) {
+  if (IsRegistered($database, $newUsername)) {
     $html .=  "<p>" . _("The username is already in use") . ".</p>";
     $error = 1;
   }
@@ -41,14 +41,14 @@ if (!empty($_POST['save'])) {
     $error = 1;
   }
 
-  $uidcheck = mysql_real_escape_string($newUsername);
+  $uidcheck = $database->RealEscapeString($newUsername);
 
   if ($uidcheck != $newUsername || preg_match('/[ ]/', $newUsername) /*|| preg_match('/[^a-z0-9._]/i', $newUsername)*/) {
     $html .= "<p>" . _("User id may not have spaces or special characters") . ".</p>";
     $error = 1;
   }
 
-  $pswcheck = mysql_real_escape_string($newPassword);
+  $pswcheck = $database->RealEscapeString($newPassword);
 
   if ($pswcheck != $newPassword) {
     $html .= "<p>" . _("Illegal characters in the password") . ".</p>";
@@ -56,10 +56,10 @@ if (!empty($_POST['save'])) {
   }
 
   if ($error == 0) {
-    if (AddRegisterRequest($newUsername, $newPassword, $newName, $newEmail)) {
+    if (AddRegisterRequest($database, $newUsername, $newPassword, $newName, $newEmail)) {
       ConfirmRegisterUID($newUsername);
-      AddEditSeason($newUsername, CurrentSeason());
-      AddSeasonUserRole($newUsername, "teamadmin:" . $_POST["team"], CurrentSeason());
+      AddEditSeason($database, $newUsername, CurrentSeason($database));
+      AddSeasonUserRole($database, $newUsername, "teamadmin:" . $_POST["team"], CurrentSeason($database));
       $html .= "<p>" . _("Added new user") . "<br/>\n";
       $html .= _("Username") . ": " . $newUsername . "<br/>\n";
       $html .= _("Password") . ": " . $newPassword . "<br/>\n";
@@ -75,7 +75,7 @@ $title = _("Add new user");
 pageTopHeadOpen($title);
 include_once 'script/disable_enter.js.inc';
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 
@@ -101,7 +101,7 @@ if (isset($_POST['Email'])) $html .= $_POST['Email'];
 $html .= "'/></td></tr>";
 
 $html .= "<tr><td class='infocell'>" . _("Responsible team") . ":</td>";
-$teams = SeasonTeams(CurrentSeason());
+$teams = SeasonTeams($database, CurrentSeason($database));
 $html .= "<td><select class='dropdown' name='team'>";
 if (isset($_POST['team']))
   $html .= "<option class='dropdown' value='0'></option>";

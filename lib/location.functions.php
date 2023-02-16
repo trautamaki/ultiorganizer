@@ -1,6 +1,6 @@
 <?php
 
-function GetSearchLocations()
+function GetSearchLocations($database)
 {
 	$locale = str_replace(".", "_", getSessionLocale());
 	if (isset($_GET['search']) || isset($_GET['query']) || isset($_GET['q'])) {
@@ -19,9 +19,9 @@ function GetSearchLocations()
 		    LEFT JOIN uo_location_info inf1 ON (loc.id = inf1.location_id)
 		    LEFT JOIN uo_location_info inf2 ON (loc.id = inf2.location_id and inf2.locale='%s' )
 		    WHERE (name like '%%%s%%' OR address like '%%%s%%') ORDER BY name",
-			mysql_real_escape_string($locale),
-			mysql_real_escape_string($search),
-			mysql_real_escape_string($search)
+			$database->RealEscapeString($locale),
+			$database->RealEscapeString($search),
+			$database->RealEscapeString($search)
 		);
 	} elseif (isset($_GET['id'])) {
 		$query1 = sprintf(
@@ -32,7 +32,7 @@ function GetSearchLocations()
 		    LEFT JOIN uo_location_info inf1 ON (loc.id = inf1.location_id)
 		    LEFT JOIN uo_location_info inf2 ON (loc.id = inf2.location_id and inf2.locale='%s' )
 	      WHERE id=%d ORDER BY name",
-			mysql_real_escape_string($locale),
+			$database->RealEscapeString($locale),
 			(int)$_GET['id']
 		);
 	} else {
@@ -44,102 +44,102 @@ function GetSearchLocations()
 		    LEFT JOIN uo_location_info inf1 ON (loc.id = inf1.location_id)
 		    LEFT JOIN uo_location_info inf2 ON (loc.id = inf2.location_id and inf2.locale='%s' )
 	      WHERE 1 ORDER BY name",
-			mysql_real_escape_string($locale)
+			$database->RealEscapeString($locale)
 		);
 	}
-	$result1 = mysql_query($query1);
+	$result1 = $database->DBQuery($query1);
 
 	if (!$result1) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error());
 	}
 	return $result1;
 }
 
-function LocationInfo($id)
+function LocationInfo($database, $id)
 {
 	$locale = str_replace(".", "_", getSessionLocale());
 	$query = sprintf("SELECT id, name, fields, indoor, address, inf.info as info, lat, lng 
 	    FROM uo_location loc LEFT JOIN uo_location_info inf ON ( loc.id = inf.location_id and inf.locale='%s' )
-	    WHERE id=%d", mysql_real_escape_string($locale), (int)$id);
-	$result = mysql_query($query);
+	    WHERE id=%d", $database->RealEscapeString($locale), (int)$id);
+	$result = $database->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . $database->GetConnection()->error());
 	}
-	return mysql_fetch_assoc($result);
+	return $database->FetchAssoc($result);
 }
 
-function SetLocation($id, $name, $address, $info, $fields, $indoor, $lat, $lng, $season)
+function SetLocation($database, $id, $name, $address, $info, $fields, $indoor, $lat, $lng, $season)
 {
 	if (isSuperAdmin() || isSeasonAdmin($season)) {
 		$query = sprintf(
 			"UPDATE uo_location SET name='%s', address='%s', fields=%d, indoor=%d, lat='%s', lng='%s'  WHERE id=%d",
-			mysql_real_escape_string($name),
-			mysql_real_escape_string($address),
+			$database->RealEscapeString($name),
+			$database->RealEscapeString($address),
 			(int)$fields,
 			(int)$indoor,
-			mysql_real_escape_string($lat),
-			mysql_real_escape_string($lng),
+			$database->RealEscapeString($lat),
+			$database->RealEscapeString($lng),
 			(int)$id
 		);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 
-		updateInfos($id, $info);
+		updateInfos($database, $id, $info);
 	} else {
 		die('Insufficient rights to change location');
 	}
 }
 
-function updateInfos($id, $info)
+function updateInfos($database, $id, $info)
 {
 	foreach ($info as $locale => $infostr) {
 		if (empty($infostr)) {
 			$query = sprintf(
 				"DELETE FROM uo_location_info WHERE location_id=%d AND locale='%s'",
 				(int)$id,
-				mysql_real_escape_string($locale)
+				$database->RealEscapeString($locale)
 			);
 		} else {
 			$query = sprintf(
 				"INSERT INTO uo_location_info (location_id, locale, info) VALUE (%d, '%s', '%s')
 		    ON DUPLICATE KEY UPDATE info='%s'",
 				(int)$id,
-				mysql_real_escape_string($locale),
-				mysql_real_escape_string($infostr),
-				mysql_real_escape_string($infostr)
+				$database->RealEscapeString($locale),
+				$database->RealEscapeString($infostr),
+				$database->RealEscapeString($infostr)
 			);
 		}
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 	}
 }
 
-function AddLocation($name, $address, $info, $fields, $indoor, $lat, $lng, $season)
+function AddLocation($database, $name, $address, $info, $fields, $indoor, $lat, $lng, $season)
 {
 	if (isSuperAdmin() || isSeasonAdmin($season)) {
 		$query = sprintf(
 			"INSERT INTO uo_location (name, address, fields, indoor, lat, lng)
 	       VALUES ('%s', '%s', %d, %d, '%s', '%s')",
-			mysql_real_escape_string($name),
-			mysql_real_escape_string($address),
+			$database->RealEscapeString($name),
+			$database->RealEscapeString($address),
 			(int)$fields,
 			(int)$indoor,
-			mysql_real_escape_string($lat),
-			mysql_real_escape_string($lng)
+			$database->RealEscapeString($lat),
+			$database->RealEscapeString($lng)
 		);
 
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 
-		$locationId = mysql_insert_id();
+		$locationId = $database->GetConnection()->insert_id;
 
-		updateInfos($locationId, $info);
+		updateInfos($database, $locationId, $info);
 
 		return $locationId;
 	} else {
@@ -147,19 +147,19 @@ function AddLocation($name, $address, $info, $fields, $indoor, $lat, $lng, $seas
 	}
 }
 
-function RemoveLocation($id)
+function RemoveLocation($database, $id)
 {
 	if (isSuperAdmin()) {
 		$query = sprintf("DELETE FROM uo_location WHERE id=%d", (int)$id);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 
 		$query = sprintf("DELETE FROM uo_location_info WHERE location_id=%d", (int)$id);
-		$result = mysql_query($query);
+		$result = $database->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . $database->GetConnection()->error());
 		}
 	} else {
 		die('Insufficient rights to remove location');

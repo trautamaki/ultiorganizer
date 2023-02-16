@@ -15,7 +15,7 @@ $seriesId = 0;
 if (!empty($_GET["team"]))
 	$teamId = intval($_GET["team"]);
 
-$team_info = TeamInfo($teamId);
+$team_info = TeamInfo($database, $teamId);
 $seriesId = $team_info['series'];
 $season = $team_info['season'];
 
@@ -46,11 +46,11 @@ if (!empty($_POST['save']) || !empty($_POST['add'])) {
 		$tp['series'] = $seriesId;
 
 		if (!empty($_POST['club'])) {
-			$clubId = ClubId($_POST['club']);
+			$clubId = ClubId($database, $_POST['club']);
 
 			//slot owner club not found
 			if ($clubId == -1) {
-				$clubId = AddClub($seriesId, $_POST['club']);
+				$clubId = AddClub($database, $seriesId, $_POST['club']);
 			}
 			$tp['club'] = $clubId;
 		}
@@ -70,14 +70,14 @@ if (!empty($_POST['save']) || !empty($_POST['add'])) {
 		}		
 		*/
 		if ($teamId) {
-			SetTeam($tp);
+			SetTeam($database, $tp);
 			if (intval($tp['pool']))
-				PoolAddTeam($tp['pool'], $teamId, $tp['rank']);
+				PoolAddTeam($database, $tp['pool'], $teamId, $tp['rank']);
 			$html .= "<p>" . _("Changes saved") . "</p><hr/>";
 		} else {
-			$teamId = AddTeam($tp);
+			$teamId = AddTeam($database, $tp);
 			if (intval($tp['pool']))
-				PoolAddTeam($tp['pool'], $teamId, $tp['rank']);
+				PoolAddTeam($database, $tp['pool'], $teamId, $tp['rank']);
 
 			$html .= "<p>" . $tp['name'] . " " . _("added") . ".</p><hr/>";
 			$teamId = 0;
@@ -90,8 +90,8 @@ if (!empty($_POST['save']) || !empty($_POST['add'])) {
 }
 
 $orgarray = "";
-$result = ClubList(true);
-while ($row = @mysql_fetch_assoc($result)) {
+$result = ClubList($database, true);
+while ($row = @$database->FetchAssoc($result)) {
 	$orgarray .= "\"" . $row['name'] . "\",";
 }
 $orgarray = trim($orgarray, ',');
@@ -118,12 +118,12 @@ echo yuiLoad(array("utilities", "datasource", "autocomplete"));
 </script>
 <?php
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
-$seasonInfo = SeasonInfo($season);
+$seasonInfo = SeasonInfo($database, $season);
 
 if ($teamId) {
-	$info = TeamFullInfo($teamId);
+	$info = TeamFullInfo($database, $teamId);
 
 	$tp['name'] = $info['name'];
 	$tp['abbreviation'] = $info['abbreviation'];
@@ -145,7 +145,7 @@ $html .= "<table cellpadding='2px' class='yui-skin-sam'><tr><td class='infocell'
 if (!intval($seasonInfo['isnationalteams'])) {
 	$html .= "<input class='input' id='name' name='name' size='50' value='" . utf8entities($tp['name']) . "'/></td></tr>";
 	$html .= "<tr><td class='infocell'>" . _("Club") . ":</td>\n";
-	$html .= "<td><div id='orgAutoComplete'><input class='input' type='text' id='club' name='club' size='50' value='" . utf8entities(ClubName($tp['club'])) . "'/>";
+	$html .= "<td><div id='orgAutoComplete'><input class='input' type='text' id='club' name='club' size='50' value='" . utf8entities(ClubName($database, $tp['club'])) . "'/>";
 	$html .= "<div id='orgContainer'></div>";
 	$html .= "</div>";
 } else {
@@ -155,12 +155,12 @@ $html .= "</td></tr>";
 
 if (intval($seasonInfo['isinternational'])) {
 	$html .= "<tr><td class='infocell'>" . _("Country") . ":</td>\n";
-	$html .= "<td>" . CountryDropListWithValues("country", "country", $tp['country']) . "</td></tr>";
+	$html .= "<td>" . CountryDropListWithValues($database, "country", "country", $tp['country']) . "</td></tr>";
 }
 $html .= "<tr><td class='infocell'>" . _("Abbreviation") . ":</td>";
 $html .= "<td><input class='input' id='abbreviation' name='abbreviation' maxlength='15' size='16' value='" . utf8entities($tp['abbreviation']) . "'/></td></tr>";
 
-$seriesname = SeriesName($seriesId);
+$seriesname = SeriesName($database, $seriesId);
 $html .= "<tr><td class='infocell'>" . _("Division") . ":</td>
 		<td><input class='input' id='series' name='series' disabled='disabled' size='50' value='" . utf8entities($seriesname) . "'/></td></tr>";
 
@@ -170,7 +170,7 @@ $html .= "<tr><td class='infocell'>" . _("Starting pool") . ":</td>";
 
 $html .= "<td><select class='dropdown' name='pool'>";
 
-$pools = SeriesPools($seriesId, false, true, true);
+$pools = SeriesPools($database, $seriesId, false, true, true);
 
 //empty selection
 if (intval($tp['pool']))

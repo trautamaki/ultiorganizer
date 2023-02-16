@@ -22,7 +22,7 @@ if (!empty($_GET["series"])) {
 
 if (!empty($_POST['remove_x'])) {
   $id = $_POST['hiddenDeleteId'];
-  RemoveReservation($id, $season);
+  RemoveReservation($database, $id, $season);
   $_POST['searchreservation'] = "1"; //do not hide search results
 }
 if (isset($_POST['schedule']) && isset($_POST['reservations'])) {
@@ -48,7 +48,7 @@ if (!empty($_POST['change_times'])) {
     }
   }
 
-  TimeTableSetMoveTimes($season, $times);
+  TimeTableSetMoveTimes($database, $season, $times);
 }
 
 //common page
@@ -59,7 +59,7 @@ pageTopHeadOpen($title);
 $html .=  file_get_contents('script/rescalendar.inc');
 include 'script/common.js.inc';
 pageTopHeadClose($title, false);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 $searchItems = array();
@@ -80,10 +80,10 @@ if (!empty($urlparams)) {
   $url .= "&amp;" . $urlparams;
 }
 if (empty($season)) {
-  $html .=  SearchReservation($url, $hidden, array('schedule' => _("Schedule selected")));
+  $html .=  SearchReservation($database, $url, $hidden, array('schedule' => _("Schedule selected")));
 } else {
   $html .= "<p><a href='?view=admin/reservations'>" . _("Search") . "</a></p>";
-  $groups = SeasonReservationgroups($season);
+  $groups = SeasonReservationgroups($database, $season);
   if (count($groups) > 1) {
     $html .= "<p>\n";
     foreach ($groups as $grouptmp) {
@@ -102,13 +102,13 @@ if (empty($season)) {
     $html .= "</p>\n";
   }
   $html .= "<form method='post' id='reservations' action='?view=admin/reservations&amp;season=$season&amp;group=" . urlencode($group) . "'>\n";
-  $reservations = SeasonReservations($season, $group);
+  $reservations = SeasonReservations($database, $season, $group);
   $html .= "<table class='admintable'><tr><th><input type='checkbox' onclick='checkAll(\"reservations\");'/></th>";
   $html .= "<th>" . _("Group") . "</th><th>" . _("Location") . "</th><th>" . _("Date") . "</th>";
   $html .= "<th>" . _("Starts") . "</th><th>" . _("Ends") . "</th><th>" . _("Games") . "</th>";
   $html .= "<th>" . _("Scoresheets") . "</th><th></th></tr>\n";
   foreach ($reservations as $reservation) {
-    $row = ReservationInfo($reservation['id']);
+    $row = ReservationInfo($database, $reservation['id']);
     $html  .= "<tr class='admintablerow'><td><input type='checkbox' name='reservations[]' value='" . utf8entities($row['id']) . "'/></td>";
     $html  .= "<td>" . utf8entities(U_($row['reservationgroup'])) . "</td>";
     $html  .= "<td><a href='?view=admin/addreservation&amp;reservation=" . $row['id'] . "&amp;season=" . $row['season'] . "'>" . utf8entities(U_($row['name'])) . " " . _("Field") . " " . utf8entities(U_($row['fieldname'])) . "</a></td>";
@@ -130,8 +130,8 @@ if (empty($season)) {
   $html .= "<input type='submit' name='schedule' value='" . utf8entities(_("Schedule selected")) . "'/>\n";
   $html .= "</p>";
 
-  $locations = SeasonReservationLocations($season, $group);
-  $movetimes = TimetableMoveTimes($season);
+  $locations = SeasonReservationLocations($database, $season, $group);
+  $movetimes = TimetableMoveTimes($database, $season);
 
   $html .= "<h2>" . _("Transfer times") . "</h2>";
   $html .= "<p>" . _("Minimum times (in minutes) to move between fields") . "</p>\n";

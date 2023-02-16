@@ -9,15 +9,15 @@ $_SESSION['game'] = $gameId;
 if (isset($_POST['save'])) {
 	$home = intval($_POST['home']);
 	$away = intval($_POST['away']);
-	$ok = GameSetResult($gameId, $home, $away);
+	$ok = GameSetResult($database, $gameId, $home, $away);
 	if ($ok) {
-		$game_result = GameResult($gameId);
+		$game_result = GameResult($database, $gameId);
 		$info = "<p>" . sprintf(_("Game result %s - %s saved!"), $home, $away) . "</p>";
 	}
 } elseif (isset($_POST['update'])) {
 	$home = intval($_POST['home']);
 	$away = intval($_POST['away']);
-	$ok = GameUpdateResult($gameId, $home, $away);
+	$ok = GameUpdateResult($database, $gameId, $home, $away);
 	$info = "<p>" . sprintf(_("Game result %s - %s updated!"), $home, $away) . "</p>";
 }
 
@@ -27,7 +27,7 @@ $html .= "</div><!-- /header -->\n\n";
 
 $html .= "<div data-role='content'>\n";
 
-$result = GameResult($gameId);
+$result = GameResult($database, $gameId);
 
 $html .= "<form action='?view=addresult' method='post' data-ajax='false'>\n";
 

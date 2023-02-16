@@ -6,6 +6,8 @@ include_once 'lib/timetable.functions.php';
 
 header("Content-Type: text/Calendar; charset=utf-8");
 
+$database = new Database();
+
 $order = 'tournaments';
 $timefilter = 'coming';
 $id = 0;
@@ -27,7 +29,7 @@ if (iget("series")) {
   $id = iget("season");
   $gamefilter = "season";
 } else {
-  $id = CurrentSeason();
+  $id = CurrentSeason($database);
   $gamefilter = "season";
 }
 
@@ -40,16 +42,16 @@ if (iget("time")) {
   $timefilter  = iget("time");
 }
 
-$games = TimetableGames($id, $gamefilter, $timefilter, $order);
+$games = TimetableGames($database, $id, $gamefilter, $timefilter, $order);
 
 echo "BEGIN:VCALENDAR\n";
 echo "VERSION:2.0\n";
 echo "PRODID: " . _("Ultiorganizer") . "\n\n";
 
-while ($game = mysql_fetch_assoc($games)) {
-  $location = LocationInfo($game['place_id']);
+while ($game = $database->FetchAssoc($games)) {
+  $location = LocationInfo($database, $game['place_id']);
   echo "\nBEGIN:VEVENT";
-  echo "\nSUMMARY:" . TeamName($game['hometeam']) . "-" . TeamName($game['visitorteam']);
+  echo "\nSUMMARY:" . TeamName($database, $game['hometeam']) . "-" . TeamName($database, $game['visitorteam']);
   echo "\nDESCRIPTION:" . U_($game['seriesname']) . ": " . U_($game['poolname']);
   echo "\nLOCATION: " . $game['placename'] . " " . $game['fieldname'];
   if (!empty($game['timezone'])) {

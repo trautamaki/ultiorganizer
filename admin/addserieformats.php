@@ -65,9 +65,9 @@ if (!empty($_POST['save']) || !empty($_POST['add'])) {
 		$pp['drawsallowed'] = 0;
 
 	if (!empty($_POST['add'])) {
-		$poolId = AddPoolTemplate($pp);
+		$poolId = AddPoolTemplate($database, $pp);
 	} else {
-		SetPoolTemplate($poolId, $pp);
+		SetPoolTemplate($database, $poolId, $pp);
 	}
 }
 
@@ -77,11 +77,11 @@ include_once 'script/disable_enter.js.inc';
 include_once 'lib/yui.functions.php';
 $html .= yuiLoad(array("utilities", "datasource", "autocomplete"));
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 if ($poolId) {
-	$info = PoolTemplateInfo($poolId);
+	$info = PoolTemplateInfo($database, $poolId);
 	$pp['name'] = $info['name'];
 	$pp['type'] = $info['type'];
 	$pp['teams'] = $info['teams'];

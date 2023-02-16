@@ -31,11 +31,11 @@ include_once 'localization.php';
 	$group = iget("tournament");
 
 	if (!$season) {
-		$season = CurrentSeason();
+		$season = CurrentSeason($database);
 	}
-	$games = TimetableGames($season, "season", "all", "places", $group);
+	$games = TimetableGames($database, $season, "season", "all", "places", $group);
 
-	echo ExtTournamentView($games);
+	echo ExtTournamentView($database, $games);
 	CloseConnection();
 	?>
 </body>

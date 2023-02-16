@@ -1,17 +1,19 @@
 <?php
 $LAYOUT_ID = FBPUBLISH;
 
+$database = new Database();
+
 //common page
 $userid = $_SESSION['uid'];
 $playerid = $_GET['player'];
-$latestId = PlayerLatestId($playerid);
-$playerInfo = PlayerInfo($latestId);
+$latestId = PlayerLatestId($database, $playerid);
+$playerInfo = PlayerInfo($database, $latestId);
 $title = _("Manage player Facebook feeds for") . " " . utf8entities($playerInfo['firstname'] . " " . $playerInfo['lastname']);
 
 if (IsFacebookEnabled()) {
 	$fb_cookie = FBCookie($serverConf['FacebookAppId'], $serverConf['FacebookAppSecret']);
 	$fb_props = getFacebookUserProperties($userid);
-	if (!FBLoggedIn($fb_cookie, $fb_props)) {
+	if (!FBLoggedIn($database, $fb_cookie, $fb_props)) {
 		die("Must be logged in to manage publishing");
 	}
 }
@@ -45,7 +47,7 @@ if (isset($_POST['save'])) {
 
 pageTopHeadOpen($title);
 pageTopHeadClose($title, false);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 //help
 $help = "<p>" . _("Facebook feed messages") . ":</p>

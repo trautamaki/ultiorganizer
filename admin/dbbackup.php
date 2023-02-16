@@ -14,25 +14,25 @@ if (isset($_POST['backup']) && !empty($_POST['tables']) && isSuperAdmin()) {
 
 	foreach ($tables as $table) {
 		set_time_limit(120);
-		$result = mysql_query('SELECT * FROM ' . $table);
-		$num_fields = mysql_num_fields($result);
+		$result = $database->DBQuery('SELECT * FROM ' . $table);
+		$num_fields = $result->field_count;
 
 		$return .= 'DROP TABLE IF EXISTS ' . $table . ';';
-		$row2 = mysql_fetch_row(mysql_query('SHOW CREATE TABLE ' . $table));
+		$row2 = $database->FetchRow($database->DBQuery('SHOW CREATE TABLE ' . $table));
 		$return .= "\n\n" . $row2[1] . ";\n\n";
 
 		for ($i = 0; $i < $num_fields; $i++) {
-			while ($row = mysql_fetch_row($result)) {
+			while ($row = $result->fetch_row()) {
 				$return .= 'INSERT INTO ' . $table . ' VALUES(';
 				for ($j = 0; $j < $num_fields; $j++) {
 
-					if (mysql_field_type($result, $j) == 'blob' && $table == 'uo_image') {
+					if ($database->fieldtype($result, $j) == 'blob' && $table == 'uo_image') {
 						if (isset($row[$j]) && ($row[$j] != NULL)) {
 							$return .= '0x' . bin2hex($row[$j]);
 						} else {
 							$return .= 'NULL';
 						}
-					} elseif (mysql_field_type($result, $j) == 'int') {
+					} elseif ($database->fieldtype($result, $j) == 'int') {
 						if (isset($row[$j]) && ($row[$j] != NULL)) {
 							$return .= intval($row[$j]);
 						} else {
@@ -80,7 +80,7 @@ $LAYOUT_ID = DBBACKUP;
 pageTopHeadOpen($title);
 include 'script/common.js.inc';
 pageTopHeadClose($title, false);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 if (isSuperAdmin()) {
 
@@ -98,8 +98,8 @@ if (isSuperAdmin()) {
 	$html .= "<th>" . _("Updated") . "</th>";
 	$html .= "</tr>\n";
 	$total_size = 0;
-	$result = mysql_query("SHOW TABLE STATUS");
-	while ($row = mysql_fetch_assoc($result)) {
+	$result = $database->DBQuery("SHOW TABLE STATUS");
+	while ($row = $database->FetchAssoc($result)) {
 		if (substr($row['Name'], 0, 3) == 'uo_') {
 			$html .= "<tr>";
 			$html .= "<td class='center'><input type='checkbox' name='tables[]' value='" . utf8entities($row['Name']) . "' /></td>";

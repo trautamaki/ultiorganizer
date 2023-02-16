@@ -7,6 +7,7 @@ include_once 'lib/pool.functions.php';
 include_once 'lib/common.functions.php';
 require_once("lib/HSVClass.php");
 
+$database = new Database();
 
 $LAYOUT_ID = SCHEDULE;
 $title = _("Team selection");
@@ -18,15 +19,15 @@ if (isset($_GET['series'])) {
     $seriesId = intval($_GET['series']);
 }
 
-$pools = SeriesPools($seriesId, false, true, false);
+$pools = SeriesPools($database, $seriesId, false, true, false);
 $not_started = array();
 foreach ($pools as $pool) {
-    if (!IsPoolStarted($pool['pool_id'])) {
+    if (!IsPoolStarted($database, $pool['pool_id'])) {
         $not_started[] = $pool['pool_id'];
     }
 }
 $pools = $not_started;
-$teamsNotInPool = SeriesTeamsWithoutPool($seriesId);
+$teamsNotInPool = SeriesTeamsWithoutPool($database, $seriesId);
 
 //common page
 pageTopHeadOpen($title);
@@ -92,7 +93,7 @@ echo yuiLoad(array("utilities", "dragdrop"));
 </style>
 <?php
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 echo "<table><tr><td style='width:250px'>";
 
@@ -102,7 +103,7 @@ echo "<h3>" . _("Without pool") . "</h3>\n";
 echo "<div class='workarea' >\n";
 echo "<ul id='unpooled' class='draglist' style='height:400px'>\n";
 foreach ($teamsNotInPool as $team) {
-    if (hasEditTeamsRight($seriesId)) {
+    if (hasEditTeamsRight($database, $seriesId)) {
         teamEntry("ffffff", TEAM_HEIGHT, $team['team_id'], $team['name'], $team['rank']);
     }
 }
@@ -122,14 +123,14 @@ foreach ($pools as $poolId) {
         echo "</tr><tr>\n";
 
     echo "<td>\n";
-    $poolinfo = PoolInfo($poolId);
+    $poolinfo = PoolInfo($database, $poolId);
     $total_teams = 10;
     echo "<table><tr>\n";
     echo "<td style='vertical-align:top;padding:5px'>\n";
     echo "<div style='vertical-align:bottom;height:100%'><h3>" . $poolinfo['name'] . "</h3></div>\n";
     echo "<div class='workarea' >\n";
     echo "<ol id='res" . $poolId . "' class='draglist' style='height:" . ($total_teams * TEAM_HEIGHT) . "px'>\n";
-    $poolteams = PoolTeams($poolId);
+    $poolteams = PoolTeams($database, $poolId);
     foreach ($poolteams as $team) {
         teamEntry("ffffff", TEAM_HEIGHT, $team['team_id'], $team['name'], $team['seed']);
     }
@@ -174,16 +175,16 @@ echo "</td></tr></table>\n";
                 echo "		new YAHOO.util.DDTarget(\"unpooled\");\n";
                 foreach ($pools as $poolId) {
                     echo "		new YAHOO.util.DDTarget(\"res" . $poolId . "\");\n";
-                    $poolteams = PoolTeams($poolId);
+                    $poolteams = PoolTeams($database, $poolId);
                     foreach ($poolteams as $team) {
-                        if (hasEditTeamsRight($seriesId)) {
+                        if (hasEditTeamsRight($database, $seriesId)) {
                             echo "		new YAHOO.example.DDList(\"team" . $team['team_id'] . "\");\n";
                         }
                     }
                 }
 
                 foreach ($teamsNotInPool as $team) {
-                    if (hasEditTeamsRight($seriesId)) {
+                    if (hasEditTeamsRight($database, $seriesId)) {
                         echo "		new YAHOO.example.DDList(\"team" . $team['team_id'] . "\");\n";
                     }
                 }

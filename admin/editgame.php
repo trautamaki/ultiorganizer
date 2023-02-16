@@ -4,10 +4,12 @@ include_once 'lib/game.functions.php';
 include_once 'lib/series.functions.php';
 include_once 'lib/common.functions.php';
 
+$database = new Database();
+
 $LAYOUT_ID = EDITGAME;
 $backurl = utf8entities(empty($_SERVER['HTTP_REFERER']) ? "" : $_SERVER['HTTP_REFERER']);
 $gameId = $_GET["game"];
-$info = GameResult($gameId);
+$info = GameResult($database, $gameId);
 
 if (!empty($_GET["season"]))
 	$season = $_GET["season"];
@@ -42,7 +44,7 @@ if (!empty($_POST['save'])) {
 	}
 	$gp['reservation'] = $_POST['place'];
 
-	$res = ReservationInfo($gp['reservation']);
+	$res = ReservationInfo($database, $gp['reservation']);
 	if (!empty($_POST['time'])) {
 		$gp['time'] = ToInternalTimeFormat((ShortDate($res['starttime']) . " " . $_POST['time']));
 	} else {
@@ -65,14 +67,14 @@ if (!empty($_POST['save'])) {
 		$gp['name'] = $_POST['name'];
 
 
-	SetGame($gameId, $gp);
+	SetGame($database, $gameId, $gp);
 
 	$userid = $_POST['userid'];
 	if (empty($userid)) {
 		$userid = UserIdForMail($_POST['email']);
 	}
-	if (IsRegistered($userid)) {
-		AddSeasonUserRole($userid, 'gameadmin:' . $gameId, $season);
+	if (IsRegistered($database, $userid)) {
+		AddSeasonUserRole($database, $userid, 'gameadmin:' . $gameId, $season);
 	}
 	if (!empty($backurl)) {
 		session_write_close();
@@ -142,7 +144,7 @@ echo yuiLoad(array("utilities", "calendar", "datasource", "autocomplete"));
 <?php
 
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 
@@ -150,8 +152,8 @@ contentStart();
 
 echo "<h2>" . _("Edit game") . "</h2>\n";
 echo "<form method='post' action='?view=admin/editgame&amp;season=$season&amp;game=$gameId'>";
-$info = GameResult($gameId);
-$pool_info = PoolInfo($info['pool']);
+$info = GameResult($database, $gameId);
+$pool_info = PoolInfo($database, $info['pool']);
 $seriesId = $pool_info['series'];
 $poolId = $info['pool'];
 
@@ -190,7 +192,7 @@ echo "<tr><td class='infocell'>" . _("Location") . ":</td><td><select class='dro
 echo "<option class='dropdown' value='0'></option>";
 
 // places
-$places = SeasonReservations($season);
+$places = SeasonReservations($database, $season);
 
 foreach ($places as $row) {
 	if ($row['id'] == $info['reservation']) {
@@ -212,7 +214,7 @@ echo "<tr><td class='infocell'>" . _("Starting time") . " (hh:mm):</td>
 echo "<tr><td class='infocell'>" . _("Division") . ":</td><td><select class='dropdown' name='pool'>\n";
 echo "<option class='dropdown' value='0'></option>";
 
-$pools = SeasonPools($season);
+$pools = SeasonPools($database, $season);
 foreach ($pools as $row) {
 	if ($row['pool_id'] == $info['pool'])
 		echo "<option class='dropdown' selected='selected' value='" . utf8entities($row['pool_id']) . "'>" . utf8entities(U_($row['seriesname'])) . ", " . utf8entities(U_($row['poolname'])) . "</option>";
@@ -226,7 +228,7 @@ echo "<tr><td class='infocell'>" . _("Responsible team") . ":</td><td>";
 TeamSelectionListNew('respteam', $info['respteam'], $info['respteam'], $poolId);
 echo "</td></tr>";
 echo "<tr><td class='infocell' style='vertical-align:text-top;'>" . _("Responsible person") . ":</td><td>";
-$users = GameAdmins($gameId);
+$users = GameAdmins($database, $gameId);
 foreach ($users as $user) {
 	echo utf8entities($user['name']) . "<br/>";
 }
@@ -265,9 +267,9 @@ function TeamSelectionListNew($name, $selected, $schedule_selected, $poolId)
 	echo "<option class='dropdown' value='0'></option>";
 
 	$pseudoteams = false;
-	$teams = PoolTeams($poolId);
+	$teams = PoolTeams($database, $poolId);
 	if (count($teams) == 0) {
-		$teams = PoolSchedulingTeams($poolId);
+		$teams = PoolSchedulingTeams($database, $poolId);
 		$pseudoteams = true;
 	}
 
@@ -302,7 +304,7 @@ function TeamSelectionList($name, $selected, $seriesId)
 	echo "<option class='dropdown' value='0'></option>";
 
 	// teams from series
-	$teams = SeriesTeams($seriesId);
+	$teams = SeriesTeams($database, $seriesId);
 	foreach ($teams as $team) {
 		if ($team['team_id'] == $selected) {
 			echo "<option class='dropdown' selected='selected' value='" . utf8entities($team['team_id']) . "'>" . utf8entities($team['name']) . "</option>";

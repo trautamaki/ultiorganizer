@@ -8,11 +8,14 @@ include_once $include_prefix . 'lib/configuration.functions.php';
 if (version_compare(PHP_VERSION, '5.0.0', '>')) {
 	include_once 'lib/twitter.functions.php';
 }
+
+$database = new Database();
+
 $html = "";
 $html2 = "";
 $gameId = intval($_GET["game"]);
-$game_result = GameInfo($gameId);
-$seasoninfo = SeasonInfo($game_result['season']);
+$game_result = GameInfo($database, $gameId);
+$seasoninfo = SeasonInfo($database, $game_result['season']);
 
 $LAYOUT_ID = ADDRESULT;
 $title = _("Result");
@@ -21,7 +24,7 @@ $title = _("Result");
 if (!empty($_POST['save'])) {
 	$home = intval($_POST['home']);
 	$away = intval($_POST['away']);
-	$ok = GameSetResult($gameId, $home, $away);
+	$ok = GameSetResult($database, $gameId, $home, $away);
 	if ($ok) {
 		$html2 .= "<p>" . sprintf(_("Final result saved: %s - %s."), $home, $away) . " ";
 		if ($home > $away) {
@@ -31,26 +34,26 @@ if (!empty($_POST['save'])) {
 		}
 		$html2 .= "</p>";
 	}
-	$game_result = GameInfo($gameId);
+	$game_result = GameInfo($database, $gameId);
 } elseif (isset($_POST['update'])) {
 	$home = intval($_POST['home']);
 	$away = intval($_POST['away']);
-	$ok = GameUpdateResult($gameId, $home, $away);
+	$ok = GameUpdateResult($database, $gameId, $home, $away);
 	$html2 .= "<p>" . sprintf(_("Game ongoing. Current score: %s - %s."), $home, $away) . "</p>";
-	$game_result = GameInfo($gameId);
+	$game_result = GameInfo($database, $gameId);
 } elseif (isset($_POST['clear'])) {
-	$ok = GameClearResult($gameId);
+	$ok = GameClearResult($database, $gameId);
 	if ($ok) {
 		$html2 .= "<p>" . _("Game reset") . ".</p>";
 	}
-	$game_result = GameInfo($gameId);
+	$game_result = GameInfo($database, $gameId);
 }
 
 //common page
 pageTopHeadOpen($title);
 include_once 'script/disable_enter.js.inc';
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 //content
 $menutabs[_("Result")] = "?view=user/addresult&game=$gameId";
@@ -84,10 +87,10 @@ $html .= "<tr>
 </table>";
 
 if ($game_result['homevalid'] == 2) {
-	$poolInfo = PoolInfo($game_result['pool']);
+	$poolInfo = PoolInfo($database, $game_result['pool']);
 	$html .= "<p>" . "The home team is the BYE team. You should use the suggested result: " . $poolInfo['forfeitagainst'] . " - " . $poolInfo['forfeitscore'] . "</p>";
 } elseif ($game_result['visitorvalid'] == 2) {
-	$poolInfo = PoolInfo($game_result['pool']);
+	$poolInfo = PoolInfo($database, $game_result['pool']);
 	$html .= "<p>" . "The visitor team is the BYE team. You should use the suggested result: " . $poolInfo['forfeitscore'] . " - " . $poolInfo['forfeitagainst'] . "</p>";
 }
 

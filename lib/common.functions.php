@@ -7,7 +7,7 @@ function StripFromQueryString($query_string, $needle)
 	return preg_replace("/(&)+/", "&", $query_string);
 }
 
-function SafeDivide($dividend, $divisor)
+function SafeDivide($database, $dividend, $divisor)
 {
 	if (!isset($divisor) || is_null($divisor) || $divisor == 0)
 		$result = 0;
@@ -274,7 +274,7 @@ function GetScriptName()
 function GetURLBase()
 {
 	$url = "http://";
-	$url .= GetServerName();
+	$url .= Database::GetServerName();
 	$url .= GetScriptName();
 
 	$cutpos = strrpos($url, "/");
@@ -695,14 +695,14 @@ if (!function_exists('array_combine')) {
 	}
 }
 
-function ResultsetToCsv($result, $separator)
+function ResultsetToCsv($database, $result, $separator)
 {
 	$csv_terminated = "\n";
 	$csv_separator = $separator;
 	$csv_enclosed = '"';
 	$csv_escaped = "\\";
 
-	$fields_cnt = mysql_num_fields($result);
+	$fields_cnt = $result->field_count;
 
 	$schema_insert = '';
 
@@ -710,7 +710,7 @@ function ResultsetToCsv($result, $separator)
 		$l = $csv_enclosed . str_replace(
 			$csv_enclosed,
 			$csv_escaped . $csv_enclosed,
-			stripslashes(mysql_field_name($result, $i))
+			stripslashes($database->fieldname($result, $i))
 		) . $csv_enclosed;
 		$schema_insert .= $l;
 		$schema_insert .= $csv_separator;
@@ -720,7 +720,7 @@ function ResultsetToCsv($result, $separator)
 	$out .= $csv_terminated;
 
 	// Format the data
-	while ($row = mysql_fetch_array($result)) {
+	while ($row = $database->fetcharray($result)) {
 		$schema_insert = '';
 		for ($j = 0; $j < $fields_cnt; $j++) {
 			if ($row[$j] == '0' || $row[$j] != '') {
@@ -804,7 +804,7 @@ function ArrayToCsv($result, $separator)
 	return $out;
 }
 
-function CreateOrdering($tables, $orderby)
+function CreateOrdering($database, $tables, $orderby)
 {
 	if (!isset($orderby)) {
 		return "";
@@ -819,10 +819,10 @@ function CreateOrdering($tables, $orderby)
 
 	if (is_array($tables)) {
 		foreach ($tables as $table => $alias) {
-			$fields[$alias] = GetTableColumns($table);
+			$fields[$alias] = GetTableColumns($database, $table);
 		}
 	} else {
-		$fields[$tables] = GetTableColumns($tables);
+		$fields[$tables] = GetTableColumns($database, $tables);
 	}
 	$ret = "";
 	foreach ($orderby as $field => $direction) {
@@ -860,7 +860,7 @@ function CreateOrdering($tables, $orderby)
 	return $ret;
 }
 
-function CreateFilter($tables, $filter)
+function CreateFilter($database, $tables, $filter)
 {
 	if (!isset($filter) || !is_array($filter) || (count($filter) == 0)) {
 		return "";
@@ -868,17 +868,17 @@ function CreateFilter($tables, $filter)
 	$fields = array();
 	if (is_array($tables)) {
 		foreach ($tables as $table => $alias) {
-			$fields[$alias] = GetTableColumns($table);
+			$fields[$alias] = GetTableColumns($database, $table);
 		}
 	} else {
-		$fields[$tables] = GetTableColumns($tables);
+		$fields[$tables] = GetTableColumns($database, $tables);
 	}
 	if (isset($filter["field"])) {
-		$ret = _handleCriteria($filter, $fields);
+		$ret = _handleCriteria($database, $filter, $fields);
 	} elseif (isset($filter["join"])) {
-		$ret = _handleJoin($filter, $fields);
+		$ret = _handleJoin($database, $filter, $fields);
 	} elseif (is_array(current($filter))) {
-		$ret = _handleArray(current($filter), $fields);
+		$ret = _handleArray($database, current($filter), $fields);
 	}
 	if (strlen(trim(preg_replace('/[\(\)]/', '', $ret))) > 0) {
 		$ret = "WHERE " . $ret;
@@ -888,18 +888,18 @@ function CreateFilter($tables, $filter)
 	return $ret;
 }
 
-function _handleArray($filter, $fields)
+function _handleArray($database, $filter, $fields)
 {
 	if (isset($filter["join"])) {
-		return _handleJoin($filter, $fields);
+		return _handleJoin($database, $filter, $fields);
 	} elseif (isset($filter["field"])) {
-		return _handleCriteria($filter, $fields);
+		return _handleCriteria($database, $filter, $fields);
 	} elseif (is_array(current($filter))) {
-		return _handleArray(current($filter), $fields);
+		return _handleArray($database, current($filter), $fields);
 	}
 }
 
-function _handleJoin($filter, $fields)
+function _handleJoin($database, $filter, $fields)
 {
 	if (!(isset($filter['join']) && isset($filter['criteria']) && is_array($filter['criteria']))) {
 		die("Invalid join " . print_r($filter, true));
@@ -911,28 +911,28 @@ function _handleJoin($filter, $fields)
 	$criteria = array();
 	foreach ($filter['criteria'] as $next) {
 		if (isset($next["join"])) {
-			$criteria[] = _handleJoin($next, $fields);
+			$criteria[] = _handleJoin($database, $next, $fields);
 		} elseif (isset($next["field"])) {
-			$criteria[] = _handleCriteria($next, $fields);
+			$criteria[] = _handleCriteria($database, $next, $fields);
 		} elseif (is_array(current($next))) {
-			$criteria[] = _handleArray(current($next), $fields);
+			$criteria[] = _handleArray($database, current($next), $fields);
 		}
 	}
 	return "(" . implode(") " . $operator . " (", $criteria) . ")";
 }
 
-function _handleCriteria($filter, $fields)
+function _handleCriteria($database, $filter, $fields)
 {
 	if (!(isset($filter['field']) && isset($filter['operator']) && isset($filter['value']))) {
 		die("Invalid criteria " . print_r($filter, true));
 	}
 	$field = $filter['field'];
 	if (is_array($field) && isset($field['function'])) {
-		$fieldAndType = _handleFunction($field, $fields);
+		$fieldAndType = _handleFunction($database, $field, $fields);
 		$field = current($fieldAndType);
 		$type = next($fieldAndType);
 	} elseif (is_array($field) && isset($field['constanttype'])) {
-		$fieldAndType = _handleConstant($field);
+		$fieldAndType = _handleConstant($database, $field);
 		$field = current($fieldAndType);
 		$type = next($fieldAndType);
 	} else {
@@ -953,28 +953,28 @@ function _handleCriteria($filter, $fields)
 	} else {
 		$start = $field . " " . $operator . " ";
 	}
-	$query = $start . _handleLiteral($operator, $type, $filter['value']);
+	$query = $start . _handleLiteral($database, $operator, $type, $filter['value']);
 	return $query;
 }
 
-function _handleConstant($field)
+function _handleConstant($database, $field)
 {
 	if (!(isset($field['constanttype']) && isset($field['value']))) {
 		die("Invalid constant " . print_r($field, true));
 	}
 	$type = $field['constanttype'];
-	$value = _handleLiteral("=", $type, $field['value']);
+	$value = _handleLiteral($database, "=", $type, $field['value']);
 	return array($value, $type);
 }
 
-function _handleLiteral($operator, $type, $value)
+function _handleLiteral($database, $operator, $type, $value)
 {
 	if (is_array($value) && isset($value['variable'])) {
 		$value = _handleVariable($value);
 	}
 	if ($operator == "IN") {
 		if ($type == "int") {
-			return "(" . mysql_real_escape_string($value) . ")";
+			return "(" . $database->RealEscapeString($value) . ")";
 		} else {
 			// split a string at unescaped comma
 			// where backslash is the escape character
@@ -985,7 +985,7 @@ function _handleLiteral($operator, $type, $value)
 			// $aPieces now contains the exploded string
 			// and unescaping can be safely done on each piece
 			foreach ($aPieces as $idx => $piece) {
-				$aPieces[$idx] = mysql_real_escape_string(preg_replace("/\\\\(.)/s", "$1", $piece));
+				$aPieces[$idx] = $database->RealEscapeString(preg_replace("/\\\\(.)/s", "$1", $piece));
 			}
 			return "('" . implode("', '", $aPieces) . "')";
 		}
@@ -996,14 +996,14 @@ function _handleLiteral($operator, $type, $value)
 			die("Invalid SUBSELECT '" . print_r($value, true) . "'");
 		}
 		$table = $value['table'];
-		$columns = GetTableColumns("uo_" . $table);
+		$columns = GetTableColumns($database, "uo_" . $table);
 		if (count($columns) < 1) {
 			die("Invalid SUBSELECT table '" . $table . "'");
 		}
 		$field = $value['field'];
 		$fields = array($table => $columns);
 		if (is_array($field)) {
-			$fieldAndType = _handleFunction($field, $fields);
+			$fieldAndType = _handleFunction($database, $field, $fields);
 			$field = current($fieldAndType);
 			$type = next($fieldAndType);
 		} else {
@@ -1011,12 +1011,12 @@ function _handleLiteral($operator, $type, $value)
 			$field = current($fieldAndType);
 			$type = next($fieldAndType);
 		}
-		$join = _handleJoin($value, $fields);
+		$join = _handleJoin($database, $value, $fields);
 		return "(SELECT " . $field . " FROM uo_" . $table . " " . $table . " WHERE " . $join . ")";
 	} else if ($type == "int") {
 		return intval($value);
 	} else {
-		return "'" . mysql_real_escape_string($value) . "'";
+		return "'" . $database->RealEscapeString($value) . "'";
 	}
 }
 
@@ -1043,7 +1043,7 @@ function _handleFieldName($field, $fields)
 	return array($field, $type);
 }
 
-function _handleFunction($filter, $fields)
+function _handleFunction($database, $filter, $fields)
 {
 	if (!(isset($filter['function']) && isset($filter['args'])
 		&& is_array($filter['args']) && isset($filter['returntype']))) {
@@ -1063,7 +1063,7 @@ function _handleFunction($filter, $fields)
 			$fieldAndType = _handleFieldName($nextarg['field'], $fields);
 			$finalArgs[] = current($fieldAndType);
 		} elseif (isset($nextarg['value']) && isset($nextarg['type'])) {
-			$finalArgs[] = _handleLiteral("=", $nextarg['type'], $nextarg['value']);
+			$finalArgs[] = _handleLiteral($database, "=", $nextarg['type'], $nextarg['value']);
 		} else {
 			die("Invalid function argument " . $nextarg);
 		}
@@ -1121,7 +1121,7 @@ function _handleVariable($value)
 }
 
 
-function GetTableColumns($table)
+function GetTableColumns($database, $table)
 {
 	global $include_prefix;
 	if (is_file($include_prefix . "lib/table-definition-cache/tables_" . DB_VERSION . ".php")) {
@@ -1132,14 +1132,14 @@ function GetTableColumns($table)
 		}
 	}
 	$ret = array();
-	$result = DBQuery(sprintf(
+	$result = $database->DBQuery(sprintf(
 		"SELECT * FROM %s WHERE 1=0",
-		mysql_real_escape_string($table)
+		$database->RealEscapeString($table)
 	));
-	$fields = mysql_num_fields($result);
+	$fields = $result->field_count;
 	for ($i = 0; $i < $fields; $i++) {
-		$name  = strtolower(mysql_field_name($result, $i));
-		$ret[$name] = mysql_field_type($result, $i);
+		$name  = strtolower($database->fieldname($result, $i));
+		$ret[$name] = $database->fieldtype($result, $i);
 	}
 	return $ret;
 }
@@ -1305,15 +1305,15 @@ function someHTML($string)
  * @param string $id The id of the season, series, or pool.
  * @return string the comment or an empty string if no comment exists.
  */
-function CommentRaw($type, $id)
+function CommentRaw($database, $type, $id)
 {
 	$query = sprintf(
 		"SELECT comment FROM uo_comment
 		WHERE type='%d' AND id='%s'",
 		(int) $type,
-		mysql_real_escape_string($id)
+		$database->RealEscapeString($id)
 	);
-	$comment = DBQueryToValue($query);
+	$comment = $database->DBQueryToValue($query);
 	if ($comment != -1)
 		return $comment;
 	else
@@ -1323,13 +1323,14 @@ function CommentRaw($type, $id)
 /**
  * Returns a comment field, with most of the html-tags and entities encoded.
  * 
+ * @param Database $database a database instance
  * @param int $type The type of entity. 1: season, 2: series, 3: pool.
  * @param string $id The id of the season, series, or pool.
  * @return string the comment or an empty string if no comment exists.
  */
-function CommentHTML($type, $id)
+function CommentHTML($database, $type, $id)
 {
-	$comment = CommentRaw($type, $id);
+	$comment = CommentRaw($database, $type, $id);
 	if ($comment != -1)
 		return "<div class='comment'>" . someHTML($comment) . "</div>\n";
 	else
@@ -1339,18 +1340,19 @@ function CommentHTML($type, $id)
 /**
  * Sets or deletes a comment.
  *
+ * @param Database $database a database instance
  * @param int $type The type of entity. 1: season, 2: series, 3: pool.
  * @param string $id The id of the season, series, or pool.
  * @param string $comment the new value or an empty string or null if the comment should be deleted.
  * @return true if the query was successfull, false otherwise 
  */
-function SetComment($type, $id, $comment)
+function SetComment($database, $type, $id, $comment)
 {
 	if (empty($comment))
 		$query = sprintf(
 			"DELETE FROM uo_comment WHERE type='%d' AND id='%s'",
 			(int) $type,
-			mysql_real_escape_string($id)
+			$database->RealEscapeString($id)
 		);
 	else {
 		$query = sprintf(
@@ -1358,12 +1360,12 @@ function SetComment($type, $id, $comment)
   				(type, id, comment) 
   				VALUES	(%d,'%s','%s') ON DUPLICATE KEY UPDATE comment='%s'",
 			(int) $type,
-			mysql_real_escape_string($id),
-			mysql_real_escape_string($comment),
-			mysql_real_escape_string($comment)
+			$database->RealEscapeString($id),
+			$database->RealEscapeString($comment),
+			$database->RealEscapeString($comment)
 		);
 	}
-	return DBQuery($query);
+	return $database->DBQuery($query);
 }
 
 /**

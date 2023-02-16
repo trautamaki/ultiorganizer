@@ -24,7 +24,7 @@ if (iget("feed")) {
 if (iget("id1")) {
   $id1 = iget("id1");
 } else {
-  $id1 = CurrentSeason();
+  $id1 = CurrentSeason($database);
 }
 
 $id2 = iget("id2");
@@ -43,27 +43,27 @@ switch ($feedtype) {
 
     //series
     if (!empty($id2)) {
-      $feed->setTitle(_("Ultimate results") . ": " . SeasonName($id1) . " " . SeriesName($id2));
+      $feed->setTitle(_("Ultimate results") . ": " . SeasonName($database, $id1) . " " . SeriesName($database, $id2));
       $feed->setLink($baseurl . "/?view=played");
-      $feed->setDescription(SeasonName($id1) . " " . SeriesName($id2));
-      $games = TimetableGames($id2, "series", "past", "timedesc");
+      $feed->setDescription(SeasonName($database, $id1) . " " . SeriesName($database, $id2));
+      $games = TimetableGames($database, $id2, "series", "past", "timedesc");
       //season
     } else {
-      $feed->setTitle(_("Ultimate results") . ": " . SeasonName($id1));
+      $feed->setTitle(_("Ultimate results") . ": " . SeasonName($database, $id1));
       $feed->setLink($baseurl . "/?view=played");
-      $feed->setDescription(SeasonName($id1));
-      $games = TimetableGames($id1, "season", "past", "timedesc");
+      $feed->setDescription(SeasonName($database, $id1));
+      $games = TimetableGames($database, $id1, "season", "past", "timedesc");
     }
     $i = 0;
 
-    while (($game = mysql_fetch_assoc($games)) && $i < $max_items) {
+    while (($game = $database->FetchAssoc($games)) && $i < $max_items) {
 
       if (GameHasStarted($game)) {
         $newItem = $feed->createNewItem();
         $newItem->setGuid($game['game_id']);
-        $title = TeamName($game['hometeam']);
+        $title = TeamName($database, $game['hometeam']);
         $title .= " - ";
-        $title .= TeamName($game['visitorteam']);
+        $title .= TeamName($database, $game['visitorteam']);
         $title .= " ";
         $title .= intval($game['homescore']);
         $title .= " - ";
@@ -88,10 +88,10 @@ switch ($feedtype) {
     //$cutpos = strrpos($baseurl, "/");
     //$path = substr($baseurl,0,$cutpos); //remove ext
 
-    $game = GameInfo($id1);
-    $goals = GameGoals($id1);
-    $gameevents = GameEvents($id1);
-    $mediaevents = GameMediaEvents($id1);
+    $game = GameInfo($database, $id1);
+    $goals = GameGoals($database, $id1);
+    $gameevents = GameEvents($database, $id1);
+    $mediaevents = GameMediaEvents($database, $id1);
 
     $feed->setTitle(_("Ultimate game") . ": " . $game['hometeamname'] . " - " . $game['visitorteamname']);
     $feed->setLink($baseurl . "/?view=gameplay&game=$id1");
@@ -100,7 +100,7 @@ switch ($feedtype) {
     $prevgoal = 0;
     $items = array();
 
-    while ($goal = mysql_fetch_assoc($goals)) {
+    while ($goal = $database->FetchAssoc($goals)) {
       $newItem = $feed->createNewItem();
       $newItem->setGuid($goal['time']);
 
@@ -201,16 +201,16 @@ switch ($feedtype) {
     $feed->setTitle(_("Ultimate results"));
     $feed->setLink($baseurl . "/?view=played");
     $feed->setDescription(_("Ultimate results"));
-    $games = GameAll(20);
+    $games = GameAll($database, 20);
 
-    while (($game = mysql_fetch_assoc($games))) {
+    while (($game = $database->FetchAssoc($games))) {
 
       if (GameHasStarted($game)) {
         $newItem = $feed->createNewItem();
         $newItem->setGuid($game['game_id']);
-        $title = TeamName($game['hometeam']);
+        $title = TeamName($database, $game['hometeam']);
         $title .= " - ";
-        $title .= TeamName($game['visitorteam']);
+        $title .= TeamName($database, $game['visitorteam']);
         $title .= " ";
         $title .= intval($game['homescore']);
         $title .= " - ";

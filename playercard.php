@@ -7,23 +7,25 @@ include_once 'lib/player.functions.php';
 include_once 'lib/game.functions.php';
 include_once 'lib/statistical.functions.php';
 
+$database = new Database();
+
 $html = "";
 if (iget("profile")) {
-  $playerId = PlayerLatestId(intval(iget("profile")));
+  $playerId = PlayerLatestId($database, intval(iget("profile")));
 } else {
   $playerId = intval(iget("player"));
 }
 
 $profile = "";
 
-$player = PlayerInfo($playerId);
+$player = PlayerInfo($database, $playerId);
 if (!empty($player['profile_id'])) {
-  $profile = PlayerProfile($player['profile_id']);
+  $profile = PlayerProfile($database, $player['profile_id']);
 } else {
-  $profile = PlayerProfile($playerId);
+  $profile = PlayerProfile($database, $playerId);
 }
 
-$curseason = CurrentSeason();
+$curseason = CurrentSeason($database);
 
 if ($player['num']) {
   $title = "#" . $profile['num'] . " " . utf8entities($profile['firstname'] . " " . $profile['lastname']);
@@ -100,7 +102,7 @@ if ($profile) {
   $html .= "</table>";
 }
 
-$urls = GetUrlList("player", $player['profile_id']);
+$urls = GetUrlList($database, "player", $player['profile_id']);
 if (count($urls)) {
   $html .= "<table style='width:600px'>";
   $html .= "<tr><td colspan='2' class='profileheader' style='vertical-align:top'>" . _("Player pages") . ":</td></tr>";
@@ -119,7 +121,7 @@ if (count($urls)) {
   $html .= "</table>";
 }
 
-$urls = GetMediaUrlList("player", $player['profile_id']);
+$urls = GetMediaUrlList($database, "player", $player['profile_id']);
 if (count($urls)) {
   $html .= "<table style='width:100%'>";
   $html .= "<tr><td colspan='2' class='profileheader' style='vertical-align:top'>" . _("Photos and Videos") . ":</td></tr>";
@@ -141,17 +143,17 @@ if (count($urls)) {
   $html .= "</table>";
 }
 
-$games = PlayerSeasonPlayedGames($playerId, $curseason);
+$games = PlayerSeasonPlayedGames($database, $playerId, $curseason);
 if ($games) {
-  $goals = PlayerSeasonGoals($playerId, $curseason);
-  $passes = PlayerSeasonPasses($playerId, $curseason);
-  $callahans = PlayerSeasonCallahanGoals($playerId, $curseason);
-  $wins = PlayerSeasonWins($playerId, $player['team'], $curseason);
+  $goals = PlayerSeasonGoals($database, $playerId, $curseason);
+  $passes = PlayerSeasonPasses($database, $playerId, $curseason);
+  $callahans = PlayerSeasonCallahanGoals($database, $playerId, $curseason);
+  $wins = PlayerSeasonWins($database, $playerId, $player['team'], $curseason);
   if (ShowDefenseStats()) {
-    $defenses = PlayerSeasonDefenses($playerId, $curseason);
+    $defenses = PlayerSeasonDefenses($database, $playerId, $curseason);
   }
 
-  $html .= "<h2>" . U_(CurrentSeasonName()) . ":</h2>\n";
+  $html .= "<h2>" . U_(CurrentSeasonName($database)) . ":</h2>\n";
   $html .= "<table border='1' width='100%'><tr>";
   $html .= "<th>" . _("Games") . "</th><th>" . _("Passes") . "</th><th>" . _("Goals") . "</th><th>" . _("Tot.") . "</th>";
   if (ShowDefenseStats()) {
@@ -165,12 +167,12 @@ if ($games) {
   $html .= "<th>" . _("Wins") . "</th><th>" . _("Win-%") . "</th></tr>\n";
 
   $total = $passes + $goals;
-  $dblPassAvg = SafeDivide($passes, $games);
-  $dblGoalAvg = SafeDivide($goals, $games);
-  $dblScoreAvg = SafeDivide($total, $games);
-  $dblWinsAvg = SafeDivide($wins, $games);
+  $dblPassAvg = SafeDivide($database, $passes, $games);
+  $dblGoalAvg = SafeDivide($database, $goals, $games);
+  $dblScoreAvg = SafeDivide($database, $total, $games);
+  $dblWinsAvg = SafeDivide($database, $wins, $games);
   if (ShowDefenseStats()) {
-    $dblDefenAvg = SafeDivide($defenses, $games);
+    $dblDefenAvg = SafeDivide($database, $defenses, $games);
   }
   $html .= "<tr>
 	<td>" . $games . "</td>
@@ -199,7 +201,7 @@ if (ShowDefenseStats()) {
     $prevseason = "";
     $seasoncounter = 0;
 
-    $playedSeasons = PlayerStatistics($player['profile_id']);
+    $playedSeasons = PlayerStatistics($database, $player['profile_id']);
 
     if (count($playedSeasons)) {
       $html .= "<h2>" . _("History") . ":</h2>\n";
@@ -243,11 +245,11 @@ if (ShowDefenseStats()) {
 
         $total = $pp['goals'] + $pp['passes'];
 
-        $dblPassAvg = SafeDivide($pp['passes'], $pp['games']);
-        $dblGoalAvg = SafeDivide($pp['goals'], $pp['games']);
-        $dblScoreAvg = SafeDivide($total, $pp['games']);
-        $dblWinAvg = SafeDivide($pp['wins'], $pp['games']);
-        $dblDefAvg = SafeDivide($pp['defenses'], $pp['games']);
+        $dblPassAvg = SafeDivide($database, $pp['passes'], $pp['games']);
+        $dblGoalAvg = SafeDivide($database, $pp['goals'], $pp['games']);
+        $dblScoreAvg = SafeDivide($database, $total, $pp['games']);
+        $dblWinAvg = SafeDivide($database, $pp['wins'], $pp['games']);
+        $dblDefAvg = SafeDivide($database, $pp['defenses'], $pp['games']);
 
         if ($seasoncounter % 2) {
           $html_tmp .= "<tr class='highlight'>";
@@ -320,11 +322,11 @@ if (ShowDefenseStats()) {
       $total_defenses += $defenses;
 
       $total = $passes + $goals;
-      $dblPassAvg = SafeDivide($passes, $games);
-      $dblGoalAvg = SafeDivide($goals, $games);
-      $dblScoreAvg = SafeDivide($total, $games);
-      $dblWinsAvg = SafeDivide($wins, $games);
-      $dblDefsAvg = SafeDivide($defenses, $games);
+      $dblPassAvg = SafeDivide($database, $passes, $games);
+      $dblGoalAvg = SafeDivide($database, $goals, $games);
+      $dblScoreAvg = SafeDivide($database, $total, $games);
+      $dblWinsAvg = SafeDivide($database, $wins, $games);
+      $dblDefsAvg = SafeDivide($database, $defenses, $games);
 
       $html .= "<tr>
 		<td>" . U_($season_type) . "</td>	
@@ -344,11 +346,11 @@ if (ShowDefenseStats()) {
     }
 
     $total = $total_passes + $total_goals;
-    $dblPassAvg = SafeDivide($total_passes, $total_games);
-    $dblGoalAvg = SafeDivide($total_goals, $total_games);
-    $dblScoreAvg = SafeDivide($total, $total_games);
-    $dblWinsAvg = SafeDivide($total_wins, $total_games);
-    $dblDefsAvg = SafeDivide($total_defenses, $total_games);
+    $dblPassAvg = SafeDivide($database, $total_passes, $total_games);
+    $dblGoalAvg = SafeDivide($database, $total_goals, $total_games);
+    $dblScoreAvg = SafeDivide($database, $total, $total_games);
+    $dblWinsAvg = SafeDivide($database, $total_wins, $total_games);
+    $dblDefsAvg = SafeDivide($database, $total_defenses, $total_games);
 
     $html .= "<tr class='highlight'>
 		<td colspan='2'>" . _("Total") . "</td>
@@ -374,7 +376,7 @@ if (ShowDefenseStats()) {
     $prevseason = "";
     $seasoncounter = 0;
 
-    $playedSeasons = PlayerStatistics($player['profile_id']);
+    $playedSeasons = PlayerStatistics($database, $player['profile_id']);
 
     if (count($playedSeasons)) {
       $html .= "<h2>" . _("History") . ":</h2>\n";
@@ -413,10 +415,10 @@ if (ShowDefenseStats()) {
 
         $total = $pp['goals'] + $pp['passes'];
 
-        $dblPassAvg = SafeDivide($pp['passes'], $pp['games']);
-        $dblGoalAvg = SafeDivide($pp['goals'], $pp['games']);
-        $dblScoreAvg = SafeDivide($total, $pp['games']);
-        $dblWinAvg = SafeDivide($pp['wins'], $pp['games']);
+        $dblPassAvg = SafeDivide($database, $pp['passes'], $pp['games']);
+        $dblGoalAvg = SafeDivide($database, $pp['goals'], $pp['games']);
+        $dblScoreAvg = SafeDivide($database, $total, $pp['games']);
+        $dblWinAvg = SafeDivide($database, $pp['wins'], $pp['games']);
 
         if ($seasoncounter % 2) {
           $html_tmp .= "<tr class='highlight'>";
@@ -481,10 +483,10 @@ if (ShowDefenseStats()) {
       $total_wins += $wins;
 
       $total = $passes + $goals;
-      $dblPassAvg = SafeDivide($passes, $games);
-      $dblGoalAvg = SafeDivide($goals, $games);
-      $dblScoreAvg = SafeDivide($total, $games);
-      $dblWinsAvg = SafeDivide($wins, $games);
+      $dblPassAvg = SafeDivide($database, $passes, $games);
+      $dblGoalAvg = SafeDivide($database, $goals, $games);
+      $dblScoreAvg = SafeDivide($database, $total, $games);
+      $dblWinsAvg = SafeDivide($database, $wins, $games);
 
       $html .= "<tr>
 		<td>" . U_($season_type) . "</td>	
@@ -502,10 +504,10 @@ if (ShowDefenseStats()) {
     }
 
     $total = $total_passes + $total_goals;
-    $dblPassAvg = SafeDivide($total_passes, $total_games);
-    $dblGoalAvg = SafeDivide($total_goals, $total_games);
-    $dblScoreAvg = SafeDivide($total, $total_games);
-    $dblWinsAvg = SafeDivide($total_wins, $total_games);
+    $dblPassAvg = SafeDivide($database, $total_passes, $total_games);
+    $dblGoalAvg = SafeDivide($database, $total_goals, $total_games);
+    $dblScoreAvg = SafeDivide($database, $total, $total_games);
+    $dblWinsAvg = SafeDivide($database, $total_wins, $total_games);
 
     $html .= "<tr class='highlight'>
 		<td colspan='2'>" . _("Total") . "</td>
@@ -530,20 +532,20 @@ $html .= "<p></p>\n";
 
 //Current season stats
 
-$games = PlayerSeasonGames($playerId, $curseason);
+$games = PlayerSeasonGames($database, $playerId, $curseason);
 
 if (count($games)) {
-  $html .= "<h2>" . utf8entities(CurrentSeasonName()) . " " . _("game events") . ":</h2>\n";
+  $html .= "<h2>" . utf8entities(CurrentSeasonName($database)) . " " . _("game events") . ":</h2>\n";
 
   foreach ($games as $game) {
 
-    $result = GameResult($game['game_id']);
+    $result = GameResult($database, $game['game_id']);
 
     $html .= "<table border='1' style='width:75%'>";
     $html .= "<tr><th colspan='4'><b>" . ShortDate($result['time']) . "&nbsp;&nbsp;" . utf8entities($result['hometeamname']) . " - " . utf8entities($result['visitorteamname']) . "&nbsp;
 			&nbsp;" . $result['homescore'] . " - " . $result['visitorscore'] . "</b></th></tr>\n";
 
-    $events = PlayerGameEvents($playerId, $game['game_id']);
+    $events = PlayerGameEvents($database, $playerId, $game['game_id']);
 
     foreach ($events as $event) {
       $html .= "<tr><td style='width:10%'>" . SecToMin($event['time']) . "</td><td style='width:10%'>" . $event['homescore'] . " - " . $event['visitorscore'] . "</td>";
@@ -554,7 +556,7 @@ if (count($games)) {
         if (intval($event['iscallahan'])) {
           $html .= "<td class='callahan' style='width:40%'>" . _("Callahan-goal") . "&nbsp;</td>";
         } else {
-          $p = PlayerInfo($event['assist']);
+          $p = PlayerInfo($database, $event['assist']);
           if ($p) {
             $html .= "<td style='width:40%'>" . utf8entities($p['firstname'] . " " . $p['lastname']) . "</td>";
           } else {
@@ -566,7 +568,7 @@ if (count($games)) {
       if ($event['scorer'] == $playerId) {
         $html .= "<td class='highlight' style='width:40%'>" . utf8entities($player['firstname'] . " " . $player['lastname']) . "</td>\n";
       } else {
-        $p = PlayerInfo($event['scorer']);
+        $p = PlayerInfo($database, $event['scorer']);
         if ($p) {
           $html .= "<td style='width:40%'>" . utf8entities($p['firstname'] . " " . $p['lastname']) . "</td>";
         } else {
@@ -583,4 +585,4 @@ if ($_SESSION['uid'] != 'anonymous') {
   $html .= "<div style='float:left;'><hr/><a href='?view=user/addmedialink&amp;player=" . $player['profile_id'] . "'>" . _("Add media") . "</a></div>";
 }
 
-showPage($title, $html);
+showPage($database, $title, $html);

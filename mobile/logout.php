@@ -1,3 +1,3 @@
 <?php
-ClearUserSessionData();
+ClearUserSessionData($database);
 header("location:?view=mobile/index");

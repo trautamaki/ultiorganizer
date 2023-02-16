@@ -9,17 +9,19 @@ include_once 'lib/pool.functions.php';
 
 $LAYOUT_ID = SEASONSTANDINGS;
 
-$season = $_GET["season"];
-$series_id = CurrentSeries($season);
+$database = new Database();
 
-$title = utf8entities(SeasonName($season)) . ": " . _("Pool standings");
+$season = $_GET["season"];
+$series_id = CurrentSeries($database, $season);
+
+$title = utf8entities(SeasonName($database, $season)) . ": " . _("Pool standings");
 
 if ($series_id <= 0) {
-  showPage($title, "<p>" . _("No divisions defined. Define at least one division first.") . "</p>");
+  showPage($database, $title, "<p>" . _("No divisions defined. Define at least one division first.") . "</p>");
   die;
 }
 
-$series = SeasonSeries($season);
+$series = SeasonSeries($database, $season);
 $html = "";
 
 $_SESSION['hide_played_pools'] = !empty($_SESSION['hide_played_pools']) ? $_SESSION['hide_played_pools'] : 0;
@@ -36,17 +38,17 @@ if (!empty($_GET["v"])) {
 if (!empty($_POST['remove_x'])) {
   $pool = $_POST['PoolId'];
   $team = $_POST['TeamDeleteId'];
-  if (CanDeleteTeamFromPool($pool, $team)) {
-    PoolDeleteTeam($pool, $team);
-    $move = PoolGetMoveByTeam($pool, $team);
+  if (CanDeleteTeamFromPool($database, $pool, $team)) {
+    PoolDeleteTeam($database, $pool, $team);
+    $move = PoolGetMoveByTeam($database, $pool, $team);
     if (count($move)) {
-      PoolUndoMove($move[0]['frompool'], $move[0]['fromplacing'], $pool);
+      PoolUndoMove($database, $move[0]['frompool'], $move[0]['fromplacing'], $pool);
     }
   }
 }
 
 if (!empty($_POST['recalculate'])) {
-  ResolvePoolStandings($_POST['PoolId']);
+  ResolvePoolStandings($database, $_POST['PoolId']);
 }
 
 if (!empty($_POST['editType'])) {
@@ -58,9 +60,9 @@ if (!empty($_POST['editType'])) {
 if (!empty($_POST['undoFromPlacing'])) {
   $place = -1;
   if ($_POST['undoFromPlacing'] == "from") {
-    $moves = PoolMovingsFromPool($_POST['PoolId']);
+    $moves = PoolMovingsFromPool($database, $_POST['PoolId']);
   } else if ($_POST['undoFromPlacing'] == "to") {
-    $moves = PoolMovingsToPool($_POST['PoolId']);
+    $moves = PoolMovingsToPool($database, $_POST['PoolId']);
   } else {
     $place = $_POST['undoFromPlacing'];
   }
@@ -68,25 +70,25 @@ if (!empty($_POST['undoFromPlacing'])) {
   if ($place == -1) {
     foreach ($moves as $row) {
       if ($row['ismoved']) {
-        $team = PoolTeamFromStandings($row['frompool'], $row['fromplacing']);
-        if (CanDeleteTeamFromPool($row['topool'], $team['team_id'])) {
-          PoolUndoMove($row['frompool'], $row['fromplacing'], $row['topool']);
+        $team = PoolTeamFromStandings($database, $row['frompool'], $row['fromplacing']);
+        if (CanDeleteTeamFromPool($database, $row['topool'], $team['team_id'])) {
+          PoolUndoMove($database, $row['frompool'], $row['fromplacing'], $row['topool']);
         }
       }
     }
   } else {
-    PoolUndoMove($_POST['PoolId'], $_POST['undoFromPlacing'], $_POST['undoToPool']);
+    PoolUndoMove($database, $_POST['PoolId'], $_POST['undoFromPlacing'], $_POST['undoToPool']);
   }
 }
 
 if (!empty($_POST['confirmMoves'])) {
-  PoolConfirmMoves($_POST['PoolId']);
+  PoolConfirmMoves($database, $_POST['PoolId']);
 }
 
 if (!empty($_POST['setVisible'])) {
-  SetPoolVisibility($_POST['PoolId'], true);
+  SetPoolVisibility($database, $_POST['PoolId'], true);
 } else if (!empty($_POST['setInvisible'])) {
-  SetPoolVisibility($_POST['PoolId'], false);
+  SetPoolVisibility($database, $_POST['PoolId'], false);
 }
 
 //common page
@@ -160,7 +162,7 @@ pageTopHeadOpen($title);
 </script>
 <?php
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 foreach ($series as $row) {
@@ -178,8 +180,8 @@ if ($_SESSION['hide_played_pools']) {
 $html .= "</p>";
 
 $html .= "<form method='post' id='theForm' action='?view=admin/seasonstandings&amp;season=$season'>";
-$seasoninfo = SeasonInfo($season);
-$pools = SeriesPools($series_id);
+$seasoninfo = SeasonInfo($database, $season);
+$pools = SeriesPools($database, $series_id);
 if (!count($pools)) {
   $html .= "<p>" . _("Add pools first") . "</p>\n";
 }
@@ -190,8 +192,8 @@ $firstTask = false;
 $missingresults = "";
 foreach ($pools as $spool) {
   $poolId = $spool['pool_id'];
-  $poolinfo = PoolInfo($poolId);
-  if (!$poolinfo['played'] && PoolCountGames($poolId) > 0) {
+  $poolinfo = PoolInfo($database, $poolId);
+  if (!$poolinfo['played'] && PoolCountGames($database, $poolId) > 0) {
     if ($missingresults)
       $missingresults .= ", ";
     else
@@ -199,14 +201,14 @@ foreach ($pools as $spool) {
     $missingresults .= poolLink($poolId, $spool['name']);
   }
 
-  if (PoolIsMoveFromPoolsPlayed($poolId) && !PoolIsAllMoved($poolId)) {
+  if (PoolIsMoveFromPoolsPlayed($database, $poolId) && !PoolIsAllMoved($database, $poolId)) {
     if (!$firstTask) {
       $html .= "<ul>";
       $firstTask = true;
     }
 
     $deplist = "";
-    $dependees = PoolDependsOn($poolId);
+    $dependees = PoolDependsOn($database, $poolId);
     foreach ($dependees as $dep) {
       if ($deplist) {
         $deplist .= ", ";
@@ -216,7 +218,7 @@ foreach ($pools as $spool) {
       $deplist .=  poolLink($dep['frompool'], $dep['name']);
     }
 
-    $confirmtext = poolLink($poolId, sprintf(_("Confirm moves to pool %s."), PoolName($poolId)));
+    $confirmtext = poolLink($poolId, sprintf(_("Confirm moves to pool %s."), PoolName($database, $poolId)));
 
     $html .= "<li>" . sprintf(_("Check standings of %s. Then: %s"), $deplist, $confirmtext) . "</li>\n";
   }
@@ -234,13 +236,13 @@ $poolNum = 0;
 foreach ($pools as $spool) {
   $poolId = $spool['pool_id'];
   $start = $teamNum;
-  $poolinfo = PoolInfo($poolId);
+  $poolinfo = PoolInfo($database, $poolId);
 
   if ($_SESSION['hide_played_pools'] && $poolinfo['played']) {
     continue;
   }
 
-  $standings = PoolTeams($poolId, "rank");
+  $standings = PoolTeams($database, $poolId, "rank");
 
   if ($poolNum > 0)
     $html .= "<div class='right pagemenu_container'><a href='#Tasks'>" . _("Go to top") . "</a></div>\n";
@@ -272,7 +274,7 @@ foreach ($pools as $spool) {
       $teamNum++;
     }
     $html .= "<tr><th></th><th>";
-    if (count(PoolTeams($poolId))) {
+    if (count(PoolTeams($database, $poolId))) {
       $html .= "<input class='button' type='submit' name='recalculate' value='" . _("Reset") . "' onclick='setPoolId(" . $poolId . ");'/>";
     }
     $html .= "</th>";
@@ -298,8 +300,8 @@ foreach ($pools as $spool) {
   }
   $html .= " <a href='?view=admin/seasongames&season=" . $season . "&series=" . $series_id . "&pool=" . $poolId . "'>" . _("Games") . "</a></p>\n";
 
-  $fromMoves = PoolMovingsFromPool($poolId);
-  $toMoves = PoolMovingsToPool($poolId);
+  $fromMoves = PoolMovingsFromPool($database, $poolId);
+  $toMoves = PoolMovingsToPool($database, $poolId);
 
   $html .= "<table style='width:100%'><tr><td style='width:50%; vertical-align:top;'>\n";
 
@@ -356,7 +358,7 @@ function swissHeading($poolId, $poolinfo, $editbuttons)
 function swissRow($poolId, $poolinfo, $row, $teamNum)
 {
   $html = "";
-  $vp = TeamVictoryPointsByPool($poolId, $row['team_id']);
+  $vp = TeamVictoryPointsByPool($database, $poolId, $row['team_id']);
 
   $html .= "<tr>";
   $html .= "<td>" . editField("seed", $teamNum, $row['team_id'], intval($row['Rank'])) . "</td>";
@@ -368,7 +370,7 @@ function swissRow($poolId, $poolinfo, $row, $teamNum)
   $html .= "<td class='center'>" . intval($vp['oppvp']) . "</td>";
   $html .= "<td class='center'>" . intval($vp['margin']) . "</td>";
   $html .= "<td class='center'>" . intval($vp['score']) . "</td>";
-  if (CanDeleteTeamFromPool($poolId, $row['team_id'])) {
+  if (CanDeleteTeamFromPool($database, $poolId, $row['team_id'])) {
     $html .= "<td class='center' style='width:20px;'>
               <input class='deletebutton' type='image' src='images/remove.png' alt='X' title='" . _("delete team from pool") . "' name='remove' 
                value='" . _("X") . "' onclick=\"setDeleteId(" . $poolId . "," . $row['team_id'] . ");\"/></td>";
@@ -400,8 +402,8 @@ function regularHeading($poolId, $poolinfo, $editbuttons)
 function regularRow($poolId, $poolinfo, $row, $teamNum)
 {
   $html = "";
-  $stats = TeamStatsByPool($poolId, $row['team_id']);
-  $points = TeamPointsByPool($poolId, $row['team_id']);
+  $stats = TeamStatsByPool($database, $poolId, $row['team_id']);
+  $points = TeamPointsByPool($database, $poolId, $row['team_id']);
 
   $html .= "<tr>";
   $html .= "<td>" . editField("seed", $teamNum, $row['team_id'], intval($row['Rank'])) . "</td>";
@@ -416,7 +418,7 @@ function regularRow($poolId, $poolinfo, $row, $teamNum)
   $html .= "<td class='center'>" . intval($points['scores']) . "</td>";
   $html .= "<td class='center'>" . intval($points['against']) . "</td>";
   $html .= "<td class='center'>" . ((intval($points['scores']) - intval($points['against']))) . "</td>";
-  if (CanDeleteTeamFromPool($poolId, $row['team_id'])) {
+  if (CanDeleteTeamFromPool($database, $poolId, $row['team_id'])) {
     $html .= "<td class='center' style='width:20px;'>
               <input class='deletebutton' type='image' src='images/remove.png' alt='X' name='remove' title='" . _("delete team from pool") . "'
                value='" . _("X") . "' onclick=\"setDeleteId(" . $poolId . "," . $row['team_id'] . ");\"/></td>";
@@ -442,22 +444,22 @@ function moveTable($moves, $type, $poolId, $poolinfo, $seasonId, $seriesId)
   $undo = false;
   $allMoved = true;
   foreach ($moves as $row) {
-    $topoolinfo = PoolInfo($row['topool']);
+    $topoolinfo = PoolInfo($database, $row['topool']);
     if ($row['ismoved']) {
       $html .= "<tr class='highlight'>";
     } else {
       $html .= "<tr>";
     }
     if ($type == "to") {
-      $html .= "<td>" . poolLink($row['frompool'], PoolName($row['frompool'])) . "</a></td>";
+      $html .= "<td>" . poolLink($row['frompool'], PoolName($database, $row['frompool'])) . "</a></td>";
       $html .= "<td>" . utf8entities($row['fromplacing']) . "</td>";
       $html .= "<td>" . $row['torank'] . "</td>";
     } else {
       $html .= "<td>" . utf8entities($row['fromplacing']) . "</td>";
-      $html .= "<td>" . poolLink($row['topool'], PoolName($row['topool'])) . "</td>";
+      $html .= "<td>" . poolLink($row['topool'], PoolName($database, $row['topool'])) . "</td>";
       $html .= "<td>" . $row['torank'] . "</td>";
     }
-    $team = PoolTeamFromStandings($row['frompool'], $row['fromplacing'], $topoolinfo['type'] != 2);  // do not count the BYE team if we are moving to a playoff pool
+    $team = PoolTeamFromStandings($database, $row['frompool'], $row['fromplacing'], $topoolinfo['type'] != 2);  // do not count the BYE team if we are moving to a playoff pool
     $html .= "<td>" . $team['name'] . "</td>";
 
     if ($row['ismoved']) {
@@ -472,8 +474,8 @@ function moveTable($moves, $type, $poolId, $poolinfo, $seasonId, $seriesId)
 
   $html .= "<tr><th colspan='4'>";
   if ($type == "to") {
-    if (PoolIsMoveFromPoolsPlayed($poolId)) {
-      if (!PoolIsAllMoved($poolId)) {
+    if (PoolIsMoveFromPoolsPlayed($database, $poolId)) {
+      if (!PoolIsAllMoved($database, $poolId)) {
         $html .= "<input class='button' type='submit' name='confirmMoves' value='" . _("Confirm moves") .
           "' onclick='setConfirm(" . $poolId . ")'/>&nbsp;";
       } else {
@@ -528,12 +530,12 @@ function editPoolStandings($type, $pool, $startIds, $editStarts, $editEnds, $see
   if ($type == "seed") {
     foreach ($seedIds as $key => $value) {
       if (intval($key) >= $start && intval($key) <= $end)
-        SetTeamPoolRank($value, $pool, $seeds[$key]);
+        SetTeamPoolRank($database, $value, $pool, $seeds[$key]);
     }
   } else if ($type == "rank") {
     foreach ($rankIds as $key => $value) {
       if (intval($key) >= $start && intval($key) <= $end) {
-        SetTeamRank($value, $pool, $ranks[$key]);
+        SetTeamRank($database, $value, $pool, $ranks[$key]);
       }
     }
   }

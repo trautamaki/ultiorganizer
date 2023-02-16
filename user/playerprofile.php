@@ -5,6 +5,9 @@ include_once $include_prefix . 'lib/season.functions.php';
 include_once $include_prefix . 'lib/player.functions.php';
 include_once $include_prefix . 'lib/pool.functions.php';
 include_once $include_prefix . 'lib/reservation.functions.php';
+
+$database = new Database();
+
 $LAYOUT_ID = PLAYERPROFILE;
 $max_file_size = 5 * 1024 * 1024; //5 MB
 $max_new_links = 3;
@@ -14,14 +17,14 @@ $playerId = 0;
 if (isset($_GET["player"])) {
 	$playerId = intval($_GET["player"]);
 } elseif (isset($_GET["profile"])) {
-	$playerId = PlayerLatestId(intval($_GET["profile"]));
+	$playerId = PlayerLatestId($database, intval($_GET["profile"]));
 }
 
-$player = PlayerInfo($playerId);
+$player = PlayerInfo($database, $playerId);
 
 if (empty($player['profile_id'])) {
-	CreatePlayerProfile($playerId);
-	$player = PlayerInfo($playerId);
+	CreatePlayerProfile($database, $playerId);
+	$player = PlayerInfo($database, $playerId);
 }
 
 //$accId = 0;
@@ -98,7 +101,7 @@ if (isset($_POST['save'])) {
 		}
 	}
 
-	SetPlayerProfile($player['team'], $playerId, $pp);
+	SetPlayerProfile($database, $player['team'], $playerId, $pp);
 
 	for ($i = 0; $i < $max_new_links; $i++) {
 
@@ -107,22 +110,22 @@ if (isset($_POST['save'])) {
 			if (!empty($_POST["urlname$i"])) {
 				$name = $_POST["urlname$i"];
 			}
-			AddPlayerProfileUrl($playerId, $_POST["urltype$i"], $_POST["url$i"], $name);
+			AddPlayerProfileUrl($database, $playerId, $_POST["urltype$i"], $_POST["url$i"], $name);
 		}
 	}
 
 	if (is_uploaded_file($_FILES['picture']['tmp_name'])) {
-		$html .= UploadPlayerImage($playerId);
+		$html .= UploadPlayerImage($database, $playerId);
 	}
 } elseif (isset($_POST['remove'])) {
-	RemovePlayerProfileImage($playerId);
+	RemovePlayerProfileImage($database, $playerId);
 } elseif (isset($_POST['removeurl_x'])) {
 	$id = $_POST['hiddenDeleteId'];
-	RemovePlayerProfileUrl($playerId, $id);
+	RemovePlayerProfileUrl($database, $playerId, $id);
 }
 
-$player = PlayerInfo($playerId);
-$profile = PlayerProfile($player['profile_id']);
+$player = PlayerInfo($database, $playerId);
+$profile = PlayerProfile($database, $player['profile_id']);
 
 if ($profile) {
 	$pp['profile_id'] = $player['profile_id'];
@@ -158,7 +161,7 @@ include_once 'script/disable_enter.js.inc';
 include_once 'script/common.js.inc';
 include_once 'lib/yui.functions.php';
 pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
+leftMenu($database, $LAYOUT_ID);
 contentStart();
 
 //content
@@ -169,7 +172,7 @@ $html .= "<tr><td colspan='2'>" . _("Player details") . "</td><td class='center'
 
 if (CUSTOMIZATIONS == "slkl") {
 	$query = sprintf("SELECT membership, license, external_type, external_validity FROM uo_license WHERE accreditation_id=%d", (int)$pp['accreditation_id']);
-	$row = DBQueryToRow($query);
+	$row = $database->DBQueryToRow($query);
 	$html .= "<tr><td class='infocell'>" . _("License Id") . ":</td>";
 
 	if (isSuperAdmin()) {
@@ -310,7 +313,7 @@ $html .= "<td class='center'><input type='checkbox' name='public[]' checked='che
 $html .= "<tr><td colspan='3'>";
 $html .= "<table border='0'>";
 
-$urls = GetUrlList("player", $player['profile_id']);
+$urls = GetUrlList($database, "player", $player['profile_id']);
 
 foreach ($urls as $url) {
 	$html .= "<tr style='border-bottom-style:solid;border-bottom-width:1px;'>";

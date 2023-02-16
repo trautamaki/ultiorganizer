@@ -26,11 +26,13 @@ include_once 'localization.php';
   include_once '../lib/team.functions.php';
   include_once '../lib/game.functions.php';
 
+  $database = new Database();
+
   $poolId = intval(iget("pool"));
-  $poolinfo = PoolInfo($poolId);
+  $poolinfo = PoolInfo($database, $poolId);
 
   $season = iget("season");
-  $seasoninfo = SeasonInfo($season);
+  $seasoninfo = SeasonInfo($database, $season);
 
   if ($poolinfo['type'] == 1) {
     echo "<table class='pk_table'>\n";
@@ -43,11 +45,11 @@ include_once 'localization.php';
     echo "<th class='pk_ser_th'>" . _("Goal diff") . "</th>";
     echo "</tr>\n";
 
-    $standings = PoolTeams($poolinfo['pool_id'], "rank");
+    $standings = PoolTeams($database, $poolinfo['pool_id'], "rank");
 
     foreach ($standings as $row) {
-      $stats = TeamStatsByPool($poolinfo['pool_id'], $row['team_id']);
-      $points = TeamPointsByPool($poolinfo['pool_id'], $row['team_id']);
+      $stats = TeamStatsByPool($database, $poolinfo['pool_id'], $row['team_id']);
+      $points = TeamPointsByPool($database, $poolinfo['pool_id'], $row['team_id']);
       $flag = "";
       if (intval($seasoninfo['isinternational'])) {
         $flag = "<img height='10' src='../images/flags/tiny/" . $row['flagfile'] . "' alt=''/> ";
@@ -68,14 +70,14 @@ include_once 'localization.php';
     $pools[] = $poolinfo['pool_id'];
 
     //find out total rounds played
-    $followers = PoolFollowersArray($poolinfo['pool_id']);
+    $followers = PoolFollowersArray($database, $poolinfo['pool_id']);
     $pools = array_merge($pools, $followers);
     $rounds = count($pools);
 
     //find out total teams in pool
-    $teams = PoolTeams($poolinfo['pool_id']);
+    $teams = PoolTeams($database, $poolinfo['pool_id']);
     if (count($teams) == 0) {
-      $teams = PoolSchedulingTeams($poolinfo['pool_id']);
+      $teams = PoolSchedulingTeams($database, $poolinfo['pool_id']);
     }
     $totalteams = count($teams);
 
@@ -86,11 +88,11 @@ include_once 'localization.php';
 
     $round = 0;
     foreach ($pools as $poolId) {
-      $pool = PoolInfo($poolId);
+      $pool = PoolInfo($database, $poolId);
       $pseudoteams = false;
-      $teams = PoolTeams($pool['pool_id'], "seed");
+      $teams = PoolTeams($database, $pool['pool_id'], "seed");
       if (count($teams) == 0) {
-        $teams = PoolSchedulingTeams($pool['pool_id']);
+        $teams = PoolSchedulingTeams($database, $pool['pool_id']);
         $pseudoteams = true;
       }
 
@@ -120,13 +122,13 @@ include_once 'localization.php';
           $name .= "<img height='10' src='../images/flags/tiny/" . $team['flagfile'] . "' alt=''/> ";
         }
         $name .= $team['name'];
-        $movefrom = PoolGetMoveFrom($pool['pool_id'], $i);
+        $movefrom = PoolGetMoveFrom($database, $pool['pool_id'], $i);
         if ($pseudoteams && $round > 0) {
-          $realteam = PoolTeamFromStandings($movefrom['frompool'], $movefrom['fromplacing']);
+          $realteam = PoolTeamFromStandings($database, $movefrom['frompool'], $movefrom['fromplacing']);
           if ($realteam['team_id']) {
-            $gamesleft = TeamPoolGamesLeft($realteam['team_id'], $movefrom['frompool']);
+            $gamesleft = TeamPoolGamesLeft($database, $realteam['team_id'], $movefrom['frompool']);
 
-            if (mysql_num_rows($gamesleft) == 0) {
+            if ($database->NumRows($gamesleft) == 0) {
               $name = "";
               if (intval($seasoninfo['isinternational']) && !empty($realteam['flagfile'])) {
                 $name .= "<img height='10' src='../images/flags/tiny/" . $realteam['flagfile'] . "' alt=''/> ";
@@ -154,7 +156,7 @@ include_once 'localization.php';
           $games++;
           $game = "&nbsp;";
           if (!$pseudoteams) {
-            $results = GameHomeTeamResults($team['team_id'], $pool['pool_id']);
+            $results = GameHomeTeamResults($database, $team['team_id'], $pool['pool_id']);
             foreach ($results as $res) {
               $game .= $res['homescore'] . "-" . $res['visitorscore'];
             }
@@ -168,11 +170,11 @@ include_once 'localization.php';
     //placements
     $html = str_replace("[placement]", _("Placement"), $html);
     for ($i = 1; $i <= $totalteams; $i++) {
-      $placement = PoolPlacementString($pool['pool_id'], $i);
-      $team = PoolTeamFromStandings($pool['pool_id'], $i);
-      $gamesleft = TeamPoolGamesLeft($team['team_id'], $pool['pool_id']);
+      $placement = PoolPlacementString($database, $pool['pool_id'], $i);
+      $team = PoolTeamFromStandings($database, $pool['pool_id'], $i);
+      $gamesleft = TeamPoolGamesLeft($database, $team['team_id'], $pool['pool_id']);
 
-      if (mysql_num_rows($gamesleft) == 0) {
+      if ($database->NumRows($gamesleft) == 0) {
         $placementname = "";
         if (intval($seasoninfo['isinternational']) && !empty($team['flagfile'])) {
           $placementname .= "<img height='10' src='../images/flags/tiny/" . $team['flagfile'] . "' alt=''/> ";

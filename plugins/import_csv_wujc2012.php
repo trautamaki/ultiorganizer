@@ -107,7 +107,7 @@ if (isset($_POST['import'])) {
 				$seriesId = -1;
 				$teamId = -1;
 				$playerId = -1;
-				$allseries = SeasonSeries($seasonId);
+				$allseries = SeasonSeries($database, $seasonId);
 				foreach ($allseries as $ser) {
 					if ($ser['name'] == $series) {
 						$seriesId = $ser['series_id'];
@@ -123,10 +123,10 @@ if (isset($_POST['import'])) {
 						"season" => $seasonId,
 						"valid" => "1"
 					);
-					$seriesId = AddSeries($sp);
+					$seriesId = AddSeries($database, $sp);
 				}
 
-				$teams = SeriesTeams($seriesId);
+				$teams = SeriesTeams($database, $seriesId);
 				foreach ($teams as $t) {
 					if ($t['name'] == $team) {
 						$teamId = $t['team_id'];
@@ -134,13 +134,13 @@ if (isset($_POST['import'])) {
 					}
 				}
 				if ($teamId == -1) {
-					$id = AddSeriesEnrolledTeam($seriesId, $_SESSION['uid'], $team, "", $country);
-					$teamId = ConfirmEnrolledTeam($seriesId, $id);
+					$id = AddSeriesEnrolledTeam($database, $seriesId, $_SESSION['uid'], $team, "", $country);
+					$teamId = ConfirmEnrolledTeam($database, $seriesId, $id);
 				}
 				//echo "<p>$country, $last, $first, $series, $gender, $jersey</p>";
 
-				$players = TeamPlayerList($teamId);
-				while ($player = mysql_fetch_assoc($players)) {
+				$players = TeamPlayerList($database, $teamId);
+				while ($player = $database->FetchAssoc($players)) {
 					//echo $player['firstname']."==$first && ".$player['lastname']."==$last &&". $player['num']."==$jersey";
 					if ($player['firstname'] == $first && $player['lastname'] == $last && intval($player['num']) == intval($jersey)) {
 						$playerId = $player['player_id'];
@@ -149,7 +149,7 @@ if (isset($_POST['import'])) {
 				}
 
 				if ($playerId == -1) {
-					$playerId = AddPlayer($teamId, $first, $last, "", $jersey, "");
+					$playerId = AddPlayer($database, $teamId, $first, $last, "", $jersey, "");
 					$query = sprintf(
 						"SELECT p1.accreditation_id, p2.firstname, p2.lastname, pp.birthdate, pp.gender, 
 								p2.num, p2.teamname, p2.seasoname, p1.profile_id
@@ -163,12 +163,12 @@ if (isset($_POST['import'])) {
 								LEFT JOIN uo_player_profile AS pp ON (p1.accreditation_id=pp.accreditation_id)
 								WHERE p1.accreditation_id > 0 AND UPPER(p1.firstname) like '%%%s%%' and UPPER(p1.lastname) like '%%%s%%'
 								GROUP BY p1.accreditation_id",
-						mysql_real_escape_string(strtoupper($first)),
-						mysql_real_escape_string(strtoupper($last))
+						$database->RealEscapeString(strtoupper($first)),
+						$database->RealEscapeString(strtoupper($last))
 					);
-					$players = DBQueryToArray($query);
+					$players = $database->DBQueryToArray($query);
 					if (count($players) == 0) {
-						SetPlayer($playerId, $jersey, $first, $last, $playerId, $playerId);
+						SetPlayer($database, $playerId, $jersey, $first, $last, $playerId, $playerId);
 						$pp = array(
 							"accreditation_id" => $playerId,
 							"num" => $jersey,
@@ -191,11 +191,11 @@ if (isset($_POST['import'])) {
 							"profile_image" => "",
 							"public" => ""
 						);
-						SetPlayerProfile($teamId, $playerId, $pp);
-						AccreditPlayer($playerId, "dataimporter");
+						SetPlayerProfile($database, $teamId, $playerId, $pp);
+						AccreditPlayer($database, $playerId, "dataimporter");
 					} elseif (count($players) == 1) {
-						SetPlayer($playerId, $jersey, $first, $last, $players[0]['accreditation_id'], $players[0]['profile_id']);
-						AccreditPlayer($playerId, "dataimporter");
+						SetPlayer($database, $playerId, $jersey, $first, $last, $players[0]['accreditation_id'], $players[0]['profile_id']);
+						AccreditPlayer($database, $playerId, "dataimporter");
 					} else {
 						//foreach($players as $p){
 						echo "<p>Check manual:" . $first . " " . $last . "</p>";
@@ -217,9 +217,9 @@ $html .= "<form method='post' enctype='multipart/form-data' action='?view=plugin
 
 $html .= "<p>" . ("Select event") . ": <select class='dropdown' name='season'>\n";
 
-$seasons = Seasons();
+$seasons = Seasons($database);
 
-while ($row = mysql_fetch_assoc($seasons)) {
+while ($row = $database->FetchAssoc($seasons)) {
 	$html .= "<option class='dropdown' value='" . utf8entities($row['season_id']) . "'>" . utf8entities($row['name']) . "</option>";
 }
 
@@ -236,5 +236,5 @@ $html .= "<input type='hidden' name='MAX_FILE_SIZE' value='50000000' />\n";
 $html .= "</div>\n";
 $html .= "</form>";
 
-showPage($title, $html);
+showPage($database, $title, $html);
 ?>

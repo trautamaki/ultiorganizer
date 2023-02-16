@@ -16,20 +16,20 @@ $gameId = intval(iget("game"));
 if (isset($_POST['save'])) {
 	$home = intval($_POST['home']);
 	$away = intval($_POST['away']);
-	$ok = GameSetResult($gameId, $home, $away);
+	$ok = GameSetResult($database, $gameId, $home, $away);
 	if ($ok) {
-		$game_result = GameResult($gameId);
+		$game_result = GameResult($database, $gameId);
 		header("location:?view=mobile/addplayerlists&game=" . $gameId . "&team=" . $game_result['hometeam']);
 	}
 } elseif (isset($_POST['update'])) {
 	$home = intval($_POST['home']);
 	$away = intval($_POST['away']);
-	$ok = GameUpdateResult($gameId, $home, $away);
+	$ok = GameUpdateResult($database, $gameId, $home, $away);
 }
 
 mobilePageTop(_("Game result"));
 
-$result = GameResult($gameId);
+$result = GameResult($database, $gameId);
 
 $html .= "<form action='?" . utf8entities($_SERVER['QUERY_STRING']) . "' method='post'>\n";
 $html .= "<table cellpadding='2'>\n";

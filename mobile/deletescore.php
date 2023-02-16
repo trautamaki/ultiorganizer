@@ -4,16 +4,16 @@ include_once 'lib/game.functions.php';
 
 $html = "";
 $gameId = intval(iget("game"));
-$result = GameGoals($gameId);
+$result = GameGoals($database, $gameId);
 $scores = array();
-while ($row = mysql_fetch_assoc($result)) {
+while ($row = $database->FetchAssoc($result)) {
 	$scores[] = $row;
 }
 
 if (isset($_POST['delete'])) {
 	if (count($scores) > 0) {
 		$lastscore = $scores[count($scores) - 1];
-		GameRemoveScore($gameId, $lastscore['num']);
+		GameRemoveScore($database, $gameId, $lastscore['num']);
 		header("location:?view=mobile/addscoresheet&game=" . $gameId);
 	}
 }
@@ -31,9 +31,9 @@ if (count($scores) > 0) {
 	if (intval($lastscore['iscallahan'])) {
 		$lastpass = "xx";
 	} else {
-		$lastpass = PlayerNumber($lastscore['assist'], $gameId);
+		$lastpass = PlayerNumber($database, $lastscore['assist'], $gameId);
 	}
-	$lastgoal = PlayerNumber($lastscore['scorer'], $gameId);
+	$lastgoal = PlayerNumber($database, $lastscore['scorer'], $gameId);
 	if ($lastgoal == -1) {
 		$lastgoal = "";
 	}

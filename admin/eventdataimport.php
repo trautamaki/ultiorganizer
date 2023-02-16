@@ -72,4 +72,4 @@ if (empty($seasonId)) {
 
 $html .= "</form>";
 
-showPage($title, $html);
+showPage($database, $title, $html);
