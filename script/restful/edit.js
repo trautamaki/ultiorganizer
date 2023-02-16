@@ -1,4 +1,4 @@
 ultiorganizer = new Object();
-ultiorganizer.initEdits = function() {
-	
+ultiorganizer.initEdits = function () {
+
 }

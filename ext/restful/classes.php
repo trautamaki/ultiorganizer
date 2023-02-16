@@ -1,7 +1,8 @@
-<?php 
+<?php
 
-class Restful {
-	
+class Restful
+{
+
 	protected $children = array();
 	protected $localizename = false;
 	protected $filters = array();
@@ -10,39 +11,47 @@ class Restful {
 	protected $itemsql;
 	protected $tables;
 	protected $defaultOrdering;
-	
-	function getNameField() {
+
+	function getNameField()
+	{
 		return "name";
 	}
-	
-	function getFilters() {
+
+	function getFilters()
+	{
 		return $this->filters;
 	}
-	
-	function getItemName() {
+
+	function getItemName()
+	{
 		return substr(get_class($this), 0, -1);
 	}
-	function getIdField()  {
-		return strtolower($this->getItemName())."_id";
+	function getIdField()
+	{
+		return strtolower($this->getItemName()) . "_id";
 	}
-	
-	function getRestClassName() {
+
+	function getRestClassName()
+	{
 		return strtolower(get_class($this));
 	}
-	
-	function getChildFilter($child) {
-		return $this->children($child);	
+
+	function getChildFilter($child)
+	{
+		return $this->children($child);
 	}
-	
-	function getItem($id) {
+
+	function getItem($id)
+	{
 		$query = $this->getItemSQL($id);
 		$ret = DBQueryToRow($query, true);
 		$merged = array_merge($ret, $this->getChildren($id));
 		$this->convertLinkFields($merged);
 		return $merged;
 	}
-	
-	function getFilter($filter) {
+
+	function getFilter($filter)
+	{
 		if (!isset($filter)) {
 			return null;
 		}
@@ -55,40 +64,45 @@ class Restful {
 		}
 		return null;
 	}
-	
-	function getListSQL($filter=null, $ordering=null) {
+
+	function getListSQL($filter = null, $ordering = null)
+	{
 		if (!isset($ordering)) {
 			$ordering = $this->getDefaultOrdering();
 		}
 		$tables = $this->getTables();
 		$orderby = CreateOrdering($tables, $ordering);
 		$where = CreateFilter($tables, $filter);
-		$query = $this->getListSQL()." ".$where." ".$orderby;
+		$query = $this->getListSQL() . " " . $where . " " . $orderby;
 		return $query;
 	}
-	
-	function getItemSQL($id) {
+
+	function getItemSQL($id)
+	{
 		return sprintf($this->itemsql, mysql_real_escape_string($id));
 	}
-	
-	function getDefaultOrdering() {
+
+	function getDefaultOrdering()
+	{
 		return $this->defaultOrdering;
 	}
-	
-	function getTables() {
+
+	function getTables()
+	{
 		return $this->tables;
 	}
-	
-	function getList($filter=null, $ordering=null) {
+
+	function getList($filter = null, $ordering = null)
+	{
 		if (!isset($ordering)) {
 			$ordering = $this->getDefaultOrdering();
 		}
 		$tables = $this->getTables();
 		$orderby = CreateOrdering($tables, $ordering);
 		$where = CreateFilter($tables, $filter);
-		$query = $this->listsql." ".$where." ".$orderby;
+		$query = $this->listsql . " " . $where . " " . $orderby;
 		$items = DBQuery(trim($query));
-		
+
 		$retArray = array();
 		$className = $this->getRestClassName();
 		while ($next = mysql_fetch_assoc($items)) {
@@ -97,10 +111,11 @@ class Restful {
 		}
 		return array("data" => $retArray);
 	}
-		
-	function getListData($row) {
+
+	function getListData($row)
+	{
 		$ret = array();
-		
+
 		$id = $row[$this->getIdField()];
 		$ret['id'] = $id;
 		if ($this->localizename) {
@@ -108,28 +123,30 @@ class Restful {
 		} else {
 			$ret['name'] = $row[$this->getNameField()];
 		}
-		$ret['link'] = urlencode(GetURLBase()."/ext/restful.php/".$this->getRestClassName()."/".$id);
+		$ret['link'] = urlencode(GetURLBase() . "/ext/restful.php/" . $this->getRestClassName() . "/" . $id);
 		return $ret;
 	}
-	
-	function getChildren($id) {
+
+	function getChildren($id)
+	{
 		$GLOBALS['id'] = $id;
 		$ret = array();
-		foreach ($this->children as $child=>$filter) {
+		foreach ($this->children as $child => $filter) {
 			$childObjectName = ucwords($child);
-			$childObject = new $childObjectName(); 
+			$childObject = new $childObjectName();
 			$nextchildren = $childObject->getList($filter);
 			$ret[$child] = $nextchildren["data"];
 		}
 		return $ret;
 	}
-	
-	function convertLinkFields(&$row) {
+
+	function convertLinkFields(&$row)
+	{
 		foreach ($this->linkfields as $field => $objectName) {
 			$objectName = ucwords($objectName);
 			$object = new $objectName();
 			$table = strtolower($object->getItemName());
-			$filter = array("field" => $table.".".$object->getIdField(), "operator" => "=", "value" => $row[$field]);
+			$filter = array("field" => $table . "." . $object->getIdField(), "operator" => "=", "value" => $row[$field]);
 			$nextLink = $object->getList($filter);
 			$row[$field] = $nextLink['data'];
 		}
@@ -139,38 +156,40 @@ class Restful {
 // Filters
 $active_seasons = array("field" => "season.iscurrent", "operator" => "=", "value" => 1);
 $editable_seasons = array("join" => "or", "criteria" => array(
-			array("field" => array("constanttype" => "int", "value" => array("variable" => "userproperties", "key1" => "userrole", "key2" => "superadmin")),
-				"operator" => ">",
-				"value" => 0),
-			array("field" => "season.season_id", "operator" => "in", "value" => 
-				array("variable" => "userproperties", "key1" => "userrole", "key2" => "seasonadmin", "implode-keys" => ","))));
+	array(
+		"field" => array("constanttype" => "int", "value" => array("variable" => "userproperties", "key1" => "userrole", "key2" => "superadmin")),
+		"operator" => ">",
+		"value" => 0
+	),
+	array("field" => "season.season_id", "operator" => "in", "value" =>
+	array("variable" => "userproperties", "key1" => "userrole", "key2" => "seasonadmin", "implode-keys" => ","))
+));
 $edit_seasons = array("field" => "season.season_id", "operator" => "in", "value" =>
-					array("variable" => "userproperties", "key1" => "editseason", "implode-keys" => ","));
+array("variable" => "userproperties", "key1" => "editseason", "implode-keys" => ","));
 $editing_seasons = array("join" => "and", "criteria" =>
-			array($editable_seasons, $edit_seasons));
+array($editable_seasons, $edit_seasons));
 
 $editable_series = array_copy($editable_seasons);
-$editable_series["criteria"][] = array("field" => "series.series_id", "operator" => "in", "value" => 
-				array("variable" => "userproperties", "key1" => "userrole", "key2" => "seriesadmin", "implode-keys" => ","));
+$editable_series["criteria"][] = array("field" => "series.series_id", "operator" => "in", "value" =>
+array("variable" => "userproperties", "key1" => "userrole", "key2" => "seriesadmin", "implode-keys" => ","));
 $editing_series = array("join" => "and", "criteria" =>
-			array($editable_series, $edit_seasons));
+array($editable_series, $edit_seasons));
 
 $editable_teams = array_copy($editable_seasons);
-$editable_teams["criteria"][] = array("field" => "team.team_id", "operator" => "in", "value" => 
-				array("variable" => "userproperties", "key1" => "userrole", "key2" => "teamadmin", "implode-keys" => ","));
+$editable_teams["criteria"][] = array("field" => "team.team_id", "operator" => "in", "value" =>
+array("variable" => "userproperties", "key1" => "userrole", "key2" => "teamadmin", "implode-keys" => ","));
 $editing_teams = array("join" => "and", "criteria" =>
-			array($editable_teams, $edit_seasons));
-				
+array($editable_teams, $edit_seasons));
 
-include_once $include_prefix.'ext/restful/countries.php';
-include_once $include_prefix.'ext/restful/games.php';
-include_once $include_prefix.'ext/restful/goals.php';
-include_once $include_prefix.'ext/restful/playerprofiles.php';
-include_once $include_prefix.'ext/restful/players.php';
-include_once $include_prefix.'ext/restful/pools.php';
-include_once $include_prefix.'ext/restful/seasons.php';
-include_once $include_prefix.'ext/restful/series.php';
-include_once $include_prefix.'ext/restful/teamprofiles.php';
-include_once $include_prefix.'ext/restful/teams.php';
-include_once $include_prefix.'ext/restful/users.php';
-?>
+
+include_once $include_prefix . 'ext/restful/countries.php';
+include_once $include_prefix . 'ext/restful/games.php';
+include_once $include_prefix . 'ext/restful/goals.php';
+include_once $include_prefix . 'ext/restful/playerprofiles.php';
+include_once $include_prefix . 'ext/restful/players.php';
+include_once $include_prefix . 'ext/restful/pools.php';
+include_once $include_prefix . 'ext/restful/seasons.php';
+include_once $include_prefix . 'ext/restful/series.php';
+include_once $include_prefix . 'ext/restful/teamprofiles.php';
+include_once $include_prefix . 'ext/restful/teams.php';
+include_once $include_prefix . 'ext/restful/users.php';

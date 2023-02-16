@@ -12,7 +12,7 @@ version: 2.8.2r1
 }
 
 .yui-panel {
-    position:relative;
+    position: relative;
 }
 
 .yui-panel-container form {
@@ -144,8 +144,9 @@ PLEASE NOTE:
     padding-bottom: 1px;
 }
 
-.yui-effect-fade .underlay, .yui-effect-fade .yui-tt-shadow {
-    display:none;
+.yui-effect-fade .underlay,
+.yui-effect-fade .yui-tt-shadow {
+    display: none;
 }
 
 /*
@@ -162,15 +163,16 @@ PLEASE NOTE:
 }
 
 .yui-override-padding {
-    padding:0 !important;
+    padding: 0 !important;
 }
 
 .yui-panel-container .container-close {
-    overflow:hidden;
-    text-indent:-10000em;
-    text-decoration:none;
+    overflow: hidden;
+    text-indent: -10000em;
+    text-decoration: none;
 }
 
-.yui-overlay.yui-force-redraw, .yui-panel-container.yui-force-redraw {
-    margin-bottom:1px;
+.yui-overlay.yui-force-redraw,
+.yui-panel-container.yui-force-redraw {
+    margin-bottom: 1px;
 }

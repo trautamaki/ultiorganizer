@@ -1,19 +1,19 @@
-'Vantaa, Myyrmäki';3;1;'Myyrmäki';1;1;'Myyrmäenraitti 4, 01600 Vantaa';60.2655000000000;24.85186000000000000000
+'Vantaa, Myyrmï¿½ki';3;1;'Myyrmï¿½ki';1;1;'Myyrmï¿½enraitti 4, 01600 Vantaa';60.2655000000000;24.85186000000000000000
 'Espoo, Espoonlahti';4;1;'Espoonlahti';1;1;'Rehtorintie 11, 02360 Espoo';60.1466540000000;24.66711700000000000000
 'Espoonlahti';4;1;'Espoonlahti';1;1;'Rehtorintie 11, 02360 Espoo';60.1466540000000;24.66711700000000000000
 'Espoonlahti, Espoo';4;1;'Espoonlahti';1;1;'Rehtorintie 11, 02360 Espoo';60.1466540000000;24.66711700000000000000
-'Espoo, Leppävaara';7;1;'Leppävaara';1;1;'Veräjäpellonkatu 6, 02650 Espoo';60.2264380000000;24.80785100000000000000
-'Leppavaara';7;1;'Leppävaara';1;1;'Veräjäpellonkatu 6, 02650 Espoo';60.2264380000000;24.80785100000000000000
-'Leppävaara';7;1;'Leppävaara';1;1;'Veräjäpellonkatu 6, 02650 Espoo';60.2264380000000;24.80785100000000000000
-'Leppävaara, Espoo';7;1;'Leppävaara';1;1;'Veräjäpellonkatu 6, 02650 Espoo';60.2264380000000;24.80785100000000000000
+'Espoo, Leppï¿½vaara';7;1;'Leppï¿½vaara';1;1;'Verï¿½jï¿½pellonkatu 6, 02650 Espoo';60.2264380000000;24.80785100000000000000
+'Leppavaara';7;1;'Leppï¿½vaara';1;1;'Verï¿½jï¿½pellonkatu 6, 02650 Espoo';60.2264380000000;24.80785100000000000000
+'Leppï¿½vaara';7;1;'Leppï¿½vaara';1;1;'Verï¿½jï¿½pellonkatu 6, 02650 Espoo';60.2264380000000;24.80785100000000000000
+'Leppï¿½vaara, Espoo';7;1;'Leppï¿½vaara';1;1;'Verï¿½jï¿½pellonkatu 6, 02650 Espoo';60.2264380000000;24.80785100000000000000
 'Hamina';30;1;'Hamina';1;1;'Kaarlonkatu 3, 49400 Hamina';60.5679730000000;27.20741100000000000000
 'Tampere';38;1;'Tampere';1;1;'Lindforsinkatu 5, 33720 Tampere';61.4503000000000;23.84636700000000000000
 'Tampere, Hervannan vapaa-aikakeskus';38;1;'Tampere';1;1;'Lindforsinkatu 5, 33720 Tampere';61.4503000000000;23.84636700000000000000
-'Tali, kenttä I';46;2;'Tali';0;1;'Purotie 8,00380 Helsinki';60.2158840000000;24.86716400000000000000
-'Tali, kenttä II';46;2;'Tali';0;2;'Purotie 8,00380 Helsinki';60.2158840000000;24.86716400000000000000
-'Pukinmäki';66;1;'Pukinmäki';0;1;'Kenttätie 3, 00700 Helsinki';60.2482960000000;24.99564700000000000000
-'Tampere, Kauppi, Kenttä 1';67;2;'Tampere, Kauppi';0;1;'Kuntokatu 5, 33520 Tampere';61.5071420000000;23.80962800000000000000
-'Tampere, Kauppi, Kenttä 2';67;2;'Tampere, Kauppi';0;2;'Kuntokatu 5, 33520 Tampere';61.5071420000000;23.80962800000000000000
+'Tali, kenttï¿½ I';46;2;'Tali';0;1;'Purotie 8,00380 Helsinki';60.2158840000000;24.86716400000000000000
+'Tali, kenttï¿½ II';46;2;'Tali';0;2;'Purotie 8,00380 Helsinki';60.2158840000000;24.86716400000000000000
+'Pukinmï¿½ki';66;1;'Pukinmï¿½ki';0;1;'Kenttï¿½tie 3, 00700 Helsinki';60.2482960000000;24.99564700000000000000
+'Tampere, Kauppi, Kenttï¿½ 1';67;2;'Tampere, Kauppi';0;1;'Kuntokatu 5, 33520 Tampere';61.5071420000000;23.80962800000000000000
+'Tampere, Kauppi, Kenttï¿½ 2';67;2;'Tampere, Kauppi';0;2;'Kuntokatu 5, 33520 Tampere';61.5071420000000;23.80962800000000000000
 'Caribia, Turku';73;1;'Caribia';1;1;'Kongressikatu 1, 20540 Turku';60.4611110799179;22.29113101959230000000
 'Caribia,Turku';73;1;'Caribia';1;1;'Kongressikatu 1, 20540 Turku';60.4611110799179;22.29113101959230000000
 'Turku, Caribia';73;1;'Caribia';1;1;'Kongressikatu 1, 20540 Turku';60.4611110799179;22.29113101959230000000
@@ -21,77 +21,77 @@
 'Puistola';74;1;'Puistola';1;1;'Koudantie 2, 00760 Helsinki';60.2672897758254;25.05700349807740000000
 'Tikkurila';82;1;'Tikkurila';1;1;'Tapulikaupungintie 4, 00750 Helsinki';60.2779010000000;25.02544900000000000000
 'Vantaa, Tikkurila';82;1;'Tikkurila';1;1;'Tapulikaupungintie 4, 00750 Helsinki';60.2779010000000;25.02544900000000000000
-'Helsingin Urheilutalo';93;1;'Helsingin Urheilutalo';1;1;'Läntinen Brahenkatu 2, 00510 Helsinki';60.1868480000000;24.94844000000000000000
+'Helsingin Urheilutalo';93;1;'Helsingin Urheilutalo';1;1;'Lï¿½ntinen Brahenkatu 2, 00510 Helsinki';60.1868480000000;24.94844000000000000000
 'Kontula';96;1;'Kontula';1;1;'Rintinpolku, 00940 Helsinki';60.2312740000000;25.09145900000000000000
 'Vehkalahti';117;1;'Vehkalahti';0;1;'Vehkalahti';60.5762168919397;27.14344024658200000000
-'Hakkari';139;1;'Hakkari';1;1;'Ahertajantie 3, 337550 Lempäälä';61.3388250000000;23.74833000000000000000
-'Hakkarin Halli, Lempäälä';139;1;'Hakkari';1;1;'Ahertajantie 3, 337550 Lempäälä';61.3388250000000;23.74833000000000000000
-'Lempäälä';139;1;'Hakkari';1;1;'Ahertajantie 3, 337550 Lempäälä';61.3388250000000;23.74833000000000000000
-'Rajamäki 1';190;4;'Rajamäki';0;1;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Rajamäki 2';190;4;'Rajamäki';0;2;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Rajamäki 3';190;4;'Rajamäki';0;3;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Rajamäki I';190;4;'Rajamäki';0;1;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Rajamäki II';190;4;'Rajamäki';0;2;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Rajamäki III';190;4;'Rajamäki';0;3;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Rajamäki, Kenttä 1';190;4;'Rajamäki';0;1;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Rajamäki, Kenttä 2';190;4;'Rajamäki';0;2;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Rajamäki, Kenttä 3';190;4;'Rajamäki';0;3;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Rajamäki, Tekonurmi';190;4;'Rajamäki';0;4;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Rajamäki. Kenttä 1';190;4;'Rajamäki';0;1;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Siltamäki';214;1;'Siltamäki';0;1;'Pallomäentie 14, 00740 Helsinki';60.2712440000000;24.98384400000000000000
+'Hakkari';139;1;'Hakkari';1;1;'Ahertajantie 3, 337550 Lempï¿½ï¿½lï¿½';61.3388250000000;23.74833000000000000000
+'Hakkarin Halli, Lempï¿½ï¿½lï¿½';139;1;'Hakkari';1;1;'Ahertajantie 3, 337550 Lempï¿½ï¿½lï¿½';61.3388250000000;23.74833000000000000000
+'Lempï¿½ï¿½lï¿½';139;1;'Hakkari';1;1;'Ahertajantie 3, 337550 Lempï¿½ï¿½lï¿½';61.3388250000000;23.74833000000000000000
+'Rajamï¿½ki 1';190;4;'Rajamï¿½ki';0;1;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Rajamï¿½ki 2';190;4;'Rajamï¿½ki';0;2;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Rajamï¿½ki 3';190;4;'Rajamï¿½ki';0;3;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Rajamï¿½ki I';190;4;'Rajamï¿½ki';0;1;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Rajamï¿½ki II';190;4;'Rajamï¿½ki';0;2;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Rajamï¿½ki III';190;4;'Rajamï¿½ki';0;3;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Rajamï¿½ki, Kenttï¿½ 1';190;4;'Rajamï¿½ki';0;1;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Rajamï¿½ki, Kenttï¿½ 2';190;4;'Rajamï¿½ki';0;2;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Rajamï¿½ki, Kenttï¿½ 3';190;4;'Rajamï¿½ki';0;3;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Rajamï¿½ki, Tekonurmi';190;4;'Rajamï¿½ki';0;4;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Rajamï¿½ki. Kenttï¿½ 1';190;4;'Rajamï¿½ki';0;1;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Siltamï¿½ki';214;1;'Siltamï¿½ki';0;1;'Pallomï¿½entie 14, 00740 Helsinki';60.2712440000000;24.98384400000000000000
 'Tapiola';215;1;'Tapiola';0;1;'Urheilupuistontie 2, 02200 Espoo';60.1784180000000;24.78498100000000000000
 'Pirkkola';227;1;'Pirkkola';1;1;'Pirkkolan liikuntapuisto, 00630 Helsinki';60.2333347439912;24.91390228271480000000
 'Pirkkola, Helsinki';227;1;'Pirkkola';1;1;'Pirkkolan liikuntapuisto, 00630 Helsinki';60.2333347439912;24.91390228271480000000
-'Pirkkahalli, Kenttä 1';249;3;'Pirkkahallin kentät';0;1;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
-'Pirkkahalli, Kenttä 2';249;3;'Pirkkahallin kentät';0;2;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
-'Pirkkahalli, Kenttä 3';249;3;'Pirkkahallin kentät';0;3;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
-'Pirkkahalli, Kenttä 4';249;3;'Pirkkahallin kentät';0;4;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
-'Pirkkahallin nurmikentät, Tampere, Kenttä1';249;3;'Pirkkahallin kentät';0;1;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
-'Pirkkahallin nurmikentät, Tampere, Kenttä2';249;3;'Pirkkahallin kentät';0;2;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
-'Pirkkahallin nurmikentät, Tampere, Kenttä3';249;3;'Pirkkahallin kentät';0;3;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
-'Tampere, Kenttä 1';249;3;'Pirkkahallin kentät';0;1;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
-'Tampere, Kenttä 2';249;3;'Pirkkahallin kentät';0;2;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
-'Tampere, Kenttä 3';249;3;'Pirkkahallin kentät';0;3;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
+'Pirkkahalli, Kenttï¿½ 1';249;3;'Pirkkahallin kentï¿½t';0;1;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
+'Pirkkahalli, Kenttï¿½ 2';249;3;'Pirkkahallin kentï¿½t';0;2;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
+'Pirkkahalli, Kenttï¿½ 3';249;3;'Pirkkahallin kentï¿½t';0;3;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
+'Pirkkahalli, Kenttï¿½ 4';249;3;'Pirkkahallin kentï¿½t';0;4;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
+'Pirkkahallin nurmikentï¿½t, Tampere, Kenttï¿½1';249;3;'Pirkkahallin kentï¿½t';0;1;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
+'Pirkkahallin nurmikentï¿½t, Tampere, Kenttï¿½2';249;3;'Pirkkahallin kentï¿½t';0;2;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
+'Pirkkahallin nurmikentï¿½t, Tampere, Kenttï¿½3';249;3;'Pirkkahallin kentï¿½t';0;3;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
+'Tampere, Kenttï¿½ 1';249;3;'Pirkkahallin kentï¿½t';0;1;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
+'Tampere, Kenttï¿½ 2';249;3;'Pirkkahallin kentï¿½t';0;2;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
+'Tampere, Kenttï¿½ 3';249;3;'Pirkkahallin kentï¿½t';0;3;'Ilmailunkatu 20, 33900 Tampere';61.4630510229356;23.73458862304690000000
 'Myllypuro';274;2;'Myllypuro';0;1;'Myllytontunpolku 1, 00920 Helsinki ';60.2192250000000;25.07842000000000000000
-'Myllypuro kenttä 2';274;2;'Myllypuro';0;2;'Myllytontunpolku 1, 00920 Helsinki ';60.2192250000000;25.07842000000000000000
-'Myllypuro pääkenttä';274;2;'Myllypuro';0;1;'Myllytontunpolku 1, 00920 Helsinki ';60.2192250000000;25.07842000000000000000
-'Myllypuro, kenttä 1';274;2;'Myllypuro';0;1;'Myllytontunpolku 1, 00920 Helsinki ';60.2192250000000;25.07842000000000000000
-'Myllypuro, kenttä 2';274;2;'Myllypuro';0;2;'Myllytontunpolku 1, 00920 Helsinki ';60.2192250000000;25.07842000000000000000
+'Myllypuro kenttï¿½ 2';274;2;'Myllypuro';0;2;'Myllytontunpolku 1, 00920 Helsinki ';60.2192250000000;25.07842000000000000000
+'Myllypuro pï¿½ï¿½kenttï¿½';274;2;'Myllypuro';0;1;'Myllytontunpolku 1, 00920 Helsinki ';60.2192250000000;25.07842000000000000000
+'Myllypuro, kenttï¿½ 1';274;2;'Myllypuro';0;1;'Myllytontunpolku 1, 00920 Helsinki ';60.2192250000000;25.07842000000000000000
+'Myllypuro, kenttï¿½ 2';274;2;'Myllypuro';0;2;'Myllytontunpolku 1, 00920 Helsinki ';60.2192250000000;25.07842000000000000000
 'Vaajakosken liikuntahalli';281;1;'Vaajakosken liikuntahalli';1;1;'Urheilutie 36, 40800 Vaajakoski';62.2490490000000;25.86821500000000000000
 'Sipoo';290;1;'Sipoo';1;1;'Lukkarintie 5, 04130 Sipoo';60.3789820000000;25.26164100000000000000
-'Hyvinkää';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkää';60.6691425623526;24.90566253662110000000
-'Hyvinkää / Martinhalli';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkää';60.6691425623526;24.90566253662110000000
-'Hyvinkää, Martinhalli';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkää';60.6691425623526;24.90566253662110000000
-'Hyvinkää/Martinhalli';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkää';60.6691425623526;24.90566253662110000000
-'Martin halli';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkää';60.6691425623526;24.90566253662110000000
-'Martin halli, Hyvinkää';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkää';60.6691425623526;24.90566253662110000000
-'Martinhalli';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkää';60.6691425623526;24.90566253662110000000
-'Martinhalli, Hyvinkää';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkää';60.6691425623526;24.90566253662110000000
-'Hanko, Kenttä 1';316;3;'Hanko';0;1;'Urheilukatu 2, 10960 Hanko';59.8316540000000;22.99534200000000000000
-'Hanko, Kenttä 2';316;3;'Hanko';0;2;'Urheilukatu 2, 10960 Hanko';59.8316540000000;22.99534200000000000000
-'Hanko, Kenttä 3';316;3;'Hanko';0;3;'Urheilukatu 2, 10960 Hanko';59.8316540000000;22.99534200000000000000
-'Hyvinkää, Kenttä 1';320;3;'Hyvinkää';0;1;'Vaiveronkatu 70, 05880 Hyvinkää';60.6419870000000;24.82951300000000000000
-'Hyvinkää, Kenttä 2';320;3;'Hyvinkää';0;2;'Vaiveronkatu 70, 05880 Hyvinkää';60.6419870000000;24.82951300000000000000
-'Hyvinkää, Kenttä 3';320;3;'Hyvinkää';0;3;'Vaiveronkatu 70, 05880 Hyvinkää';60.6419870000000;24.82951300000000000000
+'Hyvinkï¿½ï¿½';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkï¿½ï¿½';60.6691425623526;24.90566253662110000000
+'Hyvinkï¿½ï¿½ / Martinhalli';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkï¿½ï¿½';60.6691425623526;24.90566253662110000000
+'Hyvinkï¿½ï¿½, Martinhalli';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkï¿½ï¿½';60.6691425623526;24.90566253662110000000
+'Hyvinkï¿½ï¿½/Martinhalli';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkï¿½ï¿½';60.6691425623526;24.90566253662110000000
+'Martin halli';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkï¿½ï¿½';60.6691425623526;24.90566253662110000000
+'Martin halli, Hyvinkï¿½ï¿½';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkï¿½ï¿½';60.6691425623526;24.90566253662110000000
+'Martinhalli';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkï¿½ï¿½';60.6691425623526;24.90566253662110000000
+'Martinhalli, Hyvinkï¿½ï¿½';298;1;'Martinhalli';1;1;'Martintorinkuja 2, 05800 Hyvinkï¿½ï¿½';60.6691425623526;24.90566253662110000000
+'Hanko, Kenttï¿½ 1';316;3;'Hanko';0;1;'Urheilukatu 2, 10960 Hanko';59.8316540000000;22.99534200000000000000
+'Hanko, Kenttï¿½ 2';316;3;'Hanko';0;2;'Urheilukatu 2, 10960 Hanko';59.8316540000000;22.99534200000000000000
+'Hanko, Kenttï¿½ 3';316;3;'Hanko';0;3;'Urheilukatu 2, 10960 Hanko';59.8316540000000;22.99534200000000000000
+'Hyvinkï¿½ï¿½, Kenttï¿½ 1';320;3;'Hyvinkï¿½ï¿½';0;1;'Vaiveronkatu 70, 05880 Hyvinkï¿½ï¿½';60.6419870000000;24.82951300000000000000
+'Hyvinkï¿½ï¿½, Kenttï¿½ 2';320;3;'Hyvinkï¿½ï¿½';0;2;'Vaiveronkatu 70, 05880 Hyvinkï¿½ï¿½';60.6419870000000;24.82951300000000000000
+'Hyvinkï¿½ï¿½, Kenttï¿½ 3';320;3;'Hyvinkï¿½ï¿½';0;3;'Vaiveronkatu 70, 05880 Hyvinkï¿½ï¿½';60.6419870000000;24.82951300000000000000
 'Lahden Urheilutalo';351;2;'Lahden Urheilutalo';1;1;'Jalkarannantie 10, 15110 Lahti';60.9863030000000;25.64634100000000000000
 'Lahden Urheilutalo A';351;2;'Lahden Urheilutalo';1;1;'Jalkarannantie 10, 15110 Lahti';60.9863030000000;25.64634100000000000000
 'Lahden Urheilutalo B';351;2;'Lahden Urheilutalo';1;1;'Jalkarannantie 10, 15110 Lahti';60.9863030000000;25.64634100000000000000
-'Lahti, Jalkaranta, kenttä 1';351;2;'Lahden Urheilutalo';1;1;'Jalkarannantie 10, 15110 Lahti';60.9863030000000;25.64634100000000000000
-'Lahti, Jalkaranta, kenttä 2';351;2;'Lahden Urheilutalo';1;2;'Jalkarannantie 10, 15110 Lahti';60.9863030000000;25.64634100000000000000
-'Lahti, kenttä1';351;2;'Lahden Urheilutalo';1;1;'Jalkarannantie 10, 15110 Lahti';60.9863030000000;25.64634100000000000000
-'Lahti, kenttä2';351;2;'Lahden Urheilutalo';1;2;'Jalkarannantie 10, 15110 Lahti';60.9863030000000;25.64634100000000000000
+'Lahti, Jalkaranta, kenttï¿½ 1';351;2;'Lahden Urheilutalo';1;1;'Jalkarannantie 10, 15110 Lahti';60.9863030000000;25.64634100000000000000
+'Lahti, Jalkaranta, kenttï¿½ 2';351;2;'Lahden Urheilutalo';1;2;'Jalkarannantie 10, 15110 Lahti';60.9863030000000;25.64634100000000000000
+'Lahti, kenttï¿½1';351;2;'Lahden Urheilutalo';1;1;'Jalkarannantie 10, 15110 Lahti';60.9863030000000;25.64634100000000000000
+'Lahti, kenttï¿½2';351;2;'Lahden Urheilutalo';1;2;'Jalkarannantie 10, 15110 Lahti';60.9863030000000;25.64634100000000000000
 'Lahti/Urheilutalo';351;2;'Lahden Urheilutalo';1;1;'Jalkarannantie 10, 15110 Lahti';60.9863030000000;25.64634100000000000000
 'Kuopio';354;1;'Kallaveden koulu';1;1;'Blominkatu 2, 70820 Kuopio';62.8372400000000;27.64463800000000000000
 'Turku/Nunnavuori';356;1;'Nunnavuori';1;1;'Piiparinpolku 22, 20360 Turku';60.4895350000000;22.26401200000000000000
 'Raisio/Kerttula';362;1;'Kerttula';1;1;'Kisakatu 4, 21200 Raisio';60.4936680000000;22.15923600000000000000
 'Laukaa';364;1;'Laukaa';1;1;'Koulutie 3, 41360 Laukaa';62.4633680000000;25.81556800000000000000
-'Samppalinna';380;1;'Samppalinna';1;1;'Itäinen pitkäkatu 45, 20810 Turku';60.4413350000000;22.26785600000000000000
-'Turku Samppalinna';380;1;'Samppalinna';1;1;'Itäinen pitkäkatu 45, 20810 Turku';60.4413350000000;22.26785600000000000000
+'Samppalinna';380;1;'Samppalinna';1;1;'Itï¿½inen pitkï¿½katu 45, 20810 Turku';60.4413350000000;22.26785600000000000000
+'Turku Samppalinna';380;1;'Samppalinna';1;1;'Itï¿½inen pitkï¿½katu 45, 20810 Turku';60.4413350000000;22.26785600000000000000
 'Pyynikin palloiluhalli';381;1;'Pyynikin palloiluhalli';1;1;'Ammattikoulunkatu 20, 33230 Tampere';61.4972580000000;23.73521200000000000000
 'Pyynikin Palloiluhalli, Tampere';381;1;'Pyynikin palloiluhalli';1;1;'Ammattikoulunkatu 20, 33230 Tampere';61.4972580000000;23.73521200000000000000
-'Perttula, Hyvinkää, Kenttä1';320;3;'Hyvinkää';0;1;'Vaiveronkatu 70, 05880 Hyvinkää';60.6419870000000;24.82951300000000000000
-'Perttula, Hyvinkää, Kenttä2';320;3;'Hyvinkää';0;1;'Vaiveronkatu 70, 05880 Hyvinkää';60.6419870000000;24.82951300000000000000
-'Perttula, Hyvinkää, Kenttä3';320;3;'Hyvinkää';0;1;'Vaiveronkatu 70, 05880 Hyvinkää';60.6419870000000;24.82951300000000000000
+'Perttula, Hyvinkï¿½ï¿½, Kenttï¿½1';320;3;'Hyvinkï¿½ï¿½';0;1;'Vaiveronkatu 70, 05880 Hyvinkï¿½ï¿½';60.6419870000000;24.82951300000000000000
+'Perttula, Hyvinkï¿½ï¿½, Kenttï¿½2';320;3;'Hyvinkï¿½ï¿½';0;1;'Vaiveronkatu 70, 05880 Hyvinkï¿½ï¿½';60.6419870000000;24.82951300000000000000
+'Perttula, Hyvinkï¿½ï¿½, Kenttï¿½3';320;3;'Hyvinkï¿½ï¿½';0;1;'Vaiveronkatu 70, 05880 Hyvinkï¿½ï¿½';60.6419870000000;24.82951300000000000000
 'Pajulahti';409;1;'Pajulahden liikuntahalli';1;1;'Pajulahdentie 167, 15560 Nastola';60.9698660000000;25.94010000000000000000
 'Vaasa Variska';435;1;'Variska';1;1;'Vanhan Vaasan tie 20, 65380 Vaasa';63.0851960000000;21.72638900000000000000
 'Vaasa/Variska';435;1;'Variska';1;1;'Vanhan Vaasan tie 20, 65380 Vaasa';63.0851960000000;21.72638900000000000000
@@ -100,28 +100,28 @@
 'Pasila, Helsinki';446;1;'Pasila';1;1;'Radiokatu 22, 00240 Helsinki';60.2044560000000;24.91806700000000000000
 'Pasilan Urheiluhalli';446;1;'Pasila';1;1;'Radiokatu 22, 00240 Helsinki';60.2044560000000;24.91806700000000000000
 'Pasilan Urheilutalo';446;1;'Pasila';1;1;'Radiokatu 22, 00240 Helsinki';60.2044560000000;24.91806700000000000000
-'Pajulahti, Kenttä 1';449;3;'Pajulahti';0;1;'Pajulahdentie 167, 15560 Nastola';60.9698660000000;25.94010000000000000000
-'Pajulahti, Kenttä 2';449;3;'Pajulahti';0;2;'Pajulahdentie 167, 15560 Nastola';60.9698660000000;25.94010000000000000000
-'Pajulahti, Kenttä 3';449;3;'Pajulahti';0;3;'Pajulahdentie 167, 15560 Nastola';60.9698660000000;25.94010000000000000000
-'Vaasa, Kenttä 1';450;4;'Vaasa';0;1;'Ruutikellarintie 5, 65100 Vaasa';63.0859500000000;21.64336700000000000000
-'Vaasa, Kenttä 2';450;4;'Vaasa';0;2;'Ruutikellarintie 5, 65100 Vaasa';63.0859500000000;21.64336700000000000000
-'Vaasa, Kenttä 3';450;4;'Vaasa';0;3;'Ruutikellarintie 5, 65100 Vaasa';63.0859500000000;21.64336700000000000000
-'Vaasa, Kenttä 4';450;3;'Vaasa';0;4;'Ruutikellarintie 5, 65100 Vaasa';63.0859500000000;21.64336700000000000000
-'Nurmijärvi 1';190;4;'Rajamäki';0;1;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Nurmijärvi kenttä 1';190;4;'Rajamäki';0;1;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Nurmijärvi, Kenttä 1';190;4;'Rajamäki';0;1;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Nurmijärvi, Kenttä 2';190;4;'Rajamäki';0;1;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Nurmijärvi, Kenttä 3';190;4;'Rajamäki';0;1;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Nurmijärvi, kenttä I';190;4;'Rajamäki';0;1;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Nurmijärvi, kenttä II';190;4;'Rajamäki';0;1;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Nurmijärvi, kenttä III';190;4;'Rajamäki';0;1;'Kiljavantie 4, 05200 Nurmijärvi';60.5266025961711;24.74839925765990000000
-'Hämeenlinna, Kenttä 1';519;3;'Hämeenlinna';0;1;'Ruutikellarintie 5, 65100 Vaasa';61.0040540000000;24.42138200000000000000
-'Hämeenlinna, Kenttä 2';519;3;'Hämeenlinna';0;2;'Ruutikellarintie 5, 65100 Vaasa';61.0040540000000;24.42138200000000000000
-'Hämeenlinna, Kenttä 3';519;3;'Hämeenlinna';0;3;'Ruutikellarintie 5, 65100 Vaasa';61.0040540000000;24.42138200000000000000
-'Kemiö, Kenttä 1';524;3;'Kemiö';0;1;'Edvin Widesvägen 6, 25700 Kemiö';60.1717970000000;22.73072000000000000000
-'Kemiö, Kenttä 2';524;3;'Kemiö';0;2;'Edvin Widesvägen 6, 25700 Kemiö';60.1717970000000;22.73072000000000000000
-'Kemiö, Kenttä 3';524;3;'Kemiö';0;3;'Edvin Widesvägen 6, 25700 Kemiö';60.1717970000000;22.73072000000000000000
-'Kemiö, Kenttä1';524;3;'Kemiö';0;1;'Edvin Widesvägen 6, 25700 Kemiö';60.1717970000000;22.73072000000000000000
-'Kemiö, Kenttä2';524;3;'Kemiö';0;2;'Edvin Widesvägen 6, 25700 Kemiö';60.1717970000000;22.73072000000000000000
-'Kemiö, Kenttä3';524;3;'Kemiö';0;3;'Edvin Widesvägen 6, 25700 Kemiö';60.1717970000000;22.73072000000000000000
+'Pajulahti, Kenttï¿½ 1';449;3;'Pajulahti';0;1;'Pajulahdentie 167, 15560 Nastola';60.9698660000000;25.94010000000000000000
+'Pajulahti, Kenttï¿½ 2';449;3;'Pajulahti';0;2;'Pajulahdentie 167, 15560 Nastola';60.9698660000000;25.94010000000000000000
+'Pajulahti, Kenttï¿½ 3';449;3;'Pajulahti';0;3;'Pajulahdentie 167, 15560 Nastola';60.9698660000000;25.94010000000000000000
+'Vaasa, Kenttï¿½ 1';450;4;'Vaasa';0;1;'Ruutikellarintie 5, 65100 Vaasa';63.0859500000000;21.64336700000000000000
+'Vaasa, Kenttï¿½ 2';450;4;'Vaasa';0;2;'Ruutikellarintie 5, 65100 Vaasa';63.0859500000000;21.64336700000000000000
+'Vaasa, Kenttï¿½ 3';450;4;'Vaasa';0;3;'Ruutikellarintie 5, 65100 Vaasa';63.0859500000000;21.64336700000000000000
+'Vaasa, Kenttï¿½ 4';450;3;'Vaasa';0;4;'Ruutikellarintie 5, 65100 Vaasa';63.0859500000000;21.64336700000000000000
+'Nurmijï¿½rvi 1';190;4;'Rajamï¿½ki';0;1;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Nurmijï¿½rvi kenttï¿½ 1';190;4;'Rajamï¿½ki';0;1;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Nurmijï¿½rvi, Kenttï¿½ 1';190;4;'Rajamï¿½ki';0;1;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Nurmijï¿½rvi, Kenttï¿½ 2';190;4;'Rajamï¿½ki';0;1;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Nurmijï¿½rvi, Kenttï¿½ 3';190;4;'Rajamï¿½ki';0;1;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Nurmijï¿½rvi, kenttï¿½ I';190;4;'Rajamï¿½ki';0;1;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Nurmijï¿½rvi, kenttï¿½ II';190;4;'Rajamï¿½ki';0;1;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Nurmijï¿½rvi, kenttï¿½ III';190;4;'Rajamï¿½ki';0;1;'Kiljavantie 4, 05200 Nurmijï¿½rvi';60.5266025961711;24.74839925765990000000
+'Hï¿½meenlinna, Kenttï¿½ 1';519;3;'Hï¿½meenlinna';0;1;'Ruutikellarintie 5, 65100 Vaasa';61.0040540000000;24.42138200000000000000
+'Hï¿½meenlinna, Kenttï¿½ 2';519;3;'Hï¿½meenlinna';0;2;'Ruutikellarintie 5, 65100 Vaasa';61.0040540000000;24.42138200000000000000
+'Hï¿½meenlinna, Kenttï¿½ 3';519;3;'Hï¿½meenlinna';0;3;'Ruutikellarintie 5, 65100 Vaasa';61.0040540000000;24.42138200000000000000
+'Kemiï¿½, Kenttï¿½ 1';524;3;'Kemiï¿½';0;1;'Edvin Widesvï¿½gen 6, 25700 Kemiï¿½';60.1717970000000;22.73072000000000000000
+'Kemiï¿½, Kenttï¿½ 2';524;3;'Kemiï¿½';0;2;'Edvin Widesvï¿½gen 6, 25700 Kemiï¿½';60.1717970000000;22.73072000000000000000
+'Kemiï¿½, Kenttï¿½ 3';524;3;'Kemiï¿½';0;3;'Edvin Widesvï¿½gen 6, 25700 Kemiï¿½';60.1717970000000;22.73072000000000000000
+'Kemiï¿½, Kenttï¿½1';524;3;'Kemiï¿½';0;1;'Edvin Widesvï¿½gen 6, 25700 Kemiï¿½';60.1717970000000;22.73072000000000000000
+'Kemiï¿½, Kenttï¿½2';524;3;'Kemiï¿½';0;2;'Edvin Widesvï¿½gen 6, 25700 Kemiï¿½';60.1717970000000;22.73072000000000000000
+'Kemiï¿½, Kenttï¿½3';524;3;'Kemiï¿½';0;3;'Edvin Widesvï¿½gen 6, 25700 Kemiï¿½';60.1717970000000;22.73072000000000000000
 'Rahola, Tampere';546;1;'Rahola';1;1;'Teerivuorenkatu 2, 33300 Tampere';61.5026480000000;23.62686700000000000000

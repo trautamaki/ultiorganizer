@@ -1,6 +1,8 @@
 <?php
-class Teams extends Restful {
-	function Teams() {
+class Teams extends Restful
+{
+	function Teams()
+	{
 		$this->listsql = "SELECT team_id, team.name, series.name as seriesname, pool.name as poolname, season.name as seasonname
 		FROM uo_team team LEFT JOIN uo_pool pool ON (team.pool=pool.pool_id)
 		LEFT JOIN uo_series series ON (team.series=series.series_id)
@@ -26,4 +28,3 @@ class Teams extends Restful {
 		$this->linkfields["season"] = "seasons";
 	}
 }
-?>

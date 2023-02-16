@@ -21,77 +21,89 @@
 */
 
 
-  // Simple class to wrap file streams, string streams, etc.
-  // seek is essential, and it should be byte stream
-class StreamReader {
+// Simple class to wrap file streams, string streams, etc.
+// seek is essential, and it should be byte stream
+class StreamReader
+{
   // should return a string [FIXME: perhaps return array of bytes?]
-  function read($bytes) {
+  function read($bytes)
+  {
     return false;
   }
 
   // should return new position
-  function seekto($position) {
+  function seekto($position)
+  {
     return false;
   }
 
   // returns current position
-  function currentpos() {
+  function currentpos()
+  {
     return false;
   }
 
   // returns length of entire stream (limit for seekto()s)
-  function length() {
+  function length()
+  {
     return false;
   }
 };
 
-class StringReader {
+class StringReader
+{
   var $_pos;
   var $_str;
 
-  function StringReader($str='') {
+  function StringReader($str = '')
+  {
     $this->_str = $str;
     $this->_pos = 0;
   }
 
-  function read($bytes) {
+  function read($bytes)
+  {
     $data = substr($this->_str, $this->_pos, $bytes);
     $this->_pos += $bytes;
-    if (strlen($this->_str)<$this->_pos)
+    if (strlen($this->_str) < $this->_pos)
       $this->_pos = strlen($this->_str);
 
     return $data;
   }
 
-  function seekto($pos) {
+  function seekto($pos)
+  {
     $this->_pos = $pos;
-    if (strlen($this->_str)<$this->_pos)
+    if (strlen($this->_str) < $this->_pos)
       $this->_pos = strlen($this->_str);
     return $this->_pos;
   }
 
-  function currentpos() {
+  function currentpos()
+  {
     return $this->_pos;
   }
 
-  function length() {
+  function length()
+  {
     return strlen($this->_str);
   }
-
 };
 
 
-class FileReader {
+class FileReader
+{
   var $_pos;
   var $_fd;
   var $_length;
 
-  function FileReader($filename) {
+  function FileReader($filename)
+  {
     if (file_exists($filename)) {
 
-      $this->_length=filesize($filename);
+      $this->_length = filesize($filename);
       $this->_pos = 0;
-      $this->_fd = fopen($filename,'rb');
+      $this->_fd = fopen($filename, 'rb');
       if (!$this->_fd) {
         $this->error = 3; // Cannot read file, probably permissions
         return false;
@@ -102,7 +114,8 @@ class FileReader {
     }
   }
 
-  function read($bytes) {
+  function read($bytes)
+  {
     if ($bytes) {
       fseek($this->_fd, $this->_pos);
 
@@ -120,34 +133,39 @@ class FileReader {
     } else return '';
   }
 
-  function seekto($pos) {
+  function seekto($pos)
+  {
     fseek($this->_fd, $pos);
     $this->_pos = ftell($this->_fd);
     return $this->_pos;
   }
 
-  function currentpos() {
+  function currentpos()
+  {
     return $this->_pos;
   }
 
-  function length() {
+  function length()
+  {
     return $this->_length;
   }
 
-  function close() {
+  function close()
+  {
     fclose($this->_fd);
   }
-
 };
 
 // Preloads entire file in memory first, then creates a StringReader
 // over it (it assumes knowledge of StringReader internals)
-class CachedFileReader extends StringReader {
-  function CachedFileReader($filename) {
+class CachedFileReader extends StringReader
+{
+  function CachedFileReader($filename)
+  {
     if (file_exists($filename)) {
 
-      $length=filesize($filename);
-      $fd = fopen($filename,'rb');
+      $length = filesize($filename);
+      $fd = fopen($filename, 'rb');
 
       if (!$fd) {
         $this->error = 3; // Cannot read file, probably permissions
@@ -155,13 +173,9 @@ class CachedFileReader extends StringReader {
       }
       $this->_str = fread($fd, $length);
       fclose($fd);
-
     } else {
       $this->error = 2; // File doesn't exist
       return false;
     }
   }
 };
-
-
-?>

@@ -1,16 +1,16 @@
-<?php 
+<?php
 include '../../lib/database.php';
 
-OpenConnection();
+$database = new Database();
 
-$sql="SHOW TABLES";
+$sql = "SHOW TABLES";
 
-$tables = DBQueryToArray($sql, false);
+$tables = $database->DBQueryToArray($sql, false);
 
 echo "<?php\n\n";
 foreach ($tables as $table) {
 	$next = implode($table);
-	echo "\$tables['".$next."'] = array( ";
+	echo "\$tables['" . $next . "'] = array( ";
 	$columns = GetTableColumns($next);
 	$first = true;
 	foreach ($columns as $column => $type) {
@@ -19,10 +19,9 @@ foreach ($tables as $table) {
 		} else {
 			echo ", ";
 		}
-		echo "'".$column."' => '".$type."'";
+		echo "'" . $column . "' => '" . $type . "'";
 	}
 	echo " );\n";
 }
 
 echo "\n\n?>";
-?>

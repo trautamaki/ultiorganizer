@@ -1,5 +1,6 @@
 <?php
- /**
+
+/**
  * Univarsel Feed Writer
  * 
  * FeedItem class - Used as feed element in FeedWriter class
@@ -8,171 +9,158 @@
  * @author          Anis uddin Ahmad <anisniit@gmail.com>
  * @link            http://www.ajaxray.com/projects/rss
  */
- class FeedItem
- {
+class FeedItem
+{
 	var $elements = array();    //Collection of feed elements
 	var $version;
-	
+
 	/**
-	* Constructor 
-	* 
-	* @param    contant     (RSS1/RSS2/ATOM) RSS2 is default. 
-	*/ 
+	 * Constructor 
+	 * 
+	 * @param    contant     (RSS1/RSS2/ATOM) RSS2 is default. 
+	 */
 	function FeedItem($version = RSS2)
-	{    
+	{
 		$this->version = $version;
 	}
-	
+
 	/**
-	* Add an element to elements array
-	* 
-	* @access   public
-	* @param    srting  The tag name of an element
-	* @param    srting  The content of tag
-	* @param    array   Attributes(if any) in 'attrName' => 'attrValue' format
-	* @return   void
-	*/
+	 * Add an element to elements array
+	 * 
+	 * @access   public
+	 * @param    srting  The tag name of an element
+	 * @param    srting  The content of tag
+	 * @param    array   Attributes(if any) in 'attrName' => 'attrValue' format
+	 * @return   void
+	 */
 	function addElement($elementName, $content, $attributes = null)
 	{
 		$this->elements[$elementName]['name']       = $elementName;
 		$this->elements[$elementName]['content']    = $content;
 		$this->elements[$elementName]['attributes'] = $attributes;
 	}
-	
+
 	/**
-	* Set multiple feed elements from an array. 
-	* Elements which have attributes cannot be added by this method
-	* 
-	* @access   public
-	* @param    array   array of elements in 'tagName' => 'tagContent' format.
-	* @return   void
-	*/
+	 * Set multiple feed elements from an array. 
+	 * Elements which have attributes cannot be added by this method
+	 * 
+	 * @access   public
+	 * @param    array   array of elements in 'tagName' => 'tagContent' format.
+	 * @return   void
+	 */
 	function addElementArray($elementArray)
 	{
-		if(! is_array($elementArray)) return;
-		foreach ($elementArray as $elementName => $content) 
-		{
+		if (!is_array($elementArray)) return;
+		foreach ($elementArray as $elementName => $content) {
 			$this->addElement($elementName, $content);
 		}
 	}
-	
+
 	/**
-	* Return the collection of elements in this feed item
-	* 
-	* @access   public
-	* @return   array
-	*/
+	 * Return the collection of elements in this feed item
+	 * 
+	 * @access   public
+	 * @return   array
+	 */
 	function getElements()
 	{
 		return $this->elements;
 	}
-	
+
 	// Wrapper functions ------------------------------------------------------
-	
+
 	/**
-	* Set the 'dscription' element of feed item
-	* 
-	* @access   public
-	* @param    string  The content of 'description' element
-	* @return   void
-	*/
-	function setDescription($description) 
+	 * Set the 'dscription' element of feed item
+	 * 
+	 * @access   public
+	 * @param    string  The content of 'description' element
+	 * @return   void
+	 */
+	function setDescription($description)
 	{
-		$tag = ($this->version == ATOM)? 'summary' : 'description'; 
+		$tag = ($this->version == ATOM) ? 'summary' : 'description';
 		$this->addElement($tag, $description);
 	}
-	
+
 	/**
-	* @desc     Set the 'title' element of feed item
-	* @access   public
-	* @param    string  The content of 'title' element
-	* @return   void
-	*/
-	function setTitle($title) 
+	 * @desc     Set the 'title' element of feed item
+	 * @access   public
+	 * @param    string  The content of 'title' element
+	 * @return   void
+	 */
+	function setTitle($title)
 	{
-		$this->addElement('title', $title);  	
+		$this->addElement('title', $title);
 	}
-	
+
 	/**
-	* @desc     Set the 'guid' element of feed item
-	* @access   public
-	* @param    string  The content of 'guid' element
-	* @return   void
-	*/
-	function setGuid($guid) 
+	 * @desc     Set the 'guid' element of feed item
+	 * @access   public
+	 * @param    string  The content of 'guid' element
+	 * @return   void
+	 */
+	function setGuid($guid)
 	{
-		$this->addElement('guid', $guid);  	
+		$this->addElement('guid', $guid);
 	}
-	
+
 	/**
-	* Set the 'date' element of feed item
-	* 
-	* @access   public
-	* @param    string  The content of 'date' element
-	* @return   void
-	*/
-	function setDate($date) 
+	 * Set the 'date' element of feed item
+	 * 
+	 * @access   public
+	 * @param    string  The content of 'date' element
+	 * @return   void
+	 */
+	function setDate($date)
 	{
-		if(! is_numeric($date))
-		{
+		if (!is_numeric($date)) {
 			$date = strtotime($date);
 		}
-		
-		if($this->version == ATOM)
-		{
+
+		if ($this->version == ATOM) {
 			$tag    = 'updated';
 			$value  = date(DATE_ATOM, $date);
-		}        
-		elseif($this->version == RSS2) 
-		{
+		} elseif ($this->version == RSS2) {
 			$tag    = 'pubDate';
 			$value  = date(DATE_RSS, $date);
-		}
-		else                                
-		{
+		} else {
 			$tag    = 'dc:date';
 			$value  = date("Y-m-d", $date);
 		}
-		
-		$this->addElement($tag, $value);    
+
+		$this->addElement($tag, $value);
 	}
-	
+
 	/**
-	* Set the 'link' element of feed item
-	* 
-	* @access   public
-	* @param    string  The content of 'link' element
-	* @return   void
-	*/
-	function setLink($link) 
+	 * Set the 'link' element of feed item
+	 * 
+	 * @access   public
+	 * @param    string  The content of 'link' element
+	 * @return   void
+	 */
+	function setLink($link)
 	{
-		if($this->version == RSS2 || $this->version == RSS1)
-		{
+		if ($this->version == RSS2 || $this->version == RSS1) {
 			$this->addElement('link', $link);
+		} else {
+			$this->addElement('link', '', array('href' => $link));
+			$this->addElement('id', FeedWriter::uuid($link, 'urn:uuid:'));
 		}
-		else
-		{
-			$this->addElement('link','',array('href'=>$link));
-			$this->addElement('id', FeedWriter::uuid($link,'urn:uuid:'));
-		} 
-		
 	}
-	
+
 	/**
-	* Set the 'encloser' element of feed item
-	* For RSS 2.0 only
-	* 
-	* @access   public
-	* @param    string  The url attribute of encloser tag
-	* @param    string  The length attribute of encloser tag
-	* @param    string  The type attribute of encloser tag
-	* @return   void
-	*/
+	 * Set the 'encloser' element of feed item
+	 * For RSS 2.0 only
+	 * 
+	 * @access   public
+	 * @param    string  The url attribute of encloser tag
+	 * @param    string  The length attribute of encloser tag
+	 * @param    string  The type attribute of encloser tag
+	 * @return   void
+	 */
 	function setEncloser($url, $length, $type)
 	{
-		$attributes = array('url'=>$url, 'length'=>$length, 'type'=>$type);
-		$this->addElement('enclosure','',$attributes);
+		$attributes = array('url' => $url, 'length' => $length, 'type' => $type);
+		$this->addElement('enclosure', '', $attributes);
 	}
-	
- } // end of class FeedItem
-?>
+} // end of class FeedItem

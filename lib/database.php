@@ -271,4 +271,3 @@ if (function_exists('mysql_set_charset') === false) {
     }
   }
 }
-?>

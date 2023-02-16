@@ -33,11 +33,12 @@
  * second parameter in the constructor (e.g. whenusing very large MO files
  * that you don't want to keep in memory)
  */
-class gettext_reader {
+class gettext_reader
+{
   //public:
-   var $error = 0; // public variable that holds error code (0 if no error)
+  var $error = 0; // public variable that holds error code (0 if no error)
 
-   //private:
+  //private:
   var $BYTEORDER = 0;        // 0: low endian, 1: big endian
   var $STREAM = NULL;
   var $short_circuit = false;
@@ -60,19 +61,21 @@ class gettext_reader {
    * @access private
    * @return Integer from the Stream
    */
-  function readint() {
-      if ($this->BYTEORDER == 0) {
-        // low endian
-        $input=unpack('V', $this->STREAM->read(4));
-        return array_shift($input);
-      } else {
-        // big endian
-        $input=unpack('N', $this->STREAM->read(4));
-        return array_shift($input);
-      }
+  function readint()
+  {
+    if ($this->BYTEORDER == 0) {
+      // low endian
+      $input = unpack('V', $this->STREAM->read(4));
+      return array_shift($input);
+    } else {
+      // big endian
+      $input = unpack('N', $this->STREAM->read(4));
+      return array_shift($input);
     }
+  }
 
-  function read($bytes) {
+  function read($bytes)
+  {
     return $this->STREAM->read($bytes);
   }
 
@@ -82,14 +85,15 @@ class gettext_reader {
    * @param int count How many elements should be read
    * @return Array of Integers
    */
-  function readintarray($count) {
+  function readintarray($count)
+  {
     if ($this->BYTEORDER == 0) {
-        // low endian
-        return unpack('V'.$count, $this->STREAM->read(4 * $count));
-      } else {
-        // big endian
-        return unpack('N'.$count, $this->STREAM->read(4 * $count));
-      }
+      // low endian
+      return unpack('V' . $count, $this->STREAM->read(4 * $count));
+    } else {
+      // big endian
+      return unpack('N' . $count, $this->STREAM->read(4 * $count));
+    }
   }
 
   /**
@@ -98,9 +102,10 @@ class gettext_reader {
    * @param object Reader the StreamReader object
    * @param boolean enable_cache Enable or disable caching of strings (default on)
    */
-  function gettext_reader($Reader, $enable_cache = true) {
+  function gettext_reader($Reader, $enable_cache = true)
+  {
     // If there isn't a StreamReader, turn on short circuit mode.
-    if (! $Reader || isset($Reader->error) ) {
+    if (!$Reader || isset($Reader->error)) {
       $this->short_circuit = true;
       return;
     }
@@ -139,10 +144,13 @@ class gettext_reader {
    *
    * @access private
    */
-  function load_tables() {
-    if (is_array($this->cache_translations) &&
+  function load_tables()
+  {
+    if (
+      is_array($this->cache_translations) &&
       is_array($this->table_originals) &&
-      is_array($this->table_translations))
+      is_array($this->table_translations)
+    )
       return;
 
     /* get original and translations tables */
@@ -156,7 +164,7 @@ class gettext_reader {
     }
 
     if ($this->enable_cache) {
-      $this->cache_translations = array ();
+      $this->cache_translations = array();
       /* read all strings in the cache */
       for ($i = 0; $i < $this->total; $i++) {
         $this->STREAM->seekto($this->table_originals[$i * 2 + 2]);
@@ -175,10 +183,11 @@ class gettext_reader {
    * @param int num Offset number of original string
    * @return string Requested string if found, otherwise ''
    */
-  function get_original_string($num) {
+  function get_original_string($num)
+  {
     $length = $this->table_originals[$num * 2 + 1];
     $offset = $this->table_originals[$num * 2 + 2];
-    if (! $length)
+    if (!$length)
       return '';
     $this->STREAM->seekto($offset);
     $data = $this->STREAM->read($length);
@@ -192,10 +201,11 @@ class gettext_reader {
    * @param int num Offset number of original string
    * @return string Requested string if found, otherwise ''
    */
-  function get_translation_string($num) {
+  function get_translation_string($num)
+  {
     $length = $this->table_translations[$num * 2 + 1];
     $offset = $this->table_translations[$num * 2 + 2];
-    if (! $length)
+    if (!$length)
       return '';
     $this->STREAM->seekto($offset);
     $data = $this->STREAM->read($length);
@@ -211,7 +221,8 @@ class gettext_reader {
    * @param int end (internally used in recursive function)
    * @return int string number (offset in originals table)
    */
-  function find_string($string, $start = -1, $end = -1) {
+  function find_string($string, $start = -1, $end = -1)
+  {
     if (($start == -1) or ($end == -1)) {
       // find_string is called with only one parameter, set start end end
       $start = 0;
@@ -250,7 +261,8 @@ class gettext_reader {
    * @param string string to be translated
    * @return string translated string (or original, if not found)
    */
-  function translate($string) {
+  function translate($string)
+  {
     if ($this->short_circuit)
       return $string;
     $this->load_tables();
@@ -276,7 +288,8 @@ class gettext_reader {
    * @access private
    * @return string sanitized plural form expression
    */
-  function sanitize_plural_expression($expr) {
+  function sanitize_plural_expression($expr)
+  {
     // Get rid of disallowed characters.
     $expr = preg_replace('@[^a-zA-Z0-9_:;\(\)\?\|\&=!<>+*/\%-]@', '', $expr);
 
@@ -287,19 +300,19 @@ class gettext_reader {
     for ($i = 0; $i < strlen($expr); $i++) {
       $ch = $expr[$i];
       switch ($ch) {
-      case '?':
-        $res .= ' ? (';
-        $p++;
-        break;
-      case ':':
-        $res .= ') : (';
-        break;
-      case ';':
-        $res .= str_repeat( ')', $p) . ';';
-        $p = 0;
-        break;
-      default:
-        $res .= $ch;
+        case '?':
+          $res .= ' ? (';
+          $p++;
+          break;
+        case ':':
+          $res .= ') : (';
+          break;
+        case ';':
+          $res .= str_repeat(')', $p) . ';';
+          $p = 0;
+          break;
+        default:
+          $res .= $ch;
       }
     }
     return $res;
@@ -311,7 +324,8 @@ class gettext_reader {
    * @access private
    * @return string verbatim plural form header field
    */
-  function extract_plural_forms_header_from_po_header($header) {
+  function extract_plural_forms_header_from_po_header($header)
+  {
     if (preg_match("/(^|\n)plural-forms: ([^\n]*)\n/i", $header, $regs))
       $expr = $regs[2];
     else
@@ -325,13 +339,14 @@ class gettext_reader {
    * @access private
    * @return string plural form header
    */
-  function get_plural_forms() {
+  function get_plural_forms()
+  {
     // lets assume message number 0 is header
     // this is true, right?
     $this->load_tables();
 
     // cache header field for plural forms
-    if (! is_string($this->pluralheader)) {
+    if (!is_string($this->pluralheader)) {
       if ($this->enable_cache) {
         $header = $this->cache_translations[""];
       } else {
@@ -350,11 +365,12 @@ class gettext_reader {
    * @param n count
    * @return int array index of the right plural form
    */
-  function select_string($n) {
+  function select_string($n)
+  {
     $string = $this->get_plural_forms();
-    $string = str_replace('nplurals',"\$total",$string);
-    $string = str_replace("n",$n,$string);
-    $string = str_replace('plural',"\$plural",$string);
+    $string = str_replace('nplurals', "\$total", $string);
+    $string = str_replace("n", $n, $string);
+    $string = str_replace('plural', "\$plural", $string);
 
     $total = 0;
     $plural = 0;
@@ -373,7 +389,8 @@ class gettext_reader {
    * @param string number
    * @return translated plural form
    */
-  function ngettext($single, $plural, $number) {
+  function ngettext($single, $plural, $number)
+  {
     if ($this->short_circuit) {
       if ($number != 1)
         return $plural;
@@ -389,7 +406,7 @@ class gettext_reader {
 
 
     if ($this->enable_cache) {
-      if (! array_key_exists($key, $this->cache_translations)) {
+      if (!array_key_exists($key, $this->cache_translations)) {
         return ($number != 1) ? $plural : $single;
       } else {
         $result = $this->cache_translations[$key];
@@ -408,15 +425,15 @@ class gettext_reader {
     }
   }
 
-  function pgettext($context, $msgid) {
+  function pgettext($context, $msgid)
+  {
     $key = $context . chr(4) . $msgid;
     return $this->translate($key);
   }
 
-  function npgettext($context, $singular, $plural, $number) {
+  function npgettext($context, $singular, $plural, $number)
+  {
     $singular = $context . chr(4) . $singular;
     return $this->ngettext($singular, $plural, $number);
   }
 }
-
-?>
