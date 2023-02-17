@@ -227,7 +227,7 @@ function PoolTeams($poolId, $order = "rank")
 {
   $query = sprintf(
     "SELECT uo_team.team_id, uo_team.name, uo_team.club, club.name AS clubname,
-        uo_team_pool.Rank, uo_team.country, c.name AS countryname, uo_team.rank AS seed,
+        `uo_team_pool`.`rank`, uo_team.country, c.name AS countryname, `uo_team`.`rank` AS seed,
         c.flagfile, uo_team_pool.activerank
         FROM uo_team
         RIGHT JOIN uo_team_pool ON (uo_team.team_id=uo_team_pool.team)
@@ -239,16 +239,16 @@ function PoolTeams($poolId, $order = "rank")
 
   switch ($order) {
     case "seed":
-      $query .= " ORDER BY uo_team_pool.Rank ASC";
+      $query .= " ORDER BY `uo_team_pool`.`Rank` ASC";
       break;
     case "name":
       $query .= " ORDER BY uo_team.name, uo_team.team_id";
       break;
     case "rank":
-      $query .= " ORDER BY uo_team_pool.activerank ASC, uo_team_pool.Rank ASC, uo_team.team_id";
+      $query .= " ORDER BY uo_team_pool.activerank ASC, `uo_team_pool`.`rank` ASC, uo_team.team_id";
       break;
     default:
-      $query .= " ORDER BY uo_team_pool.activerank ASC, uo_team_pool.Rank ASC, uo_team.team_id ";
+      $query .= " ORDER BY uo_team_pool.activerank ASC, `uo_team_pool`.`rank` ASC, uo_team.team_id ";
       break;
   }
 
@@ -1676,7 +1676,7 @@ function PoolAddTeam($poolId, $teamId, $rank, $updaterank = false, $checkrights 
     if ($updaterank) {
       $query = sprintf(
         "INSERT IGNORE INTO uo_team_pool
-                  (team, pool, rank, activerank)
+                  (team, pool, `rank`, activerank)
                   VALUES (%d,%d,%d,%d)",
         (int)$teamId,
         (int)$poolId,
@@ -1686,7 +1686,7 @@ function PoolAddTeam($poolId, $teamId, $rank, $updaterank = false, $checkrights 
     } else {
       $query = sprintf(
         "INSERT IGNORE INTO uo_team_pool
-                  (team, pool, rank)
+                  (team, pool, `rank`)
                   VALUES (%d,%d,%d)",
         (int)$teamId,
         (int)$poolId,

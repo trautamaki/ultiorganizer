@@ -876,7 +876,7 @@ function SeriesCopyTeams($to, $from)
     $teams = SeriesTeams($from);
     foreach ($teams as $team) {
       $query = sprintf(
-        "INSERT INTO uo_team(name, club, country, rank, abbreviation, valid, series )
+        "INSERT INTO uo_team(name, club, country, `rank`, abbreviation, valid, series )
       			VALUES ('%s',%d,%d,%d,'%s',1,%d)",
         GetDatabase()->RealEscapeString($team['name']),
         (int) $team['club'],

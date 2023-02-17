@@ -532,7 +532,7 @@ function TeamMove($teamId, $frompool, $inplayofftree = false)
         return;
       } else {
         $query = sprintf(
-          "DELETE FROM uo_team_pool WHERE team=%d AND rank=%d",
+          "DELETE FROM uo_team_pool WHERE team=%d AND `rank`=%d",
           (int)$move['topool'],
           (int)$move['torank']
         );
@@ -543,7 +543,7 @@ function TeamMove($teamId, $frompool, $inplayofftree = false)
   //insert team to next pool
   $query = sprintf(
     "INSERT IGNORE INTO uo_team_pool
-				(team, pool, rank, activerank) 
+				(team, pool, `rank`, activerank) 
 				VALUES	('%s','%s','%s','%s')",
     (int)$teamId,
     (int)$move['topool'],
