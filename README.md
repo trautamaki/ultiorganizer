@@ -23,7 +23,7 @@ The files are organized as follows:
 
 # Installation
 
-To run Ultiorganizer you need a web server, php 4.4 and a mysql database.
+To run Ultiorganizer you need a web server, php 7 and a mysql8 database.
 
 To install Ultiorganizer simply copy the files to your web server, call http://yourpage.com/install.php and follow the instructions.
 
@@ -43,12 +43,10 @@ docker network create ultiorganizer-net
 
 ## Create the DB
 
-MySQL 8 changed the default characterset to `utf8mb4` and the currently used MySQL PHP extension doesn't support it. Therefore MySQL 5 is used for development.
-
 ```sh
 export MYSQL_ROOT_PASSWORD='<root password>'
 
-docker run --detach --name=ultiorganizer-db --network ultiorganizer-net --env "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD" mysql:5.7
+docker run --detach --name=ultiorganizer-db --network ultiorganizer-net --env "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD" mysql:8
 ```
 
 MySQL 5.7.5 and up implements detection of functional dependence. As there are queries in Ultiorganizer that refer to columns that are not listed in the `GROUP BY` section errors occur. These can be circumvented by disabling the new functionality.
@@ -56,19 +54,16 @@ MySQL 5.7.5 and up implements detection of functional dependence. As there are q
 ```sh
 docker exec ultiorganizer-db mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --execute="CREATE DATABASE ultiorganizer;SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));"
 ```
-
 More details in: <https://dev.mysql.com/doc/refman/5.7/en/group-by-handling.html>
 
 ## Create the web server
 
-The original MySQL PHP driver has been deprecated in PHP 5.5.0 and removed in PHP 7.0. Therefore Ultiorganizer can in it's current state be developed only with PHP 5.
-
 The command below should be run ini the folder where you have cloned your Ultiorganizer Git repo. If not then substitute `$PWD` with a path to the code or copy the code to the container.
 
 ```sh
-docker run --network ultiorganizer-net --name=ultiorganizer --publish 8080:80 --volume "$PWD":/var/www/html --detach php:5-apache
+docker run --network ultiorganizer-net --name=ultiorganizer --publish 8080:80 --volume "$PWD":/var/www/html --detach php:7-apache
 
-docker run --network ultiorganizer-net --name=ultiorganizer --publish 8080:80 -v "$PWD":/var/www/html -d php:5-apache
+docker run --network ultiorganizer-net --name=ultiorganizer --publish 8080:80 -v "$PWD":/var/www/html -d php:7-apache
 ```
 
 The base PHP apache image is missing some libraries and extensions that need to be installed.
