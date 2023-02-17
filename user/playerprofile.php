@@ -28,7 +28,7 @@ if (empty($player['profile_id'])) {
 }
 
 //$accId = 0;
-if (!hasEditPlayerProfileRight($playerId)) {
+if (!hasEditPlayerProfileRight($database, $playerId)) {
 	die('Insufficient rights to edit player profile');
 }
 
