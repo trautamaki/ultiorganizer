@@ -532,7 +532,7 @@ function TeamMove($database, $teamId, $frompool, $inplayofftree = false)
         return;
       } else {
         $query = sprintf(
-          "DELETE FROM uo_team_pool WHERE team=%d AND rank=%d",
+          "DELETE FROM uo_team_pool WHERE team=%d AND `rank`=%d",
           (int)$move['topool'],
           (int)$move['torank']
         );
@@ -543,7 +543,7 @@ function TeamMove($database, $teamId, $frompool, $inplayofftree = false)
   //insert team to next pool
   $query = sprintf(
     "INSERT IGNORE INTO uo_team_pool
-				(team, pool, rank, activerank) 
+				(team, pool, `rank`, activerank) 
 				VALUES	('%s','%s','%s','%s')",
     (int)$teamId,
     (int)$move['topool'],
@@ -1506,12 +1506,9 @@ function AddTeam($database, $params)
 function SetTeam($database, $params)
 {
   if (hasEditTeamsRight($database, $params['series'])) {
-    $query = sprintf(
-      "
-			UPDATE uo_team SET
-			name='%s', pool='%s', abbreviation='%s',
-			rank='%s', valid='%s', series='%s'
-			WHERE team_id='%s'",
+    $query = sprintf("UPDATE `uo_team` SET
+			`name`='%s', `pool`=%d, `abbreviation`='%s', `rank`=%d, `valid`=%d, `series`=%d
+			WHERE `team_id`=%d",
       $database->RealEscapeString($params['name']),
       $database->RealEscapeString($params['pool']),
       $database->RealEscapeString($params['abbreviation']),
@@ -1524,10 +1521,10 @@ function SetTeam($database, $params)
     $result = $database->DBQuery($query);
 
     if (!empty($params['country'])) {
-      $database->DBQuery("UPDATE uo_team SET country=" . (int)$params['country'] . " WHERE team_id=" . (int)$params['team_id']);
+      $database->DBQuery("UPDATE `uo_team` SET `country`=" . (int)$params['country'] . " WHERE `team_id`=" . (int)$params['team_id']);
     }
     if (!empty($params['club'])) {
-      $database->DBQuery("UPDATE uo_team SET club=" . (int)$params['club'] . " WHERE team_id=" . (int)$params['team_id']);
+      $database->DBQuery("UPDATE `uo_team` SET `club`=" . (int)$params['club'] . " WHERE `team_id`=" . (int)$params['team_id']);
     }
 
     return $result;
