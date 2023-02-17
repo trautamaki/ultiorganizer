@@ -112,7 +112,7 @@ if (!empty($poolId)){
 		}
 
 		$smscount=0;
-//		while($row = mysql_fetch_assoc($moves))	{
+//		while($row = DB()->FetchAssoc($moves))	{
 		foreach($moves as $row)	{
 	//		$poolinfo = PoolInfo($row['topool']);
 

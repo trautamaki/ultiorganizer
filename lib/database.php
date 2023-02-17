@@ -25,4 +25,10 @@ include_once $include_prefix.'sql/upgrade_db.php';
 // 'lib/table-definition-cache' with the database version in the file name.
 // You can get it by getting ext/restful/show_tables.php
 define('DB_VERSION', 76); //Database version matching to upgrade functions.
+
+$db = new Database();
+function DB() {
+  global $db;
+  return $db;
+}
 ?>

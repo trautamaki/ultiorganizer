@@ -189,44 +189,44 @@ if (!empty($_POST['series'])) {
 	for($i=0;$i<(count($newmove1));$i++) {	
 		$query=sprintf("UPDATE uo_moveteams SET topool='%s', torank='%s', scheduling_id='%s' 
 						WHERE frompool='%s' AND fromplacing='%s'",
-			mysql_real_escape_string($newmove1[$i]['topool']),
-			mysql_real_escape_string($newmove1[$i]['torank']),
-			mysql_real_escape_string($newmove1[$i]['scheduling_id']),
-			mysql_real_escape_string($newmove1[$i]['frompool']),
-			mysql_real_escape_string($newmove1[$i]['fromplacing'])	 );
+			DB()->RealEscapeString($newmove1[$i]['topool']),
+			DB()->RealEscapeString($newmove1[$i]['torank']),
+			DB()->RealEscapeString($newmove1[$i]['scheduling_id']),
+			DB()->RealEscapeString($newmove1[$i]['frompool']),
+			DB()->RealEscapeString($newmove1[$i]['fromplacing'])	 );
 			
 //		echo $query."<br>";
-		$result = mysql_query($query);
-		if (!$result) { die('Invalid query: ' . mysql_error() . $query); }
+		$result = DB()->DBQuery($query);
+		if (!$result) { die('Invalid query: ' . DB()->SQLError() . $query); }
 				
 		$query=sprintf("UPDATE uo_scheduling_name SET name='%s' 
 						WHERE scheduling_id='%s'",
-			mysql_real_escape_string($newmove1[$i]['pteamname']),
-			mysql_real_escape_string($newmove1[$i]['scheduling_id']));			
+			DB()->RealEscapeString($newmove1[$i]['pteamname']),
+			DB()->RealEscapeString($newmove1[$i]['scheduling_id']));			
 //		echo $query."<br>";
-		$result = mysql_query($query);
-		if (!$result) { die('Invalid query: ' . mysql_error() . $query); }				
+		$result = DB()->DBQuery($query);
+		if (!$result) { die('Invalid query: ' . DB()->SQLError() . $query); }				
 	}
 	for($i=0;$i<(count($newmove2));$i++) {				
 		$query=sprintf("UPDATE uo_moveteams SET topool='%s', torank='%s', scheduling_id='%s' 
 						WHERE frompool='%s' AND fromplacing='%s'",
-			mysql_real_escape_string($newmove2[$i]['topool']),
-			mysql_real_escape_string($newmove2[$i]['torank']),
-			mysql_real_escape_string($newmove2[$i]['scheduling_id']),
-			mysql_real_escape_string($newmove2[$i]['frompool']),
-			mysql_real_escape_string($newmove2[$i]['fromplacing'])	 );
+			DB()->RealEscapeString($newmove2[$i]['topool']),
+			DB()->RealEscapeString($newmove2[$i]['torank']),
+			DB()->RealEscapeString($newmove2[$i]['scheduling_id']),
+			DB()->RealEscapeString($newmove2[$i]['frompool']),
+			DB()->RealEscapeString($newmove2[$i]['fromplacing'])	 );
 		//		echo $query."<br>";
-		$result = mysql_query($query);
-		if (!$result) { die('Invalid query: ' . mysql_error()); }
+		$result = DB()->DBQuery($query);
+		if (!$result) { die('Invalid query: ' . DB()->SQLError()); }
 		
 		
 		$query=sprintf("UPDATE uo_scheduling_name SET name='%s' 
 						WHERE scheduling_id='%s'",
-			mysql_real_escape_string($newmove2[$i]['pteamname']),
-			mysql_real_escape_string($newmove2[$i]['scheduling_id']));
+			DB()->RealEscapeString($newmove2[$i]['pteamname']),
+			DB()->RealEscapeString($newmove2[$i]['scheduling_id']));
 //		echo $query."<br>";
-		$result = mysql_query($query);
-		if (!$result) { die('Invalid query: ' . mysql_error()); }
+		$result = DB()->DBQuery($query);
+		if (!$result) { die('Invalid query: ' . DB()->SQLError()); }
 	}
 	
 	
@@ -244,7 +244,7 @@ else{
 	
 	$series = Series();
 			
-	while($row = mysql_fetch_assoc($series)){
+	while($row = DB()->FetchAssoc($series)){
 		$html .= "<option class='dropdown' value='".utf8entities($row['series_id'])."'>". utf8entities($row['seasonname']) . " " . utf8entities($row['name']) ."</option>";
 	}
 	

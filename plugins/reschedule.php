@@ -31,27 +31,27 @@ if(!empty($_POST['season'])){
 
 if (isset($_POST['update'])) {
 
-	//DBQuery("UPDATE uo_reservation SET starttime='2010-07-07 08:30:00', endtime='2010-07-07 22:30:00' WHERE reservationgroup='Day 4'");
+	//DB()->DBQuery("UPDATE uo_reservation SET starttime='2010-07-07 08:30:00', endtime='2010-07-07 22:30:00' WHERE reservationgroup='Day 4'");
 	
 	//re-schedule Day 4 games:
-	$games = DBQueryToArray("SELECT g.*, r.* FROM uo_game g 
+	$games = DB()->DBQueryToArray("SELECT g.*, r.* FROM uo_game g 
 		LEFT JOIN uo_reservation r ON(g.reservation=r.id)
 		WHERE r.reservationgroup='Day 4'
 		ORDER BY r.fieldname+0,g.time");
 	foreach($games as $game){
 		if(Hours($game['time'])==8){
-			DBQuery("UPDATE uo_game SET time='2010-07-07 12:15:00', timeslot=105 WHERE game_id=".$game['game_id']."");
+			DB()->DBQuery("UPDATE uo_game SET time='2010-07-07 12:15:00', timeslot=105 WHERE game_id=".$game['game_id']."");
 		}elseif(Hours($game['time'])==10){
-			DBQuery("UPDATE uo_game SET time='2010-07-07 14:00:00', timeslot=105 WHERE game_id=".$game['game_id']."");		
+			DB()->DBQuery("UPDATE uo_game SET time='2010-07-07 14:00:00', timeslot=105 WHERE game_id=".$game['game_id']."");		
 		}elseif(Hours($game['time'])==13){
-			DBQuery("UPDATE uo_game SET time='2010-07-07 15:45:00', timeslot=105 WHERE game_id=".$game['game_id']."");
+			DB()->DBQuery("UPDATE uo_game SET time='2010-07-07 15:45:00', timeslot=105 WHERE game_id=".$game['game_id']."");
 		}elseif(Hours($game['time'])==15){
-			DBQuery("UPDATE uo_game SET time='2010-07-07 17:30:00', timeslot=105 WHERE game_id=".$game['game_id']."");
+			DB()->DBQuery("UPDATE uo_game SET time='2010-07-07 17:30:00', timeslot=105 WHERE game_id=".$game['game_id']."");
 		}
 	}
 	
 	//re-schedule Day 3 games
-	$games = DBQueryToArray("SELECT g.*, r.* FROM uo_game g 
+	$games = DB()->DBQueryToArray("SELECT g.*, r.* FROM uo_game g 
 		LEFT JOIN uo_reservation r ON(g.reservation=r.id)
 		WHERE r.reservationgroup='Day 3' AND (TIME_FORMAT(time,'%H')='13' OR TIME_FORMAT(time,'%H')='15')
 		ORDER BY r.fieldname+0,time");
@@ -68,10 +68,10 @@ if (isset($_POST['update'])) {
 		die;
 		}
 		
-		$newresid = DBQueryToValue("SELECT r.id FROM uo_reservation r
+		$newresid = DB()->DBQueryToValue("SELECT r.id FROM uo_reservation r
 						WHERE r.reservationgroup='Day 4' AND r.fieldname='".$game['fieldname']."'");
 		
-		DBQuery("UPDATE uo_game SET time='$timestring', timeslot=$timeslot,
+		DB()->DBQuery("UPDATE uo_game SET time='$timestring', timeslot=$timeslot,
 		reservation=$newresid WHERE game_id=".$game['game_id']."");
 		
 	}
@@ -85,7 +85,7 @@ $html .= "<p>".("Select event").": <select class='dropdown' name='season'>\n";
 
 $seasons = Seasons();
 		
-while($row = mysql_fetch_assoc($seasons)){
+while($row = DB()->FetchAssoc($seasons)){
 	$html .= "<option class='dropdown' value='".utf8entities($row['season_id'])."'>". utf8entities($row['name']) ."</option>";
 }
 

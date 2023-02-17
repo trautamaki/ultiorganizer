@@ -47,7 +47,7 @@ if (isset($_POST['simulate']) && !empty($_POST['pools'])) {
 	foreach($pools as $poolId){
 		$color = $colors[rand(0,count($colors)-1)];
 		$query = "UPDATE uo_pool SET color='".$color."' WHERE pool_id=".$poolId;
-		DBQuery($query);		
+		DB()->DBQuery($query);		
 	}
 }
 
@@ -59,7 +59,7 @@ if(empty($seasonId)){
 
 	$seasons = Seasons();
 			
-	while($row = mysql_fetch_assoc($seasons)){
+	while($row = DB()->FetchAssoc($seasons)){
 		$html .= "<option class='dropdown' value='".utf8entities($row['season_id'])."'>". utf8entities($row['name']) ."</option>";
 	}
 

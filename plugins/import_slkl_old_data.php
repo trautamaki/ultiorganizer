@@ -152,18 +152,18 @@ if (isset($_POST['import'])) {
 				$query = sprintf("INSERT INTO uo_game
         			(game_id, hometeam, visitorteam, homescore, visitorscore, reservation, time, pool, valid, respteam) 
         			VALUES ('%s','%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
-        		    mysql_real_escape_string($gameId),	
-				    mysql_real_escape_string($hometeam),
-        			mysql_real_escape_string($awayteam),
-        			mysql_real_escape_string($homescores),
-        			mysql_real_escape_string($awayscores),
-        			mysql_real_escape_string($place),
-        			mysql_real_escape_string($time),
-        			mysql_real_escape_string($division),
+        		    DB()->RealEscapeString($gameId),	
+				    DB()->RealEscapeString($hometeam),
+        			DB()->RealEscapeString($awayteam),
+        			DB()->RealEscapeString($homescores),
+        			DB()->RealEscapeString($awayscores),
+        			DB()->RealEscapeString($place),
+        			DB()->RealEscapeString($time),
+        			DB()->RealEscapeString($division),
         			1,
-        			mysql_real_escape_string($respteam)); //FIXME update hasstarted?
+        			DB()->RealEscapeString($respteam)); //FIXME update hasstarted?
         		//$html .= "<p>$query</p>";
-        		DBQuery($query); 
+        		DB()->DBQuery($query); 
 
 				
 			  }elseif($table_type=="goal"){
@@ -182,8 +182,8 @@ if (isset($_POST['import'])) {
 				}
 				
 				$query = sprintf(" SELECT *	FROM uo_goal WHERE game='%s' AND num='%s'",
-		            mysql_real_escape_string($gameId),
-		            mysql_real_escape_string($i));
+		            DB()->RealEscapeString($gameId),
+		            DB()->RealEscapeString($i));
 		            
 			  $exist = DBQueryRowCount($query);
 				if($exist){
@@ -193,17 +193,17 @@ if (isset($_POST['import'])) {
 				$query = sprintf("INSERT INTO uo_goal
         			(game, num, assist, scorer, time, homescore, visitorscore, ishomegoal, iscallahan) 
         			VALUES ('%s','%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
-        		    mysql_real_escape_string($gameId),	
-				    mysql_real_escape_string($i),
-        			mysql_real_escape_string($pass),
-        			mysql_real_escape_string($goal),
-        			mysql_real_escape_string($time),
-        			mysql_real_escape_string($home),
-        			mysql_real_escape_string($away),
-        			mysql_real_escape_string($homegoal),
+        		    DB()->RealEscapeString($gameId),	
+				    DB()->RealEscapeString($i),
+        			DB()->RealEscapeString($pass),
+        			DB()->RealEscapeString($goal),
+        			DB()->RealEscapeString($time),
+        			DB()->RealEscapeString($home),
+        			DB()->RealEscapeString($away),
+        			DB()->RealEscapeString($homegoal),
         			0);
         		//$html .= "<p>$query</p>";
-        		DBQuery($query); 
+        		DB()->DBQuery($query); 
 
 				
 			  }elseif($table_type=="player"){
@@ -232,16 +232,16 @@ if (isset($_POST['import'])) {
 				$query = sprintf("INSERT INTO uo_player
         			(player_id, firstname, lastname, team, num, accreditation_id, accredited, profile_id) 
         			VALUES ('%s','%s', '%s', '%s', '%s', '%s', '%s', '%s')",
-        		    mysql_real_escape_string($playerId),	
-				    mysql_real_escape_string($first),
-        			mysql_real_escape_string($last),
-        			mysql_real_escape_string($team),
-        			mysql_real_escape_string($jersey),
-        			mysql_real_escape_string($accId),
-        			mysql_real_escape_string(1),
-        			mysql_real_escape_string($accId));
+        		    DB()->RealEscapeString($playerId),	
+				    DB()->RealEscapeString($first),
+        			DB()->RealEscapeString($last),
+        			DB()->RealEscapeString($team),
+        			DB()->RealEscapeString($jersey),
+        			DB()->RealEscapeString($accId),
+        			DB()->RealEscapeString(1),
+        			DB()->RealEscapeString($accId));
         		//$html .= "<p>$query</p>";
-        		DBQuery($query); 
+        		DB()->DBQuery($query); 
 				
 			  }elseif($table_type=="played_player"){
 			    $playerId = $utf8 ? trim($data[0]) : utf8_encode(trim($data[0]));
@@ -253,8 +253,8 @@ if (isset($_POST['import'])) {
 				}
 				
 				$query = sprintf("SELECT * FROM uo_played WHERE player='%s' AND game='%s'",
-				 mysql_real_escape_string($playerId),
-				 mysql_real_escape_string($gameId));
+				 DB()->RealEscapeString($playerId),
+				 DB()->RealEscapeString($gameId));
 				 
 				$exist = DBQueryRowCount($query);
 				if($exist){
@@ -264,12 +264,12 @@ if (isset($_POST['import'])) {
 				$query = sprintf("INSERT INTO uo_played
         			(player, game, num, accredited) 
         			VALUES ('%s','%s', '%s', '%s')",
-        		    mysql_real_escape_string($playerId),	
-				    mysql_real_escape_string($gameId),
-        			mysql_real_escape_string($jersey),
-        			mysql_real_escape_string(1));
+        		    DB()->RealEscapeString($playerId),	
+				    DB()->RealEscapeString($gameId),
+        			DB()->RealEscapeString($jersey),
+        			DB()->RealEscapeString(1));
         		//$html .= "<p>$query</p>";
-        		DBQuery($query); 
+        		DB()->DBQuery($query); 
 				
 			  }
 			  

@@ -142,7 +142,7 @@ class XMLHandler{
         }elseif(is_int($val) || $val==-1){
           $row[$key]=(int)($val);
         }else{
-          $row[$key]=mysql_real_escape_string($val);
+          $row[$key]=DB()->RealEscapeString($val);
         }
       }
       switch($this->mode){
@@ -296,7 +296,7 @@ class XMLHandler{
 
       case "DIVISION":
         
-        $cond = "name='".mysql_real_escape_string($row['NAME'])."' AND season='".$this->eventId."'";
+        $cond = "name='".DB()->RealEscapeString($row['NAME'])."' AND season='".$this->eventId."'";
         $query = "SELECT * FROM uo_series WHERE ".$cond;
         $exist = DBQueryRowCount($query);
         
@@ -306,13 +306,13 @@ class XMLHandler{
           $data['valid']=1;
           $this->divisionId = $this->InsertRow("uo_series", $data);
         }else{
-          $division_info=DBQueryToRow($query);
+          $division_info=DB()->DBQueryToRow($query);
           $this->divisionId = $division_info['series_id'];
         }
         break;
 
       case "TEAM":
-        $cond = "name='".mysql_real_escape_string($row['NAME'])."' AND series='".$this->divisionId."'";
+        $cond = "name='".DB()->RealEscapeString($row['NAME'])."' AND series='".$this->divisionId."'";
         $query = "SELECT * FROM uo_team WHERE ".$cond;
         $exist = DBQueryRowCount($query);
         
@@ -324,20 +324,20 @@ class XMLHandler{
         $email=isset($row['EMAIL'])?$row['EMAIL']:"";
         if(!empty($email)){
           $query = sprintf("SELECT * FROM uo_users WHERE email= '%s'",
-              mysql_real_escape_string($email));
-          $user = DBQueryToRow($query);
+              DB()->RealEscapeString($email));
+          $user = DB()->DBQueryToRow($query);
           if(!$user){
             $query = sprintf("INSERT INTO uo_users (name, userid, password, email) VALUES ('%s', '%s', MD5('%s'), '%s')",
-			  mysql_real_escape_string($email),
-			  mysql_real_escape_string($email),
-			  mysql_real_escape_string(CreateRandomPassword()),
-			  mysql_real_escape_string($email));
-			DBQuery($query);
+			  DB()->RealEscapeString($email),
+			  DB()->RealEscapeString($email),
+			  DB()->RealEscapeString(CreateRandomPassword()),
+			  DB()->RealEscapeString($email));
+			DB()->DBQuery($query);
 			
 			$query = sprintf("INSERT INTO uo_userproperties (userid, name, value) VALUES ('%s', 'poolselector', 'currentseason')",
-			  mysql_real_escape_string($email));
-            DBQuery($query);
-            $userid=mysql_real_escape_string($email);	  
+			  DB()->RealEscapeString($email));
+            DB()->DBQuery($query);
+            $userid=DB()->RealEscapeString($email);	  
           }else{
             $userid=$user['userid'];
           }
@@ -348,7 +348,7 @@ class XMLHandler{
           $id = AddSeriesEnrolledTeam($this->divisionId, $userid, $row['NAME'], $clubname, $countryname);
           $this->teamId = ConfirmEnrolledTeam($this->divisionId, $id);
         }else{
-          $team_info=DBQueryToRow($query);
+          $team_info=DB()->DBQueryToRow($query);
           $this->teamId = $team_info['team_id'];
         }
         $data['abbreviation']=isset($row['ABBREVIATION'])?$row['ABBREVIATION']:"";
@@ -378,10 +378,10 @@ class XMLHandler{
         if(isset($row['FIRSTNAME'])){ 
           $row['FIRSTNAME']=stripslashes($row['FIRSTNAME']);
           $row['LASTNAME']=stripslashes($row['LASTNAME']);
-          $cond = "firstname='".mysql_real_escape_string($row['FIRSTNAME'])."' AND lastname='".mysql_real_escape_string($row['LASTNAME'])."' AND team='".$this->teamId."'";
+          $cond = "firstname='".DB()->RealEscapeString($row['FIRSTNAME'])."' AND lastname='".DB()->RealEscapeString($row['LASTNAME'])."' AND team='".$this->teamId."'";
         }else{
           $row['LASTNAME']=stripslashes($row['LASTNAME']);
-          $cond = "lastname='".mysql_real_escape_string($row['LASTNAME'])."' AND team='".$this->teamId."'";
+          $cond = "lastname='".DB()->RealEscapeString($row['LASTNAME'])."' AND team='".$this->teamId."'";
         }
         $query = "SELECT * FROM uo_player WHERE ".$cond;
         $exist1 = DBQueryRowCount($query);
@@ -397,9 +397,9 @@ class XMLHandler{
         }else{
           $query = sprintf("SELECT pp.* FROM uo_player_profile pp
 								WHERE UPPER(CONCAT(pp.firstname,' ',pp.lastname)) like '%%%s%%'",
-								mysql_real_escape_string(strtoupper($row['LASTNAME'])));
+								DB()->RealEscapeString(strtoupper($row['LASTNAME'])));
 		  if(DBQueryRowCount($query)==1){
-		    $player=DBQueryToRow($query);
+		    $player=DB()->DBQueryToRow($query);
 		    $profileId=$player['profile_id'];
 		    $player_profile = PlayerProfile($player['profile_id']);
 		    $cond = "profile_id='".$profileId."' AND team='".$this->teamId."'";
@@ -427,7 +427,7 @@ class XMLHandler{
           //}
           AccreditPlayer($this->playerId, "FFinder dataimporter");
         }else{
-          $player_info=DBQueryToRow($query);
+          $player_info=DB()->DBQueryToRow($query);
           $this->playerId = $player_info['player_id'];          
           $data['num']=isset($row['JERSEY'])?$row['JERSEY']:"";
           $cond = "player_id=".$this->playerId;
@@ -490,8 +490,8 @@ class XMLHandler{
     $values = "'".implode("','",array_values($data))."'";
     $fields = implode(",",array_keys($data));
 
-    $query = "INSERT INTO ".mysql_real_escape_string($name)." (";
-    $query .= mysql_real_escape_string($fields);
+    $query = "INSERT INTO ".DB()->RealEscapeString($name)." (";
+    $query .= DB()->RealEscapeString($fields);
     $query .= ") VALUES (";
     $query .= $values;
     $query .= ")";
@@ -509,14 +509,14 @@ class XMLHandler{
     $values = array_values($row);
     $fields = array_keys($row);
 
-    $query = "UPDATE ".mysql_real_escape_string($name)." SET ";
+    $query = "UPDATE ".DB()->RealEscapeString($name)." SET ";
 
     for($i=0;$i<count($fields);$i++){
-      $query .= mysql_real_escape_string($fields[$i]) ."='".mysql_real_escape_string($values[$i])."', ";
+      $query .= DB()->RealEscapeString($fields[$i]) ."='".DB()->RealEscapeString($values[$i])."', ";
     }
     $query = rtrim($query,', ');
     $query .= " WHERE ";
-    $query .= mysql_real_escape_string($cond);
+    $query .= DB()->RealEscapeString($cond);
     return DBQueryInsert($query);
   }
 }

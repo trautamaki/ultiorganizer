@@ -34,10 +34,10 @@ $query = "SELECT (SUM(game.homescore) + SUM(game.visitorscore)) AS scores FROM
 
 if(!empty($season)){
 	$query .= sprintf("WHERE ser.season='%s'",
-		mysql_real_escape_string($season));
+		DB()->RealEscapeString($season));
 }
 		
-$scores = DBQueryToValue($query);
+$scores = DB()->DBQueryToValue($query);
 
 $chars = str_split($scores);
 for($i=count($chars);$i<$lenght;$i++){

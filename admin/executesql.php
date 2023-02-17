@@ -27,16 +27,16 @@ if(!empty($_POST['sql']) || !empty($_GET['sql']))
 	$isDelete = (strpos(strtolower($query), "delete") === 0);
 	$arraycolumnsname = array();
 	if(isSuperAdmin()){
-		$result = mysql_query($query);
+		$result = DB()->DBQuery($query);
 		}
 
-	if (!$result) { die('Invalid query: ' . mysql_error()); }
+	if (!$result) { die('Invalid query: ' . DB()->SQLError()); }
 
 	if ($isSelect || $isShow){
 		$i=0;
-		while ($i < mysql_num_fields($result)) 
+		while ($i < DB()->NumFields($result)) 
 			{
-			$meta = mysql_fetch_field($result, $i);
+			$meta = DB()->FetchField($result, $i);
 			$arraycolumnsname[$i] = $meta->name;
 			$arraycolumnstype[$i] = $meta->type;
 
@@ -99,12 +99,12 @@ $html .= "<form method='post' action='?view=admin/executesql'>";
 	  $html .= "</tr>\n";
 	  // Print contents of the query
 	  if ($isSelect || $isShow){
-		  while ($row = mysql_fetch_assoc($result))
+		  while ($row = DB()->FetchAssoc($result))
 				{
 				$html .= "<tr>";
 				foreach ($arraycolumnsname as $i => $columnname)
 					{
-					if(mysql_field_type($result,$i)!='blob'){
+					if(DB()->FieldType($result,$i)!='blob'){
 						$html .= "<td  class='dbrow'>" . utf8entities($row[$columnname]) . "</td>";
 					}else{
 						$html .= "<td  class='dbrow'>BINARY</td>";

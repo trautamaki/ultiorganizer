@@ -96,7 +96,7 @@ if($teamId){
   $scores = SeriesScoreBoard($seriesId, $sort, 0);
 }
 $i=1;
-while($row = mysql_fetch_assoc($scores)){
+while($row = DB()->FetchAssoc($scores)){
   $html .= "<tr>";
   $html .= "<td>".$i++."</td>";
   if($sort == "name") {

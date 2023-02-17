@@ -4,7 +4,6 @@ if(is_file('install.php')){
 }
 
 include_once 'lib/database.php';
-OpenConnection();
 global $include_prefix;
 include_once $include_prefix.'menufunctions.php';
 include_once $include_prefix.'view_ids.inc.php';
@@ -69,5 +68,4 @@ if(!iget("view")){
 
 include $view.".php";
 
-CloseConnection();
 ?>

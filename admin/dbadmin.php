@@ -35,7 +35,7 @@ if(isSuperAdmin()){
 	}
 	
 	$total_size = 0;
-	$result = mysql_query("SHOW TABLE STATUS");
+	$result = DB()->DBQuery("SHOW TABLE STATUS");
 	$html .= "<p><span class='profileheader'>"._("Tables").": </span></p>\n";
 	$html .= "<table>";
 	$html .= "<tr><th>"._("Name")."</th>";
@@ -46,7 +46,7 @@ if(isSuperAdmin()){
 	$html .= "<th>"._("Auto Increment")."</th>";
 	$html .= "<th>"._("Updated")."</th>";
 	$html .= "</tr>\n";
-	while($row = mysql_fetch_assoc($result)){
+	while($row = DB()->FetchAssoc($result)){
 	  if (substr($row['Name'],0,3) == 'uo_'){
     	    $sql = urlencode("SELECT * FROM ".$row['Name']);
     		$html .= "<tr>";
@@ -68,8 +68,8 @@ if(isSuperAdmin()){
 	$html .= "<p>"._("Database size").": ".$total_size." "._("bytes")."</p>\n";
 	
 	$html .= "<p><span class='profileheader'>"._("Statistics").": </span><br/>\n";
-	$mysql_stat = mysql_stat();
-	$tot_count=preg_match_all('/([a-z ]+):\s*([0-9.]+)/i', $mysql_stat, $matches);
+	$DB()->Stat = DB()->Stat();
+	$tot_count=preg_match_all('/([a-z ]+):\s*([0-9.]+)/i', $DB()->Stat, $matches);
 	for ($i=0; $i<$tot_count; $i++) {
 		$info1=trim($matches[1][$i]);
 		$info2=trim($matches[2][$i]);
@@ -79,19 +79,19 @@ if(isSuperAdmin()){
 	$html .= "&nbsp;"._("Execute").": <a href='?view=admin/executesql&amp;sql=$sql'>"."SHOW GLOBAL STATUS"."</a>";
 	$html .= "</p>\n";	
 	
-	$html .= "<p><span class='profileheader'>"._("Client Library version").": </span>".mysql_get_client_info()."<br/>\n";
-	$html .= "<span class='profileheader'>"._("Type of connection in use").": </span>".mysql_get_host_info()."<br/>\n";
-	$html .= "<span class='profileheader'>"._("Protocol version").": </span>".mysql_get_proto_info()."<br/>\n";
-	$html .= "<span class='profileheader'>"._("Server version").": </span>".mysql_get_server_info()."</p>\n";
+	$html .= "<p><span class='profileheader'>"._("Client Library version").": </span>".DB()->GetClientInfo()."<br/>\n";
+	$html .= "<span class='profileheader'>"._("Type of connection in use").": </span>".DB()->GetHostInfo()."<br/>\n";
+	$html .= "<span class='profileheader'>"._("Protocol version").": </span>".DB()->GetProtocolVersion()."<br/>\n";
+	$html .= "<span class='profileheader'>"._("Server version").": </span>".DB()->GetServerInfo()."</p>\n";
 	
 	$html .= "<p><span class='profileheader'>"._("Character set and collation").": </span><br/>\n";
-	$result = mysql_query("SHOW VARIABLES LIKE 'character_set\_%';");
-	while($row = mysql_fetch_assoc($result)){
+	$result = DB()->DBQuery("SHOW VARIABLES LIKE 'character_set\_%';");
+	while($row = DB()->FetchAssoc($result)){
 		$html .= "&nbsp;". $row['Variable_name'].": ".$row['Value']."<br/>\n";
 	
 	}
-	$result = mysql_query("SHOW VARIABLES LIKE 'collation\_%';");
-	while($row = mysql_fetch_assoc($result)){
+	$result = DB()->DBQuery("SHOW VARIABLES LIKE 'collation\_%';");
+	while($row = DB()->FetchAssoc($result)){
 		$html .= "&nbsp;". $row['Variable_name'].": ".$row['Value']."<br/>\n";
 	
 	}

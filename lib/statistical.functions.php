@@ -6,12 +6,12 @@ include_once $include_prefix.'lib/series.functions.php';
 
 function IsSeasonStatsCalculated($season) {
 	$query = sprintf("SELECT count(*) FROM uo_season_stats WHERE season='%s'",
-		mysql_real_escape_string($season));
-	return DBQueryToValue($query);
+		DB()->RealEscapeString($season));
+	return DB()->DBQueryToValue($query);
 }
 
 function IsStatsDataAvailable() {
-	return DBQueryToValue("SELECT count(*) FROM uo_season_stats");
+	return DB()->DBQueryToValue("SELECT count(*) FROM uo_season_stats");
 }
 
 function SeriesStatistics($season) {
@@ -19,8 +19,8 @@ function SeriesStatistics($season) {
 		LEFT JOIN uo_series ser ON(ser.series_id=ss.series_id)
 		WHERE ss.season='%s'
 		ORDER BY ss.season, ss.series_id",
-		mysql_real_escape_string($season));
-	return DBQueryToArray($query);
+		DB()->RealEscapeString($season));
+	return DB()->DBQueryToArray($query);
 }
 
 function SeriesStatisticsByType($seriestype, $seasontype) {
@@ -29,9 +29,9 @@ function SeriesStatisticsByType($seriestype, $seasontype) {
 		LEFT JOIN uo_season se ON(ss.season=se.season_id)
 		WHERE ser.type='%s' AND se.type='%s'
 		ORDER BY ss.season, ss.series_id",
-		mysql_real_escape_string($seriestype),
-		mysql_real_escape_string($seasontype));
-	return DBQueryToArray($query);
+		DB()->RealEscapeString($seriestype),
+		DB()->RealEscapeString($seasontype));
+	return DB()->DBQueryToArray($query);
 }
 
 function ALLSeriesStatistics() {
@@ -41,7 +41,7 @@ function ALLSeriesStatistics() {
 		LEFT JOIN uo_series ser ON(ser.series_id=ss.series_id)
 		LEFT JOIN uo_season s ON(ser.season=s.season_id)
 		ORDER BY ser.type, s.type, ss.series_id");
-	return DBQueryToArray($query);
+	return DB()->DBQueryToArray($query);
 }
 
 function SeasonStatistics($season) {
@@ -50,8 +50,8 @@ function SeasonStatistics($season) {
 		LEFT JOIN uo_season s ON(s.season_id=ss.season)
 		WHERE ss.season='%s'
 		ORDER BY ss.season",
-		mysql_real_escape_string($season));
-	return DBQueryToRow($query);
+		DB()->RealEscapeString($season));
+	return DB()->DBQueryToRow($query);
 }
 
 function AllSeasonStatistics() {
@@ -59,7 +59,7 @@ function AllSeasonStatistics() {
 		FROM uo_season_stats ss 
 		LEFT JOIN uo_season s ON(s.season_id=ss.season)
 		ORDER BY s.type, s.name");
-	return DBQueryToArray($query);
+	return DB()->DBQueryToArray($query);
 }
 
 function SeasonTeamStatistics($season) {
@@ -71,8 +71,8 @@ function SeasonTeamStatistics($season) {
 		LEFT JOIN uo_team t ON(t.team_id=ts.team_id)
 		WHERE ts.season='%s'
 		ORDER BY ts.series,ts.standing",
-		mysql_real_escape_string($season));
-	return DBQueryToArray($query);
+		DB()->RealEscapeString($season));
+	return DB()->DBQueryToArray($query);
 }
 
 function TeamStatistics($team) {
@@ -84,8 +84,8 @@ function TeamStatistics($team) {
 		LEFT JOIN uo_team t ON(t.team_id=ts.team_id)
 		WHERE ts.team_id='%s'
 		ORDER BY ts.series,ts.standing",
-		mysql_real_escape_string($team));
-	return DBQueryToArray($query);
+		DB()->RealEscapeString($team));
+	return DB()->DBQueryToArray($query);
 }
 
 function TeamStandings($season, $seriestype) {
@@ -99,9 +99,9 @@ function TeamStandings($season, $seriestype) {
 		LEFT JOIN uo_country c ON(t.country=c.country_id)
 		WHERE ts.season='%s' AND ser.type='%s'
 		ORDER BY ts.series,ts.standing",
-		mysql_real_escape_string($season),
-		mysql_real_escape_string($seriestype));
-	return DBQueryToArray($query);
+		DB()->RealEscapeString($season),
+		DB()->RealEscapeString($seriestype));
+	return DB()->DBQueryToArray($query);
 }
 
 function TeamStatisticsByName($teamname, $seriestype) {
@@ -113,9 +113,9 @@ function TeamStatisticsByName($teamname, $seriestype) {
 		LEFT JOIN uo_team t ON(t.team_id=ts.team_id)
 		WHERE t.name='%s' AND ser.type='%s'
 		ORDER BY s.starttime DESC, ts.series,ts.standing",
-		mysql_real_escape_string($teamname),
-		mysql_real_escape_string($seriestype));
-	return DBQueryToArray($query);
+		DB()->RealEscapeString($teamname),
+		DB()->RealEscapeString($seriestype));
+	return DB()->DBQueryToArray($query);
 }
 
 function PlayerStatistics($profile_id) {
@@ -127,8 +127,8 @@ function PlayerStatistics($profile_id) {
 		LEFT JOIN uo_team t ON(t.team_id=ps.team)
 		WHERE ps.profile_id='%s'
 		ORDER BY s.starttime DESC, ps.season,ps.series",
-		mysql_real_escape_string($profile_id));
-	return DBQueryToArray($query);
+		DB()->RealEscapeString($profile_id));
+	return DB()->DBQueryToArray($query);
 }
 
 function AlltimeScoreboard($season, $seriestype) {
@@ -143,9 +143,9 @@ function AlltimeScoreboard($season, $seriestype) {
 		LEFT JOIN uo_player p ON(p.player_id=ps.player_id)
 		WHERE ps.season='%s' AND ser.type='%s'
 		ORDER BY total DESC, ps.games ASC, lastname ASC LIMIT 5",
-		mysql_real_escape_string($season),
-		mysql_real_escape_string($seriestype));
-	return DBQueryToArray($query);
+		DB()->RealEscapeString($season),
+		DB()->RealEscapeString($seriestype));
+	return DB()->DBQueryToArray($query);
 }
 
 function ScoreboardAllTime($limit, $seasontype="", $seriestype="") {
@@ -166,14 +166,14 @@ function ScoreboardAllTime($limit, $seasontype="", $seriestype="") {
 			
 	if(!empty($seasontype) && !empty($seriestype)){
 		$query .= sprintf("WHERE s.type='%s' AND ser.type='%s' ",
-			mysql_real_escape_string($seasontype),
-			mysql_real_escape_string($seriestype));
+			DB()->RealEscapeString($seasontype),
+			DB()->RealEscapeString($seriestype));
 	}elseif(!empty($seasontype)){
 		$query .= sprintf("WHERE s.type='%s' ",
-			mysql_real_escape_string($seasontype));
+			DB()->RealEscapeString($seasontype));
 	}elseif(!empty($seriestype)){
 		$query .= sprintf("WHERE ser.type='%s' ",
-			mysql_real_escape_string($seriestype));
+			DB()->RealEscapeString($seriestype));
 	}
 	
 	$query .= sprintf("GROUP BY ps.profile_id 
@@ -181,7 +181,7 @@ function ScoreboardAllTime($limit, $seasontype="", $seriestype="") {
 			LIMIT %d",
 			(int)$limit);
 			
-	return DBQueryToArray($query);
+	return DB()->DBQueryToArray($query);
 }
 
 
@@ -193,7 +193,7 @@ function SetTeamSeasonStanding($teamId, $standing) {
 						WHERE team_id='%d'",
 						(int)($standing),(int)($teamId));
 		
-		DBQuery($query);
+		DB()->DBQuery($query);
 	} else { die('Insufficient rights to archive season'); }
 }
 	
@@ -237,9 +237,9 @@ function CalcSeasonStats($season) {
 		}
 		//save season stats
 		$query = sprintf("INSERT IGNORE INTO uo_season_stats (season) VALUES ('%s')",
-				mysql_real_escape_string($season));
+				DB()->RealEscapeString($season));
 		
-		DBQuery($query);
+		DB()->DBQuery($query);
 		$defense_str=" ";
 		if(ShowDefenseStats())
 			{
@@ -253,7 +253,7 @@ function CalcSeasonStats($season) {
 				home_wins=$home_wins, 
 				players=$played_players".$defense_str.
 				"WHERE season='".$season_info['season_id']."'";
-		DBQuery($query);
+		DB()->DBQuery($query);
 	} else { die('Insufficient rights to archive season'); }
 }
 
@@ -294,9 +294,9 @@ function CalcSeriesStats($season) {
 			}
 			//save season stats
 			$query = sprintf("INSERT IGNORE INTO uo_series_stats (series_id) VALUES ('%s')",
-					mysql_real_escape_string($series['series_id']));
+					DB()->RealEscapeString($series['series_id']));
 			
-			DBQuery($query);
+			DB()->DBQuery($query);
 			$defense_str=" ";
 			if(ShowDefenseStats())
 				{
@@ -310,7 +310,7 @@ function CalcSeriesStats($season) {
 					home_wins=$home_wins, 
 					players=$played_players".$defense_str.
 					"WHERE series_id=".$series['series_id'];
-			DBQuery($query);
+			DB()->DBQuery($query);
 		}
 	} else { die('Insufficient rights to archive season'); }
 }
@@ -343,7 +343,7 @@ function CalcPlayerStats($season) {
 				//save player stats
 				$query = "INSERT IGNORE INTO uo_player_stats (player_id) VALUES (".$player['player_id'].")";
 				
-				DBQuery($query);
+				DB()->DBQuery($query);
 				$defense_str=" ";
 				if(ShowDefenseStats())
 					{
@@ -365,7 +365,7 @@ function CalcPlayerStats($season) {
 						offence_time=$offence_time,
 						defence_time=$defence_time".$defense_str.
 						"WHERE player_id=".$player['player_id'];
-				DBQuery($query);
+				DB()->DBQuery($query);
 			}
 		}
 	} else { die('Insufficient rights to archive season'); }
@@ -389,7 +389,7 @@ function CalcTeamStats($season) {
 				$standing = TeamSeriesStanding($team['team_id']);
 				$allgames = TeamGames($team['team_id']);
 				
-				while($game = mysql_fetch_assoc($allgames)){
+				while($game = DB()->FetchAssoc($allgames)){
 					if (!is_null($game['homescore']) && !is_null($game['visitorscore'])){
 			
 						if ($team['team_id'] == $game['hometeam']) {
@@ -424,7 +424,7 @@ function CalcTeamStats($season) {
 				//save team stats
 				$query = "INSERT IGNORE INTO uo_team_stats (team_id) VALUES (".$team['team_id'].")";
 				
-				DBQuery($query);
+				DB()->DBQuery($query);
 				$defense_str=" ";
 				if(ShowDefenseStats())
 					{
@@ -439,7 +439,7 @@ function CalcTeamStats($season) {
 						wins=$wins, 
 						losses=$losses".$defense_str.
 						"WHERE team_id=".$team['team_id'];
-				DBQuery($query);
+				DB()->DBQuery($query);
 			}
 		}
 	} else { die('Insufficient rights to archive season'); }

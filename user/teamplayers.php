@@ -173,7 +173,7 @@ echo "</tr>\n";
 
 $team_players = TeamPlayerList($teamId);
 
-if (mysql_num_rows($team_players)==0 && (hasAccredidationRight($teamId) || hasEditPlayersRight($teamId))) {
+if (DB()->NumRows($team_players)==0 && (hasAccredidationRight($teamId) || hasEditPlayersRight($teamId))) {
   $teams = TeamGetTeamsByName($teaminfo['name']);
   if(count($teams)){
     echo "<p>". _("Copy team roster from:")." ";
@@ -190,7 +190,7 @@ if (mysql_num_rows($team_players)==0 && (hasAccredidationRight($teamId) || hasEd
   }  
 }
 
-while($player = mysql_fetch_assoc($team_players)){
+while($player = DB()->FetchAssoc($team_players)){
   $playerInfo = PlayerInfo($player['player_id']);
 
   echo "<tr>";
@@ -227,7 +227,7 @@ if(CUSTOMIZATIONS=="slkl"){
     }
 
     $query = sprintf("SELECT membership, license, external_type, external_validity FROM uo_license WHERE accreditation_id=%d",(int)$playerInfo['accreditation_id']);
-    $row = DBQueryToRow($query);
+    $row = DB()->DBQueryToRow($query);
     if(!empty($row['membership'])){
       echo "<td class='center' style='white-space: nowrap'>".$row['membership']."</td>";
     }else{

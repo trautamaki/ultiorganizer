@@ -28,7 +28,7 @@ if (isset($_POST['rename']) && !empty($_POST['ids']) && isSuperAdmin()){
 			if($id!=$name){
 				$result .= "<p>".utf8entities(ClubName($id))." --> ".utf8entities(ClubName($name))."</p>";
 				$teams = TeamListAll();
-				while ($team = mysql_fetch_assoc($teams)) {
+				while ($team = DB()->FetchAssoc($teams)) {
 					if($team['club']==$id){
 						SetTeamOwner($team['team_id'], $name);
 					}
@@ -112,7 +112,7 @@ if($filter == 'clubs'){
 	//$html .=  "<input class='input' size='50' name='newname' value=''/></p>";
 	$html .=  "<select class='dropdown' name='newname'>";
 	$clubs = ClubList();
-	while($row = mysql_fetch_assoc($clubs)){
+	while($row = DB()->FetchAssoc($clubs)){
 	$html .= "<option class='dropdown' value='".utf8entities($row['club_id'])."'>". utf8entities($row['name']) ."</option>";
 	}
 	$html .=  "</select></p>";
@@ -134,7 +134,7 @@ $counter = 0;
 if($filter == 'teams'){
 	$teams = TeamListAll();
 	$html .= "<th>"._("Team")."</th><th>"._("Division")."</th><th>"._("Club")."</th><th>"._("Event")."</th></tr>\n";
-	while ($team = mysql_fetch_assoc($teams)) {
+	while ($team = DB()->FetchAssoc($teams)) {
 		if($prevname != $team['name'] || $prevseries != $team['seriesname']){
 			$counter++;
 			$prevname = $team['name'];
@@ -157,7 +157,7 @@ if($filter == 'teams'){
 }elseif($filter == 'clubs'){
 	$clubs = ClubList();
 	$html .= "<th>"._("Name")."</th><th>"._("Teams")."</th></tr>\n";
-	while ($club = mysql_fetch_assoc($clubs)) {
+	while ($club = DB()->FetchAssoc($clubs)) {
 		if($prevname != $club['name']){
 			$counter++;
 			$prevname = $club['name'];
@@ -176,7 +176,7 @@ if($filter == 'teams'){
 }elseif($filter == 'pools'){
 	$pools = PoolListAll();
 	$html .= "<th>"._("Name")."</th><th>"._("Division")."</th><th>"._("Event")."</th></tr>\n";
-	while ($pool = mysql_fetch_assoc($pools)) {
+	while ($pool = DB()->FetchAssoc($pools)) {
 		if($prevname != $pool['name']){
 			$counter++;
 			$prevname = $pool['name'];
@@ -196,7 +196,7 @@ if($filter == 'teams'){
 }elseif($filter == 'series'){
 	$series = Series();
 	$html .= "<th>"._("Name")."</th><th>"._("Event")."</th></tr>\n";
-	while ($row = mysql_fetch_assoc($series)) {
+	while ($row = DB()->FetchAssoc($series)) {
 		if($prevname != $row['name']){
 			$counter++;
 			$prevname = $row['name'];

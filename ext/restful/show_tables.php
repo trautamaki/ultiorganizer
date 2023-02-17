@@ -5,7 +5,7 @@ OpenConnection();
 
 $sql="SHOW TABLES";
 
-$tables = DBQueryToArray($sql, false);
+$tables = DB()->DBQueryToArray($sql, false);
 
 echo "<?php\n\n";
 foreach ($tables as $table) {

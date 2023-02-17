@@ -63,81 +63,81 @@ class EventDataXMLHandler{
       $ret = "";
       $ret .= "<?xml version='1.0' encoding='UTF-8'?>\n";
       //uo_season
-      $seasons = DBQuery("SELECT * FROM uo_season WHERE season_id='".mysql_real_escape_string($eventId)."'");
-      $row = mysql_fetch_assoc($seasons);
+      $seasons = DB()->DBQuery("SELECT * FROM uo_season WHERE season_id='".DB()->RealEscapeString($eventId)."'");
+      $row = DB()->FetchAssoc($seasons);
       $ret .= $this->RowToXML("uo_season", $row, false);
 
       //uo_reservation
-      $reservations = DBQuery("SELECT * FROM uo_reservation WHERE season='".mysql_real_escape_string($eventId)."'");
-      while($reservation = mysql_fetch_assoc($reservations)){
+      $reservations = DB()->DBQuery("SELECT * FROM uo_reservation WHERE season='".DB()->RealEscapeString($eventId)."'");
+      while($reservation = DB()->FetchAssoc($reservations)){
         $ret .= $this->RowToXML("uo_reservation", $reservation);
       }
 
       //uo_movingtime
-      $times = DBQuery("SELECT * FROM uo_movingtime WHERE season='".mysql_real_escape_string($eventId)."'");
-      while($time = mysql_fetch_assoc($times)){
+      $times = DB()->DBQuery("SELECT * FROM uo_movingtime WHERE season='".DB()->RealEscapeString($eventId)."'");
+      while($time = DB()->FetchAssoc($times)){
         $ret .= $this->RowToXML("uo_movingtime", $time);
       }
       
       //uo_series
-      $series = DBQuery("SELECT * FROM uo_series WHERE season='".mysql_real_escape_string($eventId)."'");
-      while($ser = mysql_fetch_assoc($series)){
+      $series = DB()->DBQuery("SELECT * FROM uo_series WHERE season='".DB()->RealEscapeString($eventId)."'");
+      while($ser = DB()->FetchAssoc($series)){
         $ret .= $this->RowToXML("uo_series", $ser, false);
          
         $seriesId = (int)$ser['series_id'];
         //uo_team
-        $teams = DBQuery("SELECT * FROM uo_team WHERE series='$seriesId'");
-        while($team = mysql_fetch_assoc($teams)){
+        $teams = DB()->DBQuery("SELECT * FROM uo_team WHERE series='$seriesId'");
+        while($team = DB()->FetchAssoc($teams)){
           $ret .= $this->RowToXML("uo_team", $team, false);
           //uo_player
-          $players = DBQuery("SELECT * FROM uo_player WHERE team='".mysql_real_escape_string($team['team_id'])."'");
-          while($player = mysql_fetch_assoc($players)){
+          $players = DB()->DBQuery("SELECT * FROM uo_player WHERE team='".DB()->RealEscapeString($team['team_id'])."'");
+          while($player = DB()->FetchAssoc($players)){
             $ret .= $this->RowToXML("uo_player", $player);
           }
           $ret .= "</uo_team>\n";
         }
         
         //uo_scheduling_name, referenced by either games or moves 
-        $schedulings = DBQuery("SELECT sched.* FROM uo_scheduling_name sched 
+        $schedulings = DB()->DBQuery("SELECT sched.* FROM uo_scheduling_name sched 
             LEFT JOIN uo_game game ON (sched.scheduling_id = game.scheduling_name_home OR sched.scheduling_id = game.scheduling_name_visitor)
             LEFT JOIN uo_pool pool ON (game.pool = pool.pool_id)
             LEFT JOIN uo_moveteams mv ON (sched.scheduling_id = mv.scheduling_id)
             LEFT JOIN uo_pool pool2 ON (mv.frompool = pool2.pool_id OR mv.topool = pool2.pool_id)
             WHERE pool2.series = $seriesId  OR pool.series = $seriesId 
             GROUP BY scheduling_id");
-        while ($row = mysql_fetch_assoc($schedulings)) {
+        while ($row = DB()->FetchAssoc($schedulings)) {
           $ret .= $this->RowToXML("uo_scheduling_name", $row);
         }
         
         //uo_pool
-        $pools = DBQuery("SELECT * FROM uo_pool WHERE series='$seriesId'");
-        while($row = mysql_fetch_assoc($pools)){
+        $pools = DB()->DBQuery("SELECT * FROM uo_pool WHERE series='$seriesId'");
+        while($row = DB()->FetchAssoc($pools)){
           $ret .= $this->RowToXML("uo_pool", $row, false);
 
           //uo_team_pool
-          $teampools = DBQuery("SELECT * FROM uo_team_pool WHERE pool='".mysql_real_escape_string($row['pool_id'])."'");
-          while($teampool = mysql_fetch_assoc($teampools)){
+          $teampools = DB()->DBQuery("SELECT * FROM uo_team_pool WHERE pool='".DB()->RealEscapeString($row['pool_id'])."'");
+          while($teampool = DB()->FetchAssoc($teampools)){
             $ret .= $this->RowToXML("uo_team_pool", $teampool);
           }
 
           //uo_game
-          $games = DBQuery("SELECT * FROM uo_game WHERE pool='".mysql_real_escape_string($row['pool_id'])."'");
-          while($row = mysql_fetch_assoc($games)){
+          $games = DB()->DBQuery("SELECT * FROM uo_game WHERE pool='".DB()->RealEscapeString($row['pool_id'])."'");
+          while($row = DB()->FetchAssoc($games)){
             $ret .= $this->RowToXML("uo_game", $row, false);
              
             //uo_goal
-            $goals = DBQuery("SELECT * FROM uo_goal WHERE game='".mysql_real_escape_string($row['game_id'])."'");
-            while($goal = mysql_fetch_assoc($goals)){
+            $goals = DB()->DBQuery("SELECT * FROM uo_goal WHERE game='".DB()->RealEscapeString($row['game_id'])."'");
+            while($goal = DB()->FetchAssoc($goals)){
               $ret .= $this->RowToXML("uo_goal", $goal);
             }
             //uo_gameevent
-            $gameevents = DBQuery("SELECT * FROM uo_gameevent WHERE game='".mysql_real_escape_string($row['game_id'])."'");
-            while($gameevent = mysql_fetch_assoc($gameevents)){
+            $gameevents = DB()->DBQuery("SELECT * FROM uo_gameevent WHERE game='".DB()->RealEscapeString($row['game_id'])."'");
+            while($gameevent = DB()->FetchAssoc($gameevents)){
               $ret .= $this->RowToXML("uo_gameevent", $gameevent);
             }
             //uo_played
-            $playedplayers = DBQuery("SELECT * FROM uo_played WHERE game='".mysql_real_escape_string($row['game_id'])."'");
-            while($playedplayer = mysql_fetch_assoc($playedplayers)){
+            $playedplayers = DB()->DBQuery("SELECT * FROM uo_played WHERE game='".DB()->RealEscapeString($row['game_id'])."'");
+            while($playedplayer = DB()->FetchAssoc($playedplayers)){
               $ret .= $this->RowToXML("uo_played", $playedplayer);
             }
             $ret .= "</uo_game>\n";
@@ -146,18 +146,18 @@ class EventDataXMLHandler{
         }
          
         //uo_moveteams
-        $moveteams = DBQuery("SELECT m.* FROM uo_moveteams m
+        $moveteams = DB()->DBQuery("SELECT m.* FROM uo_moveteams m
 				LEFT JOIN uo_pool p ON(m.frompool=p.pool_id) 
 				WHERE p.series='$seriesId'");
-        while($moveteam = mysql_fetch_assoc($moveteams)){
+        while($moveteam = DB()->FetchAssoc($moveteams)){
           $ret .= $this->RowToXML("uo_moveteams", $moveteam);
         }
          
         //uo_game_pool
-        $gamepools = DBQuery("SELECT g.* FROM uo_game_pool g
+        $gamepools = DB()->DBQuery("SELECT g.* FROM uo_game_pool g
 				LEFT JOIN uo_pool p ON(g.pool=p.pool_id)
 				WHERE p.series='$seriesId'");
-        while($gamepool = mysql_fetch_assoc($gamepools)){
+        while($gamepool = DB()->FetchAssoc($gamepools)){
           $ret .= $this->RowToXML("uo_game_pool", $gamepool);
         }
         $ret .= "</uo_series>\n";
@@ -230,7 +230,7 @@ class EventDataXMLHandler{
 
       foreach ($this->followers as $pool => $follow) {
         $query = "UPDATE uo_pool SET follower='" . ((int) $this->uo_pool[$follow]) . "' WHERE pool_id='$pool'";
-        DBQuery($query);
+        DB()->DBQuery($query);
       }
        
       xml_parser_free($xmlparser);
@@ -301,11 +301,11 @@ class EventDataXMLHandler{
         $values = "'".implode("','",array_values($row))."'";
         $fields = implode(",",array_keys($row));
 
-        $query = "INSERT INTO ".mysql_real_escape_string($name)." (";
+        $query = "INSERT INTO ".DB()->RealEscapeString($name)." (";
         $query .= "SEASON_ID,";
-        $query .= mysql_real_escape_string($fields);
+        $query .= DB()->RealEscapeString($fields);
         $query .= ") VALUES (";
-        $query .= "'".mysql_real_escape_string($newId)."',";
+        $query .= "'".DB()->RealEscapeString($newId)."',";
         $query .= $values;
         $query .= ")";
         DBQueryInsert($query);
@@ -476,18 +476,18 @@ class EventDataXMLHandler{
         if ($value==="NULL"){
           $values .= "NULL,";
         }elseif (is_numeric($value))
-          $values .= "'".mysql_real_escape_string($value)."',";
+          $values .= "'".DB()->RealEscapeString($value)."',";
         else
           die("Invalid column value '$value' for column $key of table $name. (".json_encode($row).").");
       }else {
-        $values .= "'".mysql_real_escape_string($value)."',";
+        $values .= "'".DB()->RealEscapeString($value)."',";
       }
     }
     
     $values = substr($values, 0, -1);
 
-    $query = "INSERT INTO ".mysql_real_escape_string($name)." (";
-    $query .= mysql_real_escape_string($fields);
+    $query = "INSERT INTO ".DB()->RealEscapeString($name)." (";
+    $query .= DB()->RealEscapeString($fields);
     $query .= ") VALUES (";
     $query .= $values;
     $query .= ")";
@@ -800,10 +800,10 @@ class EventDataXMLHandler{
     $values = array_values($row);
     $fields = array_keys($row);
 
-    $query = "UPDATE ".mysql_real_escape_string($name)." SET ";
+    $query = "UPDATE ".DB()->RealEscapeString($name)." SET ";
 
     for($i=0;$i<count($fields);$i++){
-      $query .= mysql_real_escape_string($fields[$i]) ."='". mysql_real_escape_string($values[$i])."', ";
+      $query .= DB()->RealEscapeString($fields[$i]) ."='". DB()->RealEscapeString($values[$i])."', ";
     }
     $query = rtrim($query,', ');
     $query .= " WHERE ";

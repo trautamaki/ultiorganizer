@@ -3,38 +3,38 @@
 function GetUrlById($urlId) {
 	$query = sprintf("SELECT * FROM uo_urls WHERE url_id=%d",
 		(int)$urlId);
-	return DBQueryToRow($query);
+	return DB()->DBQueryToRow($query);
 }
 
 function GetUrl($owner, $ownerId, $type) {
 	$query = sprintf("SELECT * FROM uo_urls WHERE owner='%s' AND owner_id='%s' AND type='%s'",
-		mysql_real_escape_string($owner),
-		mysql_real_escape_string($ownerId),
-		mysql_real_escape_string($type));
-	return DBQueryToRow($query);
+		DB()->RealEscapeString($owner),
+		DB()->RealEscapeString($ownerId),
+		DB()->RealEscapeString($type));
+	return DB()->DBQueryToRow($query);
 }
 
 function GetUrlList($owner, $ownerId, $medialinks=false) {
 	if($medialinks){
 		$query = sprintf("SELECT * FROM uo_urls WHERE owner='%s' AND owner_id='%s' AND ismedialink=1",
-			mysql_real_escape_string($owner),
-			mysql_real_escape_string($ownerId));
+			DB()->RealEscapeString($owner),
+			DB()->RealEscapeString($ownerId));
 	}else{
 		$query = sprintf("SELECT * FROM uo_urls WHERE owner='%s' AND owner_id='%s' AND ismedialink=0",
-			mysql_real_escape_string($owner),
-			mysql_real_escape_string($ownerId));
+			DB()->RealEscapeString($owner),
+			DB()->RealEscapeString($ownerId));
 	}
 	$query .= " ORDER BY ordering, type, name";
-	return DBQueryToArray($query);
+	return DB()->DBQueryToArray($query);
 }
 
 function GetUrlListByTypeArray($typearray, $ownerId) {
 	foreach($typearray as $type){
-		$list[] = "'".mysql_real_escape_string($type)."'";
+		$list[] = "'".DB()->RealEscapeString($type)."'";
 	}
 	$liststring = implode(",", $list);
-	$query = "SELECT * FROM uo_urls WHERE type IN($liststring) AND owner_id='".mysql_real_escape_string($ownerId)."' ORDER BY ordering,type, name";
-	return DBQueryToArray($query);
+	$query = "SELECT * FROM uo_urls WHERE type IN($liststring) AND owner_id='".DB()->RealEscapeString($ownerId)."' ORDER BY ordering,type, name";
+	return DB()->DBQueryToArray($query);
 }
 
 function GetMediaUrlList($owner, $ownerId, $type="") {
@@ -45,20 +45,20 @@ function GetMediaUrlList($owner, $ownerId, $type="") {
 			LEFT JOIN uo_users u ON (u.id=urls.publisher_id)
 			LEFT JOIN uo_gameevent e ON(e.info=urls.url_id)
 			WHERE urls.owner='%s' AND urls.owner_id='%s' AND urls.ismedialink=1",
-			mysql_real_escape_string($owner),
-			mysql_real_escape_string($ownerId));
+			DB()->RealEscapeString($owner),
+			DB()->RealEscapeString($ownerId));
 	}else{
 		$query = sprintf("SELECT urls.*, u.name AS publisher FROM uo_urls urls 
 			LEFT JOIN uo_users u ON (u.id=urls.publisher_id)
 			WHERE urls.owner='%s' AND urls.owner_id='%s' AND urls.ismedialink=1",
-			mysql_real_escape_string($owner),
-			mysql_real_escape_string($ownerId));
+			DB()->RealEscapeString($owner),
+			DB()->RealEscapeString($ownerId));
 	}
 	if(!empty($filter)){
-	  $query.= sprintf(" AND type='%s'",mysql_real_escape_string($type));
+	  $query.= sprintf(" AND type='%s'",DB()->RealEscapeString($type));
 	}
 	
-	return DBQueryToArray($query);
+	return DB()->DBQueryToArray($query);
 }
 
 function GetUrlTypes() {
@@ -91,14 +91,14 @@ function AddUrl($urlparams) {
 	
 		$query = sprintf("INSERT INTO uo_urls (owner,owner_id,type,name,url,ordering)
 				VALUES('%s','%s','%s','%s','%s','%s')",
-			mysql_real_escape_string($urlparams['owner']),
-			mysql_real_escape_string($urlparams['owner_id']),
-			mysql_real_escape_string($urlparams['type']),
-			mysql_real_escape_string($urlparams['name']),
-			mysql_real_escape_string($url),
-		    mysql_real_escape_string($urlparams['ordering']));
+			DB()->RealEscapeString($urlparams['owner']),
+			DB()->RealEscapeString($urlparams['owner_id']),
+			DB()->RealEscapeString($urlparams['type']),
+			DB()->RealEscapeString($urlparams['name']),
+			DB()->RealEscapeString($url),
+		    DB()->RealEscapeString($urlparams['ordering']));
 			
-		return DBQuery($query);
+		return DB()->DBQuery($query);
 	} else { die('Insufficient rights to add url'); }	
 }
 
@@ -106,13 +106,13 @@ function AddMail($urlparams) {
 	if (isSuperAdmin()){
 		$query = sprintf("INSERT INTO uo_urls (owner,owner_id,type,name,url,ordering)
 				VALUES('%s','%s','%s','%s','%s','%s')",
-			mysql_real_escape_string($urlparams['owner']),
-			mysql_real_escape_string($urlparams['owner_id']),
-			mysql_real_escape_string($urlparams['type']),
-			mysql_real_escape_string($urlparams['name']),
-			mysql_real_escape_string($urlparams['url']),
-			mysql_real_escape_string($urlparams['ordering']));
-		return DBQuery($query);
+			DB()->RealEscapeString($urlparams['owner']),
+			DB()->RealEscapeString($urlparams['owner_id']),
+			DB()->RealEscapeString($urlparams['type']),
+			DB()->RealEscapeString($urlparams['name']),
+			DB()->RealEscapeString($urlparams['url']),
+			DB()->RealEscapeString($urlparams['ordering']));
+		return DB()->DBQuery($query);
 	} else { die('Insufficient rights to add url'); }	
 }
 
@@ -122,14 +122,14 @@ function SetUrl($urlparams) {
 	
 		$query = sprintf("UPDATE uo_urls SET owner='%s',owner_id='%s',type='%s',name='%s',url='%s', ordering='%s'
 			WHERE url_id=%d",
-			mysql_real_escape_string($urlparams['owner']),
-			mysql_real_escape_string($urlparams['owner_id']),
-			mysql_real_escape_string($urlparams['type']),
-			mysql_real_escape_string($urlparams['name']),
-			mysql_real_escape_string($url),
-			mysql_real_escape_string($urlparams['ordering']),
+			DB()->RealEscapeString($urlparams['owner']),
+			DB()->RealEscapeString($urlparams['owner_id']),
+			DB()->RealEscapeString($urlparams['type']),
+			DB()->RealEscapeString($urlparams['name']),
+			DB()->RealEscapeString($url),
+			DB()->RealEscapeString($urlparams['ordering']),
 			(int)$urlparams['url_id']);
-		return DBQuery($query);
+		return DB()->DBQuery($query);
 	} else { die('Insufficient rights to add url'); }	
 }
 
@@ -137,14 +137,14 @@ function SetMail($urlparams) {
 	if (isSuperAdmin()){
 		$query = sprintf("UPDATE uo_urls SET owner='%s',owner_id='%s',type='%s',name='%s',url='%s', ordering='%s'
 			WHERE url_id=%d",
-			mysql_real_escape_string($urlparams['owner']),
-			mysql_real_escape_string($urlparams['owner_id']),
-			mysql_real_escape_string($urlparams['type']),
-			mysql_real_escape_string($urlparams['name']),
-			mysql_real_escape_string($urlparams['url']),
-			mysql_real_escape_string($urlparams['ordering']),
+			DB()->RealEscapeString($urlparams['owner']),
+			DB()->RealEscapeString($urlparams['owner_id']),
+			DB()->RealEscapeString($urlparams['type']),
+			DB()->RealEscapeString($urlparams['name']),
+			DB()->RealEscapeString($urlparams['url']),
+			DB()->RealEscapeString($urlparams['ordering']),
 			(int)$urlparams['url_id']);
-		return DBQuery($query);
+		return DB()->DBQuery($query);
 	} else { die('Insufficient rights to add url'); }	
 }
 
@@ -152,7 +152,7 @@ function RemoveUrl($urlId) {
 	if (isSuperAdmin()){
 		$query = sprintf("DELETE FROM uo_urls WHERE url_id=%d",
 			(int)$urlId);
-		return DBQuery($query);
+		return DB()->DBQuery($query);
 	} else { die('Insufficient rights to remove url'); }
 }
 
@@ -163,16 +163,16 @@ function AddMediaUrl($urlparams) {
 		
 		$query = sprintf("INSERT INTO uo_urls (owner,owner_id,type,name,url,ismedialink,mediaowner,publisher_id)
 				VALUES('%s','%s','%s','%s','%s',1,'%s','%s')",
-			mysql_real_escape_string($urlparams['owner']),
-			mysql_real_escape_string($urlparams['owner_id']),
-			mysql_real_escape_string($urlparams['type']),
-			mysql_real_escape_string($urlparams['name']),
-			mysql_real_escape_string($url),
-			mysql_real_escape_string($urlparams['mediaowner']),
-			mysql_real_escape_string($urlparams['publisher_id']));
+			DB()->RealEscapeString($urlparams['owner']),
+			DB()->RealEscapeString($urlparams['owner_id']),
+			DB()->RealEscapeString($urlparams['type']),
+			DB()->RealEscapeString($urlparams['name']),
+			DB()->RealEscapeString($url),
+			DB()->RealEscapeString($urlparams['mediaowner']),
+			DB()->RealEscapeString($urlparams['publisher_id']));
 		Log2("Media","Add",$urlparams['url']);
-		DBQuery($query);
-		return mysql_insert_id();
+		DB()->DBQuery($query);
+		return DB()->InsertID();
 	} else { die('Insufficient rights to add media'); }	
 }
 
@@ -181,7 +181,7 @@ function RemoveMediaUrl($urlId) {
 		$query = sprintf("DELETE FROM uo_urls WHERE url_id=%d",
 			(int)$urlId);
 		Log2("Media","Remove",$urlId);
-		return DBQuery($query);
+		return DB()->DBQuery($query);
 	} else { die('Insufficient rights to remove url'); }
 }
 ?>

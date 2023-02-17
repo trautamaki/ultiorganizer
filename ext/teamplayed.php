@@ -30,7 +30,7 @@ $season = iget("season");
 
 if($teamId){
 	$games = TimetableGames($teamId,"team", "past", "tournaments");
-	if(!mysql_num_rows($games)){
+	if(!DB()->NumRows($games)){
 		echo "\n<p>"._("No games").".</p>\n";	
 	}else{
 	echo ExtGameView($games);

@@ -10,7 +10,7 @@ header("Cache-Control: no-cache, must-revalidate");
 header("Expires: -1");
 $result = GetSearchLocations();
 // Iterate through the rows, adding XML nodes for each
-while ($row = @mysql_fetch_assoc($result)){
+while ($row = @DB()->FetchAssoc($result)){
 	echo U_($row['name'])."\t".$row['address']."\t".$row['id']."\n";
 }
 CloseConnection();

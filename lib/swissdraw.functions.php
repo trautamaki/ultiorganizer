@@ -6,21 +6,21 @@ function DetectTiesInPreviousPool($poolId) {
 		SELECT distinct frompool
 		FROM uo_moveteams pmt
 		WHERE pmt.topool = '%s'",	
-		mysql_real_escape_string($poolId));
+		DB()->RealEscapeString($poolId));
 	
-	$result = mysql_query($query);
-	if (!$result) { die('Invalid query: ' . mysql_error()); }
+	$result = DB()->DBQuery($query);
+	if (!$result) { die('Invalid query: ' . DB()->SQLError()); }
 		
-	while($contrPool = mysql_fetch_assoc($result)){
+	while($contrPool = DB()->FetchAssoc($result)){
 		$query = sprintf("
 			SELECT count(activerank) AS activeteams,count(activerank)-count(distinct activerank) as ties
 			FROM uo_team_pool
 			where pool='%s'",
-			mysql_real_escape_string($contrPool['frompool']));
+			DB()->RealEscapeString($contrPool['frompool']));
 						
-		$result2 = mysql_query($query);
-		if (!$result2) { die('Invalid query: ' . mysql_error()); }
-		$row = mysql_fetch_assoc($result2);
+		$result2 = DB()->DBQuery($query);
+		if (!$result2) { die('Invalid query: ' . DB()->SQLError()); }
+		$row = DB()->FetchAssoc($result2);
 		
 		if ($row['activeteams']==0) {
 			// no active teams in this pool
@@ -41,12 +41,12 @@ function AutoResolveTiesInSourcePools($poolId) {
 		SELECT distinct frompool
 		FROM uo_moveteams pmt
 		WHERE pmt.topool = '%s'",	
-		mysql_real_escape_string($poolId));
+		DB()->RealEscapeString($poolId));
 	
-	$result = mysql_query($query);
-	if (!$result) { die('Invalid query: ' . mysql_error()); }
+	$result = DB()->DBQuery($query);
+	if (!$result) { die('Invalid query: ' . DB()->SQLError()); }
 		
-	while($contrPool = mysql_fetch_assoc($result)){
+	while($contrPool = DB()->FetchAssoc($result)){
 		AutoResolveTies($contrPool['frompool']);
 	}
 }
@@ -59,16 +59,16 @@ function AutoResolveTies($poolId) {
 		FROM uo_team_pool
 		WHERE pool='%s'
 		ORDER BY activerank,team",
-		mysql_real_escape_string($poolId));
+		DB()->RealEscapeString($poolId));
 				
-	$result = mysql_query($query);
-	if (!$result) { die('Invalid query: ' . mysql_error()); }
+	$result = DB()->DBQuery($query);
+	if (!$result) { die('Invalid query: ' . DB()->SQLError()); }
 	
-	$nbrows=mysql_num_rows($result);
+	$nbrows=DB()->NumRows($result);
 //	print "Number of rows: ".$nbrows."<br>";
 	
 	for($i=1;$i<=$nbrows;$i++){
-		$row=mysql_fetch_assoc($result);
+		$row=DB()->FetchAssoc($result);
 //		print_r($row);
 		if ($row['activerank']<$i && !empty($row['activerank'])){
 			// set this team's activerank to $i
@@ -77,11 +77,11 @@ function AutoResolveTies($poolId) {
 				UPDATE uo_team_pool
 				SET activerank='%s'
 				WHERE pool='%s' AND team='%s'",				
-				mysql_real_escape_string($i),
-				mysql_real_escape_string($poolId),
-				mysql_real_escape_string($row['team']));
-			$result2 = mysql_query($query);
-			if (!$result2) { die('Invalid query: ' . mysql_error()); }
+				DB()->RealEscapeString($i),
+				DB()->RealEscapeString($poolId),
+				DB()->RealEscapeString($row['team']));
+			$result2 = DB()->DBQuery($query);
+			if (!$result2) { die('Invalid query: ' . DB()->SQLError()); }
 		}				
 	}
 }
@@ -130,13 +130,13 @@ function CheckSwissdrawMoves($poolId){
 		$query = sprintf("
 			UPDATE uo_moveteams SET torank=%s,scheduling_id=%s
 			WHERE fromplacing=%s AND frompool=%s",
-			mysql_real_escape_string($moves[$i]['torank']),
-   			mysql_real_escape_string($moves[$i]['scheduling_id']),
-			mysql_real_escape_string($moves[$i]['fromplacing']),
-			mysql_real_escape_string($moves[$i]['frompool']));
+			DB()->RealEscapeString($moves[$i]['torank']),
+   			DB()->RealEscapeString($moves[$i]['scheduling_id']),
+			DB()->RealEscapeString($moves[$i]['fromplacing']),
+			DB()->RealEscapeString($moves[$i]['frompool']));
 //		print $query."<br>";
-		$result = mysql_query($query);
-		if (!$result) die($query.'Invalid query: ' . mysql_error());
+		$result = DB()->DBQuery($query);
+		if (!$result) die($query.'Invalid query: ' . DB()->SQLError());
 		}
 		
 	// everthing went fine
@@ -307,17 +307,17 @@ function GenerateSwissdrawPools($poolId, $rounds, $generate=true){
 		$query = sprintf("SELECT team.team_id from uo_team_pool as tp left join uo_team team 
 				on (tp.team = team.team_id) WHERE tp.pool=%d ORDER BY tp.rank",
 				(int)$poolId);
-		$result = DBQuery($query);
+		$result = DB()->DBQuery($query);
 		
-		if(mysql_num_rows($result)==0){
+		if(DB()->NumRows($result)==0){
 				$pseudoteams = true;
 				$query = sprintf("SELECT pt.scheduling_id AS team_id from uo_scheduling_name pt 
 					LEFT JOIN uo_moveteams mt ON(pt.scheduling_id = mt.scheduling_id) 
 					WHERE mt.topool=%d ORDER BY mt.torank",
 					(int)$poolId);
-				$result = DBQuery($query);
+				$result = DB()->DBQuery($query);
 			}
-		$teams = mysql_num_rows($result);
+		$teams = DB()->NumRows($result);
 		
 		//echo "<p>rounds to win $rounds</p>";
 		$prevpoolId = $poolId;
@@ -338,7 +338,7 @@ function GenerateSwissdrawPools($poolId, $rounds, $generate=true){
 				$id = PoolFromAnotherPool($poolInfo['series'],$name,$poolInfo['ordering'].($i+1),$poolId);
 				// make it a continuation pool
 				$query = sprintf("UPDATE uo_pool SET continuingpool=1 WHERE pool_id=%s",(int)$id);
-				$result = DBQuery($query);
+				$result = DB()->DBQuery($query);
 		
 				//standard move to next pool
 				for($j=1;$j<=$teams;$j++){
@@ -373,16 +373,16 @@ function PoolTeamFromStandingsNoTies($poolId, $activerank){
 		LEFT JOIN uo_team_pool AS js ON (j.team_id = js.team)
 		LEFT JOIN uo_country c ON(c.country_id=j.country)
 		WHERE js.pool='%s' AND js.activerank='%s'",
-		mysql_real_escape_string($poolId),
-		mysql_real_escape_string($activerank));
+		DB()->RealEscapeString($poolId),
+		DB()->RealEscapeString($activerank));
 		
-	$result = mysql_query($query);
-	if (!$result) { die('Invalid query: ' . mysql_error()); }
+	$result = DB()->DBQuery($query);
+	if (!$result) { die('Invalid query: ' . DB()->SQLError()); }
 	
-	if (mysql_num_rows($result)==0) {
+	if (DB()->NumRows($result)==0) {
 		// must be due to ties in previous activeranks
 		$searchback=0;
-		while(mysql_num_rows($result)==0) {
+		while(DB()->NumRows($result)==0) {
 			$searchback++;
 			$query = sprintf("
 				SELECT j.team_id, j.name, js.activerank, c.flagfile
@@ -390,16 +390,16 @@ function PoolTeamFromStandingsNoTies($poolId, $activerank){
 				LEFT JOIN uo_team_pool AS js ON (j.team_id = js.team)
 				LEFT JOIN uo_country c ON(c.country_id=j.country)
 				WHERE js.pool='%s' AND js.activerank='%s'",
-				mysql_real_escape_string($poolId),
-				mysql_real_escape_string($activerank-$searchback));
+				DB()->RealEscapeString($poolId),
+				DB()->RealEscapeString($activerank-$searchback));
 				
-			$result = mysql_query($query);
-			if (!$result) { die('Invalid query: ' . mysql_error()); }
+			$result = DB()->DBQuery($query);
+			if (!$result) { die('Invalid query: ' . DB()->SQLError()); }
 		}
-		mysql_data_seek($result,$searchback);		
+		DB()->DataSeek($result,$searchback);		
 	}
 	
-	return mysql_fetch_assoc($result);
+	return DB()->FetchAssoc($result);
 }
 
 
@@ -416,31 +416,31 @@ function CheckBYESchedule($poolId) {
 		WHERE g.pool='%s' AND ((thome.valid=2 OR tvisit.valid=2 AND g.time is not NULL) OR 
 			(g.time is NULL AND thome.valid=1 AND tvisit.valid=1) )
 		ORDER BY g.time",
-		mysql_real_escape_string($poolId));
+		DB()->RealEscapeString($poolId));
 		
-	$result = DBQuery($query);
+	$result = DB()->DBQuery($query);
 	
-	if (mysql_num_rows($result)==2) { // swap spots
-		$row1=mysql_fetch_assoc($result);
-		$row2=mysql_fetch_assoc($result);
+	if (DB()->NumRows($result)==2) { // swap spots
+		$row1=DB()->FetchAssoc($result);
+		$row2=DB()->FetchAssoc($result);
 
 		$query = sprintf("
 				UPDATE uo_game SET reservation='%s', time='%s' 
 				WHERE game_id='%s' ",
-				mysql_real_escape_string($row2['reservation']),
-				mysql_real_escape_string($row2['time']),
-				mysql_real_escape_string($row1['game_id']));
-				$result = mysql_query($query);
-		if (!$result || mysql_affected_rows()!=1) { die('Invalid query: ' . mysql_error()); }
+				DB()->RealEscapeString($row2['reservation']),
+				DB()->RealEscapeString($row2['time']),
+				DB()->RealEscapeString($row1['game_id']));
+				$result = DB()->DBQuery($query);
+		if (!$result || DB()->AffectedRows()!=1) { die('Invalid query: ' . DB()->SQLError()); }
 
 		if ($row1['reservation']!="" or $row1['time']!="") { die('something is fishy here'); }
 		
 		$query = sprintf("
 				UPDATE uo_game SET reservation=NULL, time=NULL 
 				WHERE game_id='%s' ",
-				mysql_real_escape_string($row2['game_id']));
-				$result = mysql_query($query);		
-		if (!$result || mysql_affected_rows()!=1) { die('Invalid query: ' . mysql_error()); }		
+				DB()->RealEscapeString($row2['game_id']));
+				$result = DB()->DBQuery($query);		
+		if (!$result || DB()->AffectedRows()!=1) { die('Invalid query: ' . DB()->SQLError()); }		
 		
 		echo "Spots swapped!!! Pool_id ".$poolId."<br>";
 	}
@@ -462,23 +462,23 @@ function CheckBYE($poolId){
 		$query = sprintf("
 				UPDATE uo_game,uo_team SET uo_game.visitorscore='%s', uo_game.homescore='%s', uo_game.hasstarted='2'
 				WHERE (uo_game.pool='%s' AND uo_game.visitorteam=uo_team.team_id AND uo_team.valid=2)",
-				mysql_real_escape_string($poolInfo['forfeitagainst']),
-				mysql_real_escape_string($poolInfo['forfeitscore']),
-				mysql_real_escape_string($poolId));
-		$result = mysql_query($query);
-		if (!$result) { die('Invalid query: ' . mysql_error()); }
-		$changes=mysql_affected_rows();
+				DB()->RealEscapeString($poolInfo['forfeitagainst']),
+				DB()->RealEscapeString($poolInfo['forfeitscore']),
+				DB()->RealEscapeString($poolId));
+		$result = DB()->DBQuery($query);
+		if (!$result) { die('Invalid query: ' . DB()->SQLError()); }
+		$changes=DB()->AffectedRows();
 		
 		// if the home-team is the BYE-team assign the appropriate scores to home and visitor
 		$query = sprintf("
 				UPDATE uo_game,uo_team SET uo_game.homescore='%s', uo_game.visitorscore='%s', uo_game.hasstarted='2'
 				WHERE (uo_game.pool='%s' AND uo_game.hometeam=uo_team.team_id AND uo_team.valid=2)",
-				mysql_real_escape_string($poolInfo['forfeitagainst']),
-				mysql_real_escape_string($poolInfo['forfeitscore']),
-				mysql_real_escape_string($poolId));
-				$result = mysql_query($query);
-		if (!$result) { die('Invalid query: ' . mysql_error()); }
-		$changes+=mysql_affected_rows();
+				DB()->RealEscapeString($poolInfo['forfeitagainst']),
+				DB()->RealEscapeString($poolInfo['forfeitscore']),
+				DB()->RealEscapeString($poolId));
+				$result = DB()->DBQuery($query);
+		if (!$result) { die('Invalid query: ' . DB()->SQLError()); }
+		$changes+=DB()->AffectedRows();
 				
 	}
 	return $changes;
