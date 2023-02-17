@@ -68,7 +68,7 @@ if ($userid != "anonymous") {
       $error = 1;
     }
 
-    $uidcheck = mysql_real_escape_string($newUsername);
+    $uidcheck = GetDatabase()->RealEscapeString($newUsername);
 
     if ($uidcheck != $newUsername) {
       $message .= "<p class='warning'>" . _("Illegal characters in the username.") . "</p>";
@@ -358,7 +358,7 @@ if ($_SESSION['uid'] != "anonymous") {
 
   $html .= "<select multiple='multiple' name='addeditseasonslist[]' id='addeditseasonslist' style='height:200px;width:250px'>\n";
   $seasons = Seasons();
-  while ($season = mysql_fetch_assoc($seasons)) {
+  while ($season = GetDatabase()->FetchAssoc($seasons)) {
     if (empty($editseasons[$season['season_id']])) {
       $html .= "<option value='" . urlencode($season['season_id']) . "'>" . utf8entities($season['name']) . "</option>";
     }

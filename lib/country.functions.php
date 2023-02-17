@@ -6,16 +6,16 @@ function CountryName($countryId)
     "SELECT name FROM uo_country WHERE country_id=%d",
     (int)$countryId
   );
-  return _(DBQueryToValue($query));
+  return _(GetDatabase()->DBQueryToValue($query));
 }
 
 function CountryId($countryname)
 {
   $query = sprintf(
     "SELECT country_id FROM uo_country WHERE name='%s'",
-    mysql_real_escape_string($countryname)
+    GetDatabase()->RealEscapeString($countryname)
   );
-  return DBQueryToValue($query);
+  return GetDatabase()->DBQueryToValue($query);
 }
 
 
@@ -26,7 +26,7 @@ function CountryInfo($countryId)
 		WHERE country_id = %d",
     (int)$countryId
   );
-  $ret = DBQueryToRow($query);
+  $ret = GetDatabase()->DBQueryToRow($query);
   $ret['name'] = _($ret['name']);
   return $ret;
 }
@@ -57,16 +57,16 @@ function CountryList($onlyvalid = true, $onlyplayed = false)
 
   $query .= " GROUP BY c.country_id ORDER BY c.name";
 
-  return  DBQueryToArray($query);
+  return  GetDatabase()->DBQueryToArray($query);
 }
 
 function CountryDropList($id, $name)
 {
   $html = "";
   $query = sprintf("SELECT country_id, name FROM uo_country WHERE valid=1 ORDER BY name");
-  $result =  DBQuery($query);
+  $result =  GetDatabase()->DBQuery($query);
   $html .= "<select class='dropdown' id='$id' name='$name'>\n";
-  while ($row = mysql_fetch_assoc($result)) {
+  while ($row = GetDatabase()->FetchAssoc($result)) {
     $html .= "<option value='" . utf8entities($row['name']) . "'>" . utf8entities(_($row['name'])) . "</option>\n";
   }
   $html .= "</select>\n";
@@ -81,11 +81,11 @@ function CountryDropListWithValues($id, $name, $selectedId, $width = "")
     $style = "style='width:$width'";
   }
   $query = sprintf("SELECT country_id, name FROM uo_country WHERE valid=1 ORDER BY name");
-  $result =  DBQuery($query);
+  $result =  GetDatabase()->DBQuery($query);
   $html .= "<select class='dropdown' $style id='$id' name='$name'>\n";
   $html .= "<option value='-1'></option>\n";
 
-  while ($row = mysql_fetch_assoc($result)) {
+  while ($row = GetDatabase()->FetchAssoc($result)) {
     if ($row['country_id'] == $selectedId) {
       $html .= "<option selected='selected' value='" . utf8entities($row['country_id']) . "'>" . utf8entities(_($row['name'])) . "</option>\n";
     } else {
@@ -104,7 +104,7 @@ function CountryNumOfTeams($countryId)
 		WHERE c.country_id=%d",
     (int)$countryId
   );
-  return DBQueryToValue($query);
+  return GetDatabase()->DBQueryToValue($query);
 }
 
 function CountryTeams($countryId, $season = "")
@@ -127,10 +127,10 @@ function CountryTeams($countryId, $season = "")
 			LEFT JOIN uo_series ser ON(team.series = ser.series_id)
 			WHERE team.country=%d AND ser.season='%s' ORDER BY ser.ordering, team.name",
       (int)$countryId,
-      mysql_real_escape_string($season)
+      GetDatabase()->RealEscapeString($season)
     );
   }
-  return DBQueryToArray($query);
+  return GetDatabase()->DBQueryToArray($query);
 }
 
 function RemoveCountry($countryId)
@@ -141,7 +141,7 @@ function RemoveCountry($countryId)
       "DELETE FROM uo_country WHERE country_id=%d",
       (int)$countryId
     );
-    return DBQuery($query);
+    return GetDatabase()->DBQuery($query);
   } else {
     die('Insufficient rights to remove country');
   }
@@ -153,13 +153,13 @@ function AddCountry($name, $abbreviation, $flag)
     $query = sprintf(
       "INSERT INTO uo_country (name, abbreviation, flagfile) 
 			VALUES ('%s', '%s', '%s')",
-      mysql_real_escape_string($name),
-      mysql_real_escape_string($abbreviation),
-      mysql_real_escape_string($flag)
+      GetDatabase()->RealEscapeString($name),
+      GetDatabase()->RealEscapeString($abbreviation),
+      GetDatabase()->RealEscapeString($flag)
     );
 
-    $result = DBQuery($query);
-    $countryId = mysql_insert_id();
+    $result = GetDatabase()->DBQuery($query);
+    $countryId = GetDatabase()->InsertID();
     Log1("country", "add", $countryId);
     return $countryId;
   } else {
@@ -171,13 +171,13 @@ function CanDeleteCountry($countryId)
 {
   $query = sprintf(
     "SELECT count(*) FROM uo_team WHERE country='%s'",
-    mysql_real_escape_string($countryId)
+    GetDatabase()->RealEscapeString($countryId)
   );
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
-  if (!$row = mysql_fetch_row($result)) return false;
+  if (!$row = GetDatabase()->FetchRow($result)) return false;
   return ($row[0] == 0);
 }
 
@@ -189,7 +189,7 @@ function SetCountryValidity($countryId, $valid)
       (int)$valid,
       (int)$countryId
     );
-    return DBQuery($query);
+    return GetDatabase()->DBQuery($query);
   } else {
     die('Insufficient rights to set country validity');
   }
@@ -205,13 +205,13 @@ function CountryPools($seasonId, $countryId)
 		LEFT JOIN uo_team team ON(tp.team=team.team_id)
 		WHERE pool.visible=1 AND ser.season='%s' AND team.country=%d
 		ORDER BY ser.ordering ASC, pool.ordering ASC, pool.pool_id ASC",
-    mysql_real_escape_string($seasonId),
+    GetDatabase()->RealEscapeString($seasonId),
     (int)$countryId
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
   return $result;

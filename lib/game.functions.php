@@ -9,12 +9,12 @@ function GameSetPools($games)
 	$query = "SELECT DISTINCT pool_id, p.name from uo_game g left join uo_pool p on (g.pool=p.pool_id) WHERE g.game_id in (";
 	$query .= implode(",", $games);
 	$query .= ") ORDER BY p.ordering ASC";
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 	$ret = array();
-	while ($row = mysql_fetch_assoc($result)) {
+	while ($row = GetDatabase()->FetchAssoc($result)) {
 		$ret[$row['pool_id']] = $row;
 	}
 	return $ret;
@@ -29,12 +29,12 @@ function PoolGameSetResults($pool, $games)
 		LEFT JOIN uo_team AS v ON (p.visitorteam=v.team_id)
 		LEFT JOIN uo_scheduling_name s ON(s.scheduling_id=p.name)
 		WHERE p.game_id IN (%s) AND pool=%d",
-		mysql_real_escape_string(implode(",", $games)),
+		GetDatabase()->RealEscapeString(implode(",", $games)),
 		(int)$pool
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 	return $result;
 }
@@ -61,14 +61,14 @@ function GameResult($gameId)
     LEFT JOIN uo_team AS v ON (p.visitorteam=v.team_id)
     LEFT JOIN uo_scheduling_name s ON(s.scheduling_id=p.name)
     WHERE p.game_id='%s'",
-		mysql_real_escape_string($gameId)
+		GetDatabase()->RealEscapeString($gameId)
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
-	return mysql_fetch_assoc($result);
+	return GetDatabase()->FetchAssoc($result);
 }
 
 function GoalInfo($gameId, $num)
@@ -85,11 +85,11 @@ function GoalInfo($gameId, $num)
 		(int)$num
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
-	if ($row = mysql_fetch_assoc($result)) {
+	if ($row = GetDatabase()->FetchAssoc($result)) {
 		return $row;
 	} else return false;
 }
@@ -108,7 +108,7 @@ function GameHomeTeamResults($teamId, $poolId)
 		(int) $teamId,
 		(int) $poolId
 	);
-	return DBQueryToArray($query);
+	return GetDatabase()->DBQueryToArray($query);
 }
 
 function GameHomePseudoTeamResults($schedulingId, $poolId)
@@ -123,7 +123,7 @@ function GameHomePseudoTeamResults($schedulingId, $poolId)
 		(int) $schedulingId,
 		(int) $poolId
 	);
-	return DBQueryToArray($query);
+	return GetDatabase()->DBQueryToArray($query);
 }
 
 function GameVisitorTeamResults($teamId, $poolId)
@@ -138,7 +138,7 @@ function GameVisitorTeamResults($teamId, $poolId)
 		(int) $teamId,
 		(int) $poolId
 	);
-	return DBQueryToArray($query);
+	return GetDatabase()->DBQueryToArray($query);
 }
 
 function GameNameFromId($gameId)
@@ -150,12 +150,12 @@ function GameNameFromId($gameId)
 		WHERE game_id=%d",
 		(int)$gameId
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
-	$row = mysql_fetch_assoc($result);
+	$row = GetDatabase()->FetchAssoc($result);
 	return $row['hometeamname'] . " - " . $row['visitorteamname'];
 }
 
@@ -166,14 +166,14 @@ function GameSeries($gameId)
 		SELECT s.series 
 		FROM uo_game p left join uo_pool s on (p.pool=s.pool_id)  
 		WHERE game_id='%s'",
-		mysql_real_escape_string($gameId)
+		GetDatabase()->RealEscapeString($gameId)
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
-	$row = mysql_fetch_row($result);
+	$row = GetDatabase()->FetchRow($result);
 
 	return $row[0];
 }
@@ -187,12 +187,12 @@ function GameRespTeam($gameId)
 		WHERE game_id='%s'",
 		(int)$gameId
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
-	$row = mysql_fetch_row($result);
+	$row = GetDatabase()->FetchRow($result);
 
 	return $row[0];
 }
@@ -212,7 +212,7 @@ function GameAdmins($gameId)
 			ORDER BY u.name",
 		(int)$gameId
 	);
-	return DBQueryToArray($query);
+	return GetDatabase()->DBQueryToArray($query);
 }
 
 function GamePool($gameId)
@@ -224,12 +224,12 @@ function GamePool($gameId)
 		WHERE game_id=%d",
 		(int)$gameId
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
-	$row = mysql_fetch_row($result);
+	$row = GetDatabase()->FetchRow($result);
 
 	return $row[0];
 }
@@ -243,15 +243,15 @@ function GameIsFirstOffenceHome($gameId)
 		WHERE game=%d ORDER BY time",
 		(int)$gameId
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
-	if (!mysql_num_rows($result))
+	if (!GetDatabase()->NumRows($result))
 		return -1;
 
-	$row = mysql_fetch_row($result);
+	$row = GetDatabase()->FetchRow($result);
 
 	return $row[0];
 }
@@ -265,12 +265,12 @@ function GameReservation($gameId)
 		WHERE game_id=%d",
 		(int)$gameId
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
-	$row = mysql_fetch_row($result);
+	$row = GetDatabase()->FetchRow($result);
 
 	return $row[0];
 }
@@ -284,12 +284,12 @@ function GameSeason($gameId)
 		WHERE game_id=%d",
 		(int)$gameId
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
-	$row = mysql_fetch_row($result);
+	$row = GetDatabase()->FetchRow($result);
 
 	return $row[0];
 }
@@ -305,7 +305,7 @@ function GamePlayers($gameId, $teamId)
 		(int)$teamId
 	);
 
-	return DBQueryToArray($query);
+	return GetDatabase()->DBQueryToArray($query);
 }
 
 function GameCaptain($gameId, $teamId)
@@ -319,7 +319,7 @@ function GameCaptain($gameId, $teamId)
 		(int)$teamId
 	);
 
-	return DBQueryToValue($query);
+	return GetDatabase()->DBQueryToValue($query);
 }
 
 function GameAll($limit = 50)
@@ -349,7 +349,7 @@ function GameAll($limit = 50)
 			LEFT JOIN uo_scheduling_name AS pvisitor ON (pp.scheduling_name_visitor=pvisitor.scheduling_id)
 			WHERE pp.valid=true AND pp.hasstarted>0 AND pp.isongoing=0  ORDER BY pp.time DESC, ps.ordering, pool.ordering, pp.game_id
 			LIMIT $limit";
-	return DBQuery($query);
+	return GetDatabase()->DBQuery($query);
 }
 
 function GamePlayerFromNumber($gameId, $teamId, $number)
@@ -361,20 +361,20 @@ function GamePlayerFromNumber($gameId, $teamId, $number)
 		INNER JOIN (SELECT player, num FROM uo_played WHERE game='%s')
 			AS pel ON (p.player_id=pel.player) 
 		WHERE p.team='%s' AND pel.num='%s'",
-		mysql_real_escape_string($gameId),
-		mysql_real_escape_string($teamId),
-		mysql_real_escape_string($number)
+		GetDatabase()->RealEscapeString($gameId),
+		GetDatabase()->RealEscapeString($teamId),
+		GetDatabase()->RealEscapeString($number)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
-	if (!mysql_num_rows($result))
+	if (!GetDatabase()->NumRows($result))
 		return -1;
 
-	$row = mysql_fetch_row($result);
+	$row = GetDatabase()->FetchRow($result);
 
 	if ($row && $row[0])
 		return intval($row[0]);
@@ -396,15 +396,15 @@ function GameTeamScoreBorad($gameId, $teamId)
 		RIGHT JOIN (SELECT player, num FROM uo_played WHERE game='%s') as pel ON (p.player_id=pel.player) 
 			WHERE p.team='%s' 
 		ORDER BY total DESC, done DESC, fedin DESC, lastname ASC, firstname ASC",
-		mysql_real_escape_string($gameId),
-		mysql_real_escape_string($gameId),
-		mysql_real_escape_string($gameId),
-		mysql_real_escape_string($teamId)
+		GetDatabase()->RealEscapeString($gameId),
+		GetDatabase()->RealEscapeString($gameId),
+		GetDatabase()->RealEscapeString($gameId),
+		GetDatabase()->RealEscapeString($teamId)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
 	return $result;
@@ -420,14 +420,14 @@ function GameTeamDefenseBoard($gameId, $teamId)
 		RIGHT JOIN (SELECT player, num FROM uo_played WHERE game='%s') as pel ON (p.player_id=pel.player) 
 			WHERE p.team='%s' 
 		ORDER BY done DESC, lastname ASC, firstname ASC",
-		mysql_real_escape_string($gameId),
-		mysql_real_escape_string($gameId),
-		mysql_real_escape_string($teamId)
+		GetDatabase()->RealEscapeString($gameId),
+		GetDatabase()->RealEscapeString($gameId),
+		GetDatabase()->RealEscapeString($teamId)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
 	return $result;
@@ -449,14 +449,14 @@ function GameScoreBoard($gameId)
 			WHERE game='%s') as pel ON (p.player_id=pel.player)
 		LEFT JOIN uo_team pj ON (pj.team_id=p.team) WHERE p.profile_id IS NOT NULL AND p.lastname IS NOT NULL 
 		ORDER BY p.profile_id ",
-		mysql_real_escape_string($gameId),
-		mysql_real_escape_string($gameId),
-		mysql_real_escape_string($gameId)
+		GetDatabase()->RealEscapeString($gameId),
+		GetDatabase()->RealEscapeString($gameId),
+		GetDatabase()->RealEscapeString($gameId)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
 	return $result;
@@ -471,12 +471,12 @@ function GameGoals($gameId)
 		LEFT JOIN uo_player AS t ON (m.scorer=t.player_id) 
 		WHERE m.game='%s' 
 		ORDER BY m.num",
-		mysql_real_escape_string($gameId)
+		GetDatabase()->RealEscapeString($gameId)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
 	return $result;
@@ -490,12 +490,12 @@ function GameDefenses($gameId)
 		FROM (uo_defense AS m LEFT JOIN uo_player AS s ON (m.author = s.player_id))
 		WHERE m.game='%s' 
 		ORDER BY m.num",
-		mysql_real_escape_string($gameId)
+		GetDatabase()->RealEscapeString($gameId)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
 	return $result;
@@ -511,10 +511,10 @@ function GameLastGoal($gameId)
 		LEFT JOIN uo_player AS t ON (m.scorer=t.player_id) 
 		WHERE m.game='%s' 
 		ORDER BY m.num DESC",
-		mysql_real_escape_string($gameId)
+		GetDatabase()->RealEscapeString($gameId)
 	);
 
-	return DBQueryToRow($query);
+	return GetDatabase()->DBQueryToRow($query);
 }
 
 function GameAllGoals($gameId)
@@ -525,12 +525,12 @@ function GameAllGoals($gameId)
 		FROM uo_goal 
 		WHERE game='%s' 
 		ORDER BY time",
-		mysql_real_escape_string($gameId)
+		GetDatabase()->RealEscapeString($gameId)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
 	return $result;
@@ -545,11 +545,11 @@ function GameEvents($gameId)
 			WHERE game='%s' UNION ALL SELECT time,ishome,type FROM uo_gameevent WHERE game='%s') AS tapahtuma 
 		WHERE type!='media'
 		ORDER BY time ",
-		mysql_real_escape_string($gameId),
-		mysql_real_escape_string($gameId)
+		GetDatabase()->RealEscapeString($gameId),
+		GetDatabase()->RealEscapeString($gameId)
 	);
 
-	return DBQueryToArray($query);
+	return GetDatabase()->DBQueryToArray($query);
 }
 
 function GameMediaEvents($gameId)
@@ -564,13 +564,13 @@ function GameMediaEvents($gameId)
 		(int)$gameId
 	);
 
-	return DBQueryToArray($query);
+	return GetDatabase()->DBQueryToArray($query);
 }
 
 function AddGameMediaEvent($gameId, $time, $urlId)
 {
 	if (hasAddMediaRight()) {
-		$lastnum = DBQueryToValue("SELECT MAX(num) FROM uo_gameevent WHERE game=" . intval($gameId));
+		$lastnum = GetDatabase()->DBQueryToValue("SELECT MAX(num) FROM uo_gameevent WHERE game=" . intval($gameId));
 		$lastnum = intval($lastnum) + 1;
 
 		$query = sprintf(
@@ -580,8 +580,8 @@ function AddGameMediaEvent($gameId, $time, $urlId)
 			(int)$time,
 			(int)$urlId
 		);
-		DBQuery($query);
-		return mysql_insert_id();
+		GetDatabase()->DBQuery($query);
+		return GetDatabase()->InsertID();
 	} else {
 		die('Insufficient rights to add media');
 	}
@@ -595,7 +595,7 @@ function RemoveGameMediaEvent($gameId, $urlId)
 			(int)$gameId,
 			(int)$urlId
 		);
-		return DBQuery($query);
+		return GetDatabase()->DBQuery($query);
 	} else {
 		die('Insufficient rights to remove media');
 	}
@@ -609,12 +609,12 @@ function GameTimeouts($gameId)
 		FROM uo_timeout 
 		WHERE game='%s' 
 		ORDER BY time",
-		mysql_real_escape_string($gameId)
+		GetDatabase()->RealEscapeString($gameId)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
 	return $result;
@@ -628,12 +628,12 @@ function GameTurnovers($gameId)
 		FROM uo_gameevent 
 		WHERE game='%s' AND type='turnover' 
 		ORDER BY time",
-		mysql_real_escape_string($gameId)
+		GetDatabase()->RealEscapeString($gameId)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
 	return $result;
@@ -661,11 +661,11 @@ function GameInfo($gameId)
 		WHERE pp.game_id=%d",
 		(int)$gameId
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
-	return mysql_fetch_assoc($result);
+	return GetDatabase()->FetchAssoc($result);
 }
 
 
@@ -713,13 +713,13 @@ function GameUpdateResult($gameId, $home, $away)
 	if (hasEditGameEventsRight($gameId)) {
 		$query = sprintf(
 			"UPDATE uo_game SET homescore='%s', visitorscore='%s', isongoing='1', hasstarted='1' WHERE game_id='%s'",
-			mysql_real_escape_string($home),
-			mysql_real_escape_string($away),
-			mysql_real_escape_string($gameId)
+			GetDatabase()->RealEscapeString($home),
+			GetDatabase()->RealEscapeString($away),
+			GetDatabase()->RealEscapeString($gameId)
 		);
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		return $result;
@@ -734,13 +734,13 @@ function GameSetResult($gameId, $home, $away, $updatePools = true, $checkRights 
 		LogGameUpdate($gameId, "result: $home - $away");
 		$query = sprintf(
 			"UPDATE uo_game SET homescore='%s', visitorscore='%s', isongoing='0', hasstarted='2' WHERE game_id='%s'",
-			mysql_real_escape_string($home),
-			mysql_real_escape_string($away),
-			mysql_real_escape_string($gameId)
+			GetDatabase()->RealEscapeString($home),
+			GetDatabase()->RealEscapeString($away),
+			GetDatabase()->RealEscapeString($gameId)
 		);
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		if ($updatePools) {
@@ -766,11 +766,11 @@ function GameClearResult($gameId, $updatepools = true)
 		LogGameUpdate($gameId, "result cleared");
 		$query = sprintf(
 			"UPDATE uo_game SET homescore=NULL, visitorscore=NULL, isongoing='0', hasstarted='0' WHERE game_id='%s'",
-			mysql_real_escape_string($gameId)
+			GetDatabase()->RealEscapeString($gameId)
 		);
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		if ($updatepools) {
@@ -796,13 +796,13 @@ function GameSetDefenses($gameId, $home, $away)
 	if (hasEditGameEventsRight($gameId)) {
 		$query = sprintf(
 			"UPDATE uo_game SET homedefenses='%s', visitordefenses='%s' WHERE game_id='%s'",
-			mysql_real_escape_string($home),
-			mysql_real_escape_string($away),
-			mysql_real_escape_string($gameId)
+			GetDatabase()->RealEscapeString($home),
+			GetDatabase()->RealEscapeString($away),
+			GetDatabase()->RealEscapeString($gameId)
 		);
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 		if (IsFacebookEnabled()) {
 			TriggerFacebookEvent($gameId, "game", 0);
@@ -821,16 +821,16 @@ function GameAddPlayer($gameId, $playerId, $number)
 			(game, player, num, accredited) 
 			VALUES ('%s', '%s', '%s', %d)
 			ON DUPLICATE KEY UPDATE num=%d",
-			mysql_real_escape_string($gameId),
-			mysql_real_escape_string($playerId),
-			mysql_real_escape_string($number),
+			GetDatabase()->RealEscapeString($gameId),
+			GetDatabase()->RealEscapeString($playerId),
+			GetDatabase()->RealEscapeString($number),
 			(int)isAccredited($playerId),
-			mysql_real_escape_string($number)
+			GetDatabase()->RealEscapeString($number)
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		$query = sprintf(
@@ -839,9 +839,9 @@ function GameAddPlayer($gameId, $playerId, $number)
 			(int)$playerId
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		return $result;
@@ -855,16 +855,16 @@ function GameAddNewPlayer($gameId, $firstname, $lastname, $accrid, $teamId, $num
 	if (hasEditGamePlayersRight($gameId)) {
 		$query = sprintf(
 			"INSERT INTO uo_player (firstname, lastname, team) VALUES ('%s', '%s', %d)",
-			mysql_real_escape_string($firstname),
-			mysql_real_escape_string($lastname),
+			GetDatabase()->RealEscapeString($firstname),
+			GetDatabase()->RealEscapeString($lastname),
 			(int)$teamId
 		);
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
-		$playerId = mysql_insert_id();
+		$playerId = GetDatabase()->InsertID();
 
 		GameAddPlayer($gameId, $playerId, $number);
 	} else {
@@ -879,13 +879,13 @@ function GameRemovePlayer($gameId, $playerId)
 			"
 			DELETE FROM uo_played 
 			WHERE game='%s' AND player='%s'",
-			mysql_real_escape_string($gameId),
-			mysql_real_escape_string($playerId)
+			GetDatabase()->RealEscapeString($gameId),
+			GetDatabase()->RealEscapeString($playerId)
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		return $result;
@@ -901,12 +901,12 @@ function GameRemoveAllPlayers($gameId)
 			"
 			DELETE FROM uo_played
 			WHERE game='%s'",
-			mysql_real_escape_string($gameId)
+			GetDatabase()->RealEscapeString($gameId)
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		return $result;
@@ -923,15 +923,15 @@ function GameSetPlayerNumber($gameId, $playerId, $number)
 			UPDATE uo_played 
 			SET num='%s', accredited=%d 
 			WHERE game=%d AND player=%d",
-			mysql_real_escape_string($number),
+			GetDatabase()->RealEscapeString($number),
 			(int)isAccredited($playerId),
 			(int)$gameId,
 			(int)$playerId
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		return $result;
@@ -947,12 +947,12 @@ function GameRemoveAllScores($gameId)
 			"
 			DELETE FROM uo_goal 
 			WHERE game='%s'",
-			mysql_real_escape_string($gameId)
+			GetDatabase()->RealEscapeString($gameId)
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		return $result;
@@ -968,12 +968,12 @@ function GameRemoveAllDefenses($gameId)
 			"
 			DELETE FROM uo_defense 
 			WHERE game='%s'",
-			mysql_real_escape_string($gameId)
+			GetDatabase()->RealEscapeString($gameId)
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		return $result;
@@ -990,13 +990,13 @@ function GameRemoveScore($gameId, $num)
 			"
 			DELETE FROM uo_goal 
 			WHERE game='%s' AND num=%d",
-			mysql_real_escape_string($gameId),
+			GetDatabase()->RealEscapeString($gameId),
 			(int)$num
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		return $result;
@@ -1019,27 +1019,27 @@ function GameAddScore($gameId, $pass, $goal, $time, $number, $hscores, $ascores,
 			VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
 			ON DUPLICATE KEY UPDATE 
 			assist='%s', scorer='%s', time='%s', homescore='%s', visitorscore='%s', ishomegoal='%s', iscallahan='%s'",
-			mysql_real_escape_string($gameId),
-			mysql_real_escape_string($number),
-			mysql_real_escape_string($pass),
-			mysql_real_escape_string($goal),
-			mysql_real_escape_string($time),
-			mysql_real_escape_string($hscores),
-			mysql_real_escape_string($ascores),
-			mysql_real_escape_string($home),
-			mysql_real_escape_string($iscallahan),
-			mysql_real_escape_string($pass),
-			mysql_real_escape_string($goal),
-			mysql_real_escape_string($time),
-			mysql_real_escape_string($hscores),
-			mysql_real_escape_string($ascores),
-			mysql_real_escape_string($home),
-			mysql_real_escape_string($iscallahan)
+			GetDatabase()->RealEscapeString($gameId),
+			GetDatabase()->RealEscapeString($number),
+			GetDatabase()->RealEscapeString($pass),
+			GetDatabase()->RealEscapeString($goal),
+			GetDatabase()->RealEscapeString($time),
+			GetDatabase()->RealEscapeString($hscores),
+			GetDatabase()->RealEscapeString($ascores),
+			GetDatabase()->RealEscapeString($home),
+			GetDatabase()->RealEscapeString($iscallahan),
+			GetDatabase()->RealEscapeString($pass),
+			GetDatabase()->RealEscapeString($goal),
+			GetDatabase()->RealEscapeString($time),
+			GetDatabase()->RealEscapeString($hscores),
+			GetDatabase()->RealEscapeString($ascores),
+			GetDatabase()->RealEscapeString($home),
+			GetDatabase()->RealEscapeString($iscallahan)
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 		if (IsFacebookEnabled()) {
 			TriggerFacebookEvent($gameId, "goal", $number);
@@ -1060,23 +1060,23 @@ function GameAddDefense($gameId, $player, $home, $caught, $time, $iscallahan, $n
 			VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s') 
 			ON DUPLICATE KEY UPDATE 
 			author='%s', time='%s', iscallahan='%s', iscaught='%s', ishomedefense='%s'",
-			mysql_real_escape_string($gameId),
-			mysql_real_escape_string($number),
-			mysql_real_escape_string($player),
-			mysql_real_escape_string($time),
-			mysql_real_escape_string($iscallahan),
-			mysql_real_escape_string($caught),
-			mysql_real_escape_string($home),
-			mysql_real_escape_string($player),
-			mysql_real_escape_string($time),
-			mysql_real_escape_string($iscallahan),
-			mysql_real_escape_string($caught),
-			mysql_real_escape_string($home)
+			GetDatabase()->RealEscapeString($gameId),
+			GetDatabase()->RealEscapeString($number),
+			GetDatabase()->RealEscapeString($player),
+			GetDatabase()->RealEscapeString($time),
+			GetDatabase()->RealEscapeString($iscallahan),
+			GetDatabase()->RealEscapeString($caught),
+			GetDatabase()->RealEscapeString($home),
+			GetDatabase()->RealEscapeString($player),
+			GetDatabase()->RealEscapeString($time),
+			GetDatabase()->RealEscapeString($iscallahan),
+			GetDatabase()->RealEscapeString($caught),
+			GetDatabase()->RealEscapeString($home)
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 		/*if (IsFacebookEnabled()) {
 			TriggerFacebookEvent($gameId, "goal", $number);
@@ -1095,21 +1095,21 @@ function GameAddScoreEntry($uo_goal)
 			INSERT INTO uo_goal 
 			(game, num, assist, scorer, time, homescore, visitorscore, ishomegoal, iscallahan) 
 			VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
-			mysql_real_escape_string($uo_goal['game']),
-			mysql_real_escape_string($uo_goal['num']),
-			mysql_real_escape_string($uo_goal['assist']),
-			mysql_real_escape_string($uo_goal['scorer']),
-			mysql_real_escape_string($uo_goal['time']),
-			mysql_real_escape_string($uo_goal['homescore']),
-			mysql_real_escape_string($uo_goal['visitorscore']),
-			mysql_real_escape_string($uo_goal['ishomegoal']),
-			mysql_real_escape_string($uo_goal['iscallahan'])
+			GetDatabase()->RealEscapeString($uo_goal['game']),
+			GetDatabase()->RealEscapeString($uo_goal['num']),
+			GetDatabase()->RealEscapeString($uo_goal['assist']),
+			GetDatabase()->RealEscapeString($uo_goal['scorer']),
+			GetDatabase()->RealEscapeString($uo_goal['time']),
+			GetDatabase()->RealEscapeString($uo_goal['homescore']),
+			GetDatabase()->RealEscapeString($uo_goal['visitorscore']),
+			GetDatabase()->RealEscapeString($uo_goal['ishomegoal']),
+			GetDatabase()->RealEscapeString($uo_goal['iscallahan'])
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 		if (IsFacebookEnabled()) {
 			TriggerFacebookEvent($gameId, "goal", $number);
@@ -1127,12 +1127,12 @@ function GameRemoveAllTimeouts($gameId)
 			"
 			DELETE FROM uo_timeout 
 			WHERE game='%s'",
-			mysql_real_escape_string($gameId)
+			GetDatabase()->RealEscapeString($gameId)
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		return $result;
@@ -1149,15 +1149,15 @@ function GameAddTimeout($gameId, $number, $time, $home)
 			INSERT INTO uo_timeout 
 			(game, num, time, ishome) 
 			VALUES ('%s', '%s', '%s', '%s')",
-			mysql_real_escape_string($gameId),
-			mysql_real_escape_string($number),
-			mysql_real_escape_string($time),
-			mysql_real_escape_string($home)
+			GetDatabase()->RealEscapeString($gameId),
+			GetDatabase()->RealEscapeString($number),
+			GetDatabase()->RealEscapeString($time),
+			GetDatabase()->RealEscapeString($home)
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		return $result;
@@ -1173,7 +1173,7 @@ function GameGetSpiritPoints($gameId, $teamId)
 		(int)$gameId,
 		(int)$teamId
 	);
-	$scores = DBQueryToArray($query);
+	$scores = GetDatabase()->DBQueryToArray($query);
 	$points = array();
 	foreach ($scores as $score) {
 		$points[$score['category_id']] = $score['value'];
@@ -1190,7 +1190,7 @@ function GameSetSpiritPoints($gameId, $teamId, $home, $points, $categories)
 			(int) $gameId,
 			(int) $teamId
 		);
-		DBQuery($query);
+		GetDatabase()->DBQuery($query);
 
 		foreach ($points as $cat => $value) {
 			if (!is_null($value)) {
@@ -1202,7 +1202,7 @@ function GameSetSpiritPoints($gameId, $teamId, $home, $points, $categories)
 					(int) $cat,
 					(int) $value
 				);
-				DBQuery($query);
+				GetDatabase()->DBQuery($query);
 			}
 		}
 	} else {
@@ -1217,16 +1217,16 @@ function GameSetScoreSheetKeeper($gameId, $name)
 			$query = sprintf("
 		UPDATE uo_game 
 		SET official='%s' 
-		WHERE game_id='%s'", mysql_real_escape_string($name), mysql_real_escape_string($gameId));
+		WHERE game_id='%s'", GetDatabase()->RealEscapeString($name), GetDatabase()->RealEscapeString($gameId));
 		} else {
 			$query = sprintf("
 		UPDATE uo_game
 		SET official=NULL
-		WHERE game_id='%s'", mysql_real_escape_string($gameId));
+		WHERE game_id='%s'", GetDatabase()->RealEscapeString($gameId));
 		}
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		return $result;
@@ -1243,16 +1243,16 @@ function GameSetHalftime($gameId, $time)
 			$query = sprintf("
 			UPDATE uo_game 
 			SET halftime='%s' 
-			WHERE game_id='%s'", mysql_real_escape_string($time), mysql_real_escape_string($gameId));
+			WHERE game_id='%s'", GetDatabase()->RealEscapeString($time), GetDatabase()->RealEscapeString($gameId));
 		} else {
 			$query = sprintf("
 			UPDATE uo_game 
 			SET halftime=NULL 
-			WHERE game_id='%s'", mysql_real_escape_string($gameId));
+			WHERE game_id='%s'", GetDatabase()->RealEscapeString($gameId));
 		}
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		return $result;
@@ -1277,7 +1277,7 @@ function GameSetCaptain($gameId, $teamId, $playerId)
 				(int)$captain
 			);
 
-			DBQuery($query);
+			GetDatabase()->DBQuery($query);
 
 			$query = sprintf(
 				"
@@ -1288,7 +1288,7 @@ function GameSetCaptain($gameId, $teamId, $playerId)
 				(int)$playerId
 			);
 
-			DBQuery($query);
+			GetDatabase()->DBQuery($query);
 		}
 	} else {
 		die('Insufficient rights to edit game');
@@ -1304,9 +1304,9 @@ function GameSetStartingTeam($gameId, $home)
 				(int)$gameId
 			);
 
-			$result = mysql_query($query);
+			$result = GetDatabase()->DBQuery($query);
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . GetDatabase()->SQLError());
 			}
 
 			return $result;
@@ -1319,9 +1319,9 @@ function GameSetStartingTeam($gameId, $home)
 				(int)$home
 			);
 
-			$result = mysql_query($query);
+			$result = GetDatabase()->DBQuery($query);
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . GetDatabase()->SQLError());
 			}
 
 			return $result;
@@ -1340,33 +1340,33 @@ function AddGame($params)
 			INSERT INTO uo_game
 			(hometeam, visitorteam, reservation, time, pool, valid, respteam) 
 			VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s')",
-			mysql_real_escape_string($params['hometeam']),
-			mysql_real_escape_string($params['visitorteam']),
-			mysql_real_escape_string($params['reservation']),
-			mysql_real_escape_string($params['time']),
-			mysql_real_escape_string($params['pool']),
-			mysql_real_escape_string($params['valid']),
-			mysql_real_escape_string($params['respteam'])
+			GetDatabase()->RealEscapeString($params['hometeam']),
+			GetDatabase()->RealEscapeString($params['visitorteam']),
+			GetDatabase()->RealEscapeString($params['reservation']),
+			GetDatabase()->RealEscapeString($params['time']),
+			GetDatabase()->RealEscapeString($params['pool']),
+			GetDatabase()->RealEscapeString($params['valid']),
+			GetDatabase()->RealEscapeString($params['respteam'])
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
-		$id = mysql_insert_id();
+		$id = GetDatabase()->InsertID();
 		$query = sprintf(
 			"
 			INSERT INTO uo_game_pool
 			(game, pool, timetable) 
 			VALUES ('%s', '%s', 1)",
-			mysql_real_escape_string($id),
-			mysql_real_escape_string($params['pool'])
+			GetDatabase()->RealEscapeString($id),
+			GetDatabase()->RealEscapeString($params['pool'])
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 		Log1("game", "add", $id);
 		return $id;
@@ -1386,11 +1386,11 @@ function SetGame($gameId, $params)
 					"
 					UPDATE uo_game SET " . $key . "='%s' 
 					WHERE game_id='%s'\n",
-					mysql_real_escape_string($param),
-					mysql_real_escape_string($gameId)
+					GetDatabase()->RealEscapeString($param),
+					GetDatabase()->RealEscapeString($gameId)
 				);
 
-				$result = DBQuery($query);
+				$result = GetDatabase()->DBQuery($query);
 			}
 		}
 
@@ -1403,7 +1403,7 @@ function SetGame($gameId, $params)
 				(int)$gameId
 			);
 
-			DBQuery($query);
+			GetDatabase()->DBQuery($query);
 		} else {
 			$query = sprintf(
 				"UPDATE uo_game SET respteam=NULL
@@ -1411,17 +1411,17 @@ function SetGame($gameId, $params)
 				(int)$gameId
 			);
 
-			DBQuery($query);
+			GetDatabase()->DBQuery($query);
 		}
 
 		if (!empty($params['name'])) {
 			$query = sprintf(
 				"INSERT INTO uo_scheduling_name 
 				(name) VALUES ('%s')",
-				mysql_real_escape_string($params['name'])
+				GetDatabase()->RealEscapeString($params['name'])
 			);
 
-			$nameId = DBQueryInsert($query);
+			$nameId = GetDatabase()->DBQueryInsert($query);
 
 			$query = sprintf(
 				"UPDATE uo_game SET
@@ -1429,7 +1429,7 @@ function SetGame($gameId, $params)
 				(int)$nameId,
 				(int)$gameId
 			);
-			DBQuery($query);
+			GetDatabase()->DBQuery($query);
 		}
 
 		return $result;
@@ -1451,7 +1451,7 @@ function GameChangeHome($gameId)
 					WHERE game_id=%d",
 			(int)$gameId
 		);
-		$game = DBQueryToRow($query);
+		$game = GetDatabase()->DBQueryToRow($query);
 
 		$query = sprintf(
 			"UPDATE uo_game SET hometeam=%d,visitorteam=%d,homescore=%d,visitorscore=%d, scheduling_name_home=%d, scheduling_name_visitor=%d
@@ -1465,14 +1465,14 @@ function GameChangeHome($gameId)
 			(int)$gameId
 		);
 
-		DBQuery($query);
+		GetDatabase()->DBQuery($query);
 		if ($game['hometeam'] == $game['respteam']) {
 			$query = sprintf(
 				"UPDATE uo_game SET respteam=%d	WHERE game_id=%d",
 				(int) $game['visitorteam'],
 				(int)$gameId
 			);
-			DBQuery($query);
+			GetDatabase()->DBQuery($query);
 		}
 	} else {
 		die('Insufficient rights to delete game');
@@ -1487,24 +1487,24 @@ function GameChangeName($gameId, $name)
 			$query = sprintf(
 				"INSERT INTO uo_scheduling_name 
 				(name) VALUES ('%s')",
-				mysql_real_escape_string($name)
+				GetDatabase()->RealEscapeString($name)
 			);
-			$nameId = DBQueryInsert($query);
+			$nameId = GetDatabase()->DBQueryInsert($query);
 
 			$query = sprintf(
 				"UPDATE uo_game SET name=%d WHERE game_id=%d",
 				(int)$nameId,
 				(int)$gameId
 			);
-			$result = DBQuery($query);
+			$result = GetDatabase()->DBQuery($query);
 		} else {
 			$query = sprintf(
 				"UPADATE uo_scheduling_name SET 
 				name='%s' WHERE scheduling_id=%d",
-				mysql_real_escape_string($name),
+				GetDatabase()->RealEscapeString($name),
 				(int)$gameinfo['name']
 			);
-			$result = DBQuery($query);
+			$result = GetDatabase()->DBQuery($query);
 		}
 		return $result;
 	} else {
@@ -1584,9 +1584,9 @@ function DeleteGame($gameId)
 			(int) $gameId
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		$query = sprintf(
@@ -1595,9 +1595,9 @@ function DeleteGame($gameId)
 			(int) $gameId
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		return $result;
@@ -1618,9 +1618,9 @@ function DeleteMovedGame($gameId, $poolId)
 			(int) $poolId
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		return $result;
@@ -1639,9 +1639,9 @@ function PoolDeleteAllGames($poolId)
         WHERE pool=%d",
 			$poolId
 		);
-		$result = DBQuery($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 
 		$query = sprintf(
@@ -1649,9 +1649,9 @@ function PoolDeleteAllGames($poolId)
         WHERE pool=%d",
 			$poolId
 		);
-		$result = DBQuery($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 		return $result;
 	} else {
@@ -1667,7 +1667,7 @@ function PoolSeries($poolId)
 		WHERE series='%d'",
 		(int) $poolId
 	);
-	return DBQueryToValue($query);
+	return GetDatabase()->DBQueryToValue($query);
 }
 
 function UnscheduledGameInfo($teams = array())
@@ -1682,12 +1682,12 @@ function UnscheduledGameInfo($teams = array())
 		$query = "SELECT game_id FROM uo_game WHERE reservation IS NULL AND time IS NULL AND
 			hometeam IN (" . implode(",", $fetch) . ") AND visitorteam IN (" . implode(",", $fetch) . ")";
 	}
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 	$ret = array();
-	while ($row = mysql_fetch_row($result)) {
+	while ($row = GetDatabase()->FetchRow($result)) {
 		$ret[$row[0]] = GameInfo($row[0]);
 	}
 	return $ret;
@@ -1703,12 +1703,12 @@ function UnscheduledPoolGameInfo($poolId)
 		(int)$poolId
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 	$ret = array();
-	while ($row = mysql_fetch_row($result)) {
+	while ($row = GetDatabase()->FetchRow($result)) {
 		$ret[$row[0]] = GameInfo($row[0]);
 	}
 	return $ret;
@@ -1725,12 +1725,12 @@ function UnscheduledSeriesGameInfo($seriesId)
 		(int)$seriesId
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 	$ret = array();
-	while ($row = mysql_fetch_row($result)) {
+	while ($row = GetDatabase()->FetchRow($result)) {
 		$ret[$row[0]] = GameInfo($row[0]);
 	}
 	return $ret;
@@ -1745,15 +1745,15 @@ function UnscheduledSeasonGameInfo($seasonId)
 		LEFT JOIN uo_series ser ON(ser.series_id=series)
 		WHERE reservation IS NULL AND time IS NULL AND ser.season='%s'
 		ORDER BY ser.ordering, pool.ordering, game_id",
-		mysql_real_escape_string($seasonId)
+		GetDatabase()->RealEscapeString($seasonId)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 	$ret = array();
-	while ($row = mysql_fetch_row($result)) {
+	while ($row = GetDatabase()->FetchRow($result)) {
 		$ret[$row[0]] = GameInfo($row[0]);
 	}
 	return $ret;
@@ -1768,9 +1768,9 @@ function ScheduleGame($gameId, $epoc, $reservation)
 			(int)$reservation,
 			(int)$gameId
 		);
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 	} else {
 		die('Insufficient rights to schedule game');
@@ -1784,9 +1784,9 @@ function UnScheduleGame($gameId)
 			"UPDATE uo_game SET time=NULL, reservation=NULL WHERE game_id=%d",
 			(int)$gameId
 		);
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 	} else {
 		die('Insufficient rights to schedule game');
@@ -1796,7 +1796,7 @@ function UnScheduleGame($gameId)
 function ClearReservation($reservationId)
 {
 	$result = ReservationGames($reservationId);
-	while ($row = mysql_fetch_assoc($result)) {
+	while ($row = GetDatabase()->FetchAssoc($result)) {
 		if (hasEditGamesRight(GameSeries($row['game_id']))) {
 			UnScheduleGame($row['game_id']);
 		} // else ignore games not managed by user
@@ -1809,41 +1809,41 @@ function CanDeleteGame($gameId)
 		"SELECT count(*) FROM uo_goal WHERE game=%d",
 		(int)$gameId
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
-	if (!$row = mysql_fetch_row($result)) return false;
+	if (!$row = GetDatabase()->FetchRow($result)) return false;
 	if ($row[0] == 0) {
 		$query = sprintf(
 			"SELECT count(*) FROM uo_played WHERE game=%d",
 			(int)$gameId
 		);
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
-		if (!$row = mysql_fetch_row($result)) return false;
+		if (!$row = GetDatabase()->FetchRow($result)) return false;
 		if ($row[0] == 0) {
 			$query = sprintf(
 				"SELECT count(*) FROM uo_gameevent WHERE game=%d",
 				(int)$gameId
 			);
-			$result = mysql_query($query);
+			$result = GetDatabase()->DBQuery($query);
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . GetDatabase()->SQLError());
 			}
-			if (!$row = mysql_fetch_row($result)) return false;
+			if (!$row = GetDatabase()->FetchRow($result)) return false;
 			if ($row[0] == 0) {
 				$query = sprintf(
 					"SELECT homescore,visitorscore FROM uo_game WHERE game_id=%d",
 					(int)$gameId
 				);
-				$result = mysql_query($query);
+				$result = GetDatabase()->DBQuery($query);
 				if (!$result) {
-					die('Invalid query: ' . mysql_error());
+					die('Invalid query: ' . GetDatabase()->SQLError());
 				}
-				if (!$row = mysql_fetch_row($result)) return false;
+				if (!$row = GetDatabase()->FetchRow($result)) return false;
 				return (intval($row[0]) + intval($row[1])) == 0;
 			} else return false; // FIXME test hasstarted?
 		} else return false;
@@ -1866,10 +1866,10 @@ function ResultsToCsv($season, $separator)
 			LEFT JOIN uo_scheduling_name AS pvisitor ON (pp.scheduling_name_visitor=pvisitor.scheduling_id)
 		WHERE ser.season='%s' AND (hasstarted>0)
 		ORDER BY ser.ordering, pool.ordering, pp.time ASC, pp.game_id ASC",
-		mysql_real_escape_string($season)
+		GetDatabase()->RealEscapeString($season)
 	);
 
-	$result = DBQuery($query);
+	$result = GetDatabase()->DBQuery($query);
 	return ResultsetToCsv($result, $separator);
 }
 

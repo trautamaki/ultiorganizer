@@ -36,7 +36,6 @@ include_once 'localization.php';
 	$games = TimetableGames($season, "season", "all", "places", $group);
 
 	echo ExtTournamentView($games);
-	CloseConnection();
 	?>
 </body>
 

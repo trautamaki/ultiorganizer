@@ -43,20 +43,20 @@ function LogEvent($event)
 		"INSERT INTO uo_event_log (user_id, ip, category, type, source,
 			id1, id2, description)
 				VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
-		mysql_real_escape_string($event['user_id']),
-		mysql_real_escape_string($event['ip']),
-		mysql_real_escape_string($event['category']),
-		mysql_real_escape_string($event['type']),
-		mysql_real_escape_string($event['source']),
-		mysql_real_escape_string($event['id1']),
-		mysql_real_escape_string($event['id2']),
-		mysql_real_escape_string($event['description'])
+		GetDatabase()->RealEscapeString($event['user_id']),
+		GetDatabase()->RealEscapeString($event['ip']),
+		GetDatabase()->RealEscapeString($event['category']),
+		GetDatabase()->RealEscapeString($event['type']),
+		GetDatabase()->RealEscapeString($event['source']),
+		GetDatabase()->RealEscapeString($event['id1']),
+		GetDatabase()->RealEscapeString($event['id2']),
+		GetDatabase()->RealEscapeString($event['description'])
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
-	return mysql_insert_id();
+	return GetDatabase()->InsertID();
 }
 
 function EventList($categoryfilter, $userfilter)
@@ -76,7 +76,7 @@ function EventList($categoryfilter, $userfilter)
 				$query .= " OR ";
 			}
 
-			$query .= sprintf("category='%s'", mysql_real_escape_string($cat));
+			$query .= sprintf("category='%s'", GetDatabase()->RealEscapeString($cat));
 			$i++;
 			if ($i == count($categoryfilter)) {
 				$query .= ")";
@@ -84,12 +84,12 @@ function EventList($categoryfilter, $userfilter)
 		}
 
 		if (!empty($userfilter)) {
-			$query .= sprintf("AND user_id='%s'", mysql_real_escape_string($userfilter));
+			$query .= sprintf("AND user_id='%s'", GetDatabase()->RealEscapeString($userfilter));
 		}
 		$query .= " ORDER BY time DESC";
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 		return $result;
 	}
@@ -98,11 +98,11 @@ function EventList($categoryfilter, $userfilter)
 function ClearEventList($ids)
 {
 	if (isSuperAdmin()) {
-		$query = sprintf("DELETE FROM uo_event_log WHERE event_id IN (%s)", mysql_real_escape_string($ids));
+		$query = sprintf("DELETE FROM uo_event_log WHERE event_id IN (%s)", GetDatabase()->RealEscapeString($ids));
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 		return $result;
 	}
@@ -203,13 +203,13 @@ function GetLastGameUpdateEntry($gameId, $source)
 	$query = sprintf(
 		"SELECT * FROM uo_event_log WHERE id1=%d AND source='%s' ORDER BY TIME DESC",
 		(int)$gameId,
-		mysql_real_escape_string($source)
+		GetDatabase()->RealEscapeString($source)
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
-	return mysql_fetch_assoc($result);
+	return GetDatabase()->FetchAssoc($result);
 }
 
 function LogPoolUpdate($poolId, $details, $source = "")
@@ -243,25 +243,25 @@ function LogPageLoad($page)
 
 	$query = sprintf(
 		"SELECT loads FROM uo_pageload_counter WHERE page='%s'",
-		mysql_real_escape_string($page)
+		GetDatabase()->RealEscapeString($page)
 	);
-	$loads = DBQueryToValue($query);
+	$loads = GetDatabase()->DBQueryToValue($query);
 
 	if ($loads < 0) {
 		$query = sprintf(
 			"INSERT INTO uo_pageload_counter (page, loads) VALUES ('%s',%d)",
-			mysql_real_escape_string($page),
+			GetDatabase()->RealEscapeString($page),
 			1
 		);
-		DBQuery($query);
+		GetDatabase()->DBQuery($query);
 	} else {
 		$loads++;
 		$query = sprintf(
 			"UPDATE uo_pageload_counter SET loads=%d WHERE page='%s'",
 			$loads,
-			mysql_real_escape_string($page)
+			GetDatabase()->RealEscapeString($page)
 		);
-		DBQuery($query);
+		GetDatabase()->DBQuery($query);
 	}
 }
 
@@ -275,25 +275,25 @@ function LogVisitor($ip)
 
 	$query = sprintf(
 		"SELECT visits FROM uo_visitor_counter WHERE ip='%s'",
-		mysql_real_escape_string($ip)
+		GetDatabase()->RealEscapeString($ip)
 	);
-	$visits = DBQueryToValue($query);
+	$visits = GetDatabase()->DBQueryToValue($query);
 
 	if ($visits < 0) {
 		$query = sprintf(
 			"INSERT INTO uo_visitor_counter (ip, visits) VALUES ('%s',%d)",
-			mysql_real_escape_string($ip),
+			GetDatabase()->RealEscapeString($ip),
 			1
 		);
-		DBQuery($query);
+		GetDatabase()->DBQuery($query);
 	} else {
 		$visits++;
 		$query = sprintf(
 			"UPDATE uo_visitor_counter SET visits=%d WHERE ip='%s'",
 			$visits,
-			mysql_real_escape_string($ip)
+			GetDatabase()->RealEscapeString($ip)
 		);
-		DBQuery($query);
+		GetDatabase()->DBQuery($query);
 	}
 }
 
@@ -303,7 +303,7 @@ function LogVisitor($ip)
 function LogGetVisitorCount()
 {
 	$query = sprintf("SELECT SUM(visits) AS visits, COUNT(ip) AS visitors FROM uo_visitor_counter");
-	return DBQueryToRow($query);
+	return GetDatabase()->DBQueryToRow($query);
 }
 
 /**
@@ -312,5 +312,5 @@ function LogGetVisitorCount()
 function LogGetPageLoads()
 {
 	$query = sprintf("SELECT page, loads FROM uo_pageload_counter ORDER BY loads DESC");
-	return DBQueryToArray($query);
+	return GetDatabase()->DBQueryToArray($query);
 }

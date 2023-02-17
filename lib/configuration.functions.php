@@ -11,34 +11,34 @@ function SetTwitterKey($access_token, $purpose, $id)
 		$query = sprintf(
 			"SELECT key_id	FROM uo_keys 
 				WHERE type='twitter' AND purpose='%s' AND id='%s'",
-			mysql_real_escape_string($purpose),
-			mysql_real_escape_string($id)
+			GetDatabase()->RealEscapeString($purpose),
+			GetDatabase()->RealEscapeString($id)
 		);
 
-		$key_id = DBQueryToValue($query);
+		$key_id = GetDatabase()->DBQueryToValue($query);
 
 		if ($key_id >= 0) {
 			$query = sprintf(
 				"UPDATE uo_keys SET
 				purpose='%s',id='%s',keystring='%s',secrets='%s'
 				WHERE key_id=$key_id",
-				mysql_real_escape_string($purpose),
-				mysql_real_escape_string($id),
-				mysql_real_escape_string($access_token['oauth_token']),
-				mysql_real_escape_string($access_token['oauth_token_secret'])
+				GetDatabase()->RealEscapeString($purpose),
+				GetDatabase()->RealEscapeString($id),
+				GetDatabase()->RealEscapeString($access_token['oauth_token']),
+				GetDatabase()->RealEscapeString($access_token['oauth_token_secret'])
 			);
 		} else {
 			$query = sprintf(
 				"INSERT INTO uo_keys 
 				(type,purpose,id,keystring,secrets)
 				VALUES ('twitter','%s','%s','%s','%s')",
-				mysql_real_escape_string($purpose),
-				mysql_real_escape_string($id),
-				mysql_real_escape_string($access_token['oauth_token']),
-				mysql_real_escape_string($access_token['oauth_token_secret'])
+				GetDatabase()->RealEscapeString($purpose),
+				GetDatabase()->RealEscapeString($id),
+				GetDatabase()->RealEscapeString($access_token['oauth_token']),
+				GetDatabase()->RealEscapeString($access_token['oauth_token_secret'])
 			);
 		}
-		return DBQuery($query);
+		return GetDatabase()->DBQuery($query);
 	} else {
 		die('Insufficient rights to configure twitter');
 	}
@@ -50,11 +50,11 @@ function GetTwitterKey($season, $purpose)
 		"SELECT key_id, keystring, secrets
 				FROM uo_keys 
 				WHERE type='twitter' AND purpose='%s' AND id='%s'",
-		mysql_real_escape_string($purpose),
-		mysql_real_escape_string($season)
+		GetDatabase()->RealEscapeString($purpose),
+		GetDatabase()->RealEscapeString($season)
 	);
 
-	return DBQueryToRow($query);
+	return GetDatabase()->DBQueryToRow($query);
 }
 
 function GetTwitterKeyById($keyId)
@@ -64,10 +64,10 @@ function GetTwitterKeyById($keyId)
 			"SELECT key_id, keystring, secrets, purpose, id
 				FROM uo_keys 
 				WHERE key_id='%s'",
-			mysql_real_escape_string($keyId)
+			GetDatabase()->RealEscapeString($keyId)
 		);
 
-		return DBQueryToRow($query);
+		return GetDatabase()->DBQueryToRow($query);
 	} else {
 		die('Insufficient rights to configure twitter');
 	}
@@ -78,10 +78,10 @@ function DeleteTwitterKey($keyId)
 	if (isSuperAdmin()) {
 		$query = sprintf(
 			"DELETE FROM uo_keys WHERE key_id='%s'",
-			mysql_real_escape_string($keyId)
+			GetDatabase()->RealEscapeString($keyId)
 		);
 
-		return DBQuery($query);
+		return GetDatabase()->DBQuery($query);
 	} else {
 		die('Insufficient rights to configure twitter');
 	}
@@ -155,19 +155,19 @@ function ShowDefenseStats()
 function GetServerConf()
 {
 	$query = "SELECT * FROM uo_setting ORDER BY setting_id";
-	return DBQueryToArray($query);
+	return GetDatabase()->DBQueryToArray($query);
 }
 
 function GetSimpleServerConf()
 {
 	$query = "SELECT * FROM uo_setting ORDER BY setting_id";
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ("' . $query . '")' . "<br/>\n" . mysql_error());
+		die('Invalid query: ("' . $query . '")' . "<br/>\n" . GetDatabase()->SQLError());
 	}
 
 	$retarray = array();
-	while ($row = mysql_fetch_assoc($result)) {
+	while ($row = GetDatabase()->FetchAssoc($result)) {
 		$retarray[$row['name']] = $row['value'];
 	}
 	return $retarray;
@@ -179,31 +179,31 @@ function SetServerConf($settings)
 		foreach ($settings as $setting) {
 			$query = sprintf(
 				"SELECT setting_id FROM uo_setting WHERE name='%s'",
-				mysql_real_escape_string($setting['name'])
+				GetDatabase()->RealEscapeString($setting['name'])
 			);
-			$result = mysql_query($query);
+			$result = GetDatabase()->DBQuery($query);
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . GetDatabase()->SQLError());
 			}
-			if ($row = mysql_fetch_row($result)) {
+			if ($row = GetDatabase()->FetchRow($result)) {
 				$query = sprintf(
 					"UPDATE uo_setting SET value='%s' WHERE setting_id=%d",
-					mysql_real_escape_string($setting['value']),
+					GetDatabase()->RealEscapeString($setting['value']),
 					(int)$row[0]
 				);
-				$result = mysql_query($query);
+				$result = GetDatabase()->DBQuery($query);
 				if (!$result) {
-					die('Invalid query: ' . mysql_error());
+					die('Invalid query: ' . GetDatabase()->SQLError());
 				}
 			} else {
 				$query = sprintf(
 					"INSERT INTO uo_setting (name, value) VALUES ('%s', '%s')",
-					mysql_real_escape_string($setting['name']),
-					mysql_real_escape_string($setting['value'])
+					GetDatabase()->RealEscapeString($setting['name']),
+					GetDatabase()->RealEscapeString($setting['value'])
 				);
-				$result = mysql_query($query);
+				$result = GetDatabase()->DBQuery($query);
 				if (!$result) {
-					die('Invalid query: ' . mysql_error());
+					die('Invalid query: ' . GetDatabase()->SQLError());
 				}
 			}
 		}
@@ -221,12 +221,12 @@ function GetGoogleMapsAPIKey()
 function isRespTeamHomeTeam()
 {
 	$query = "SELECT value FROM uo_setting WHERE name = 'HomeTeamResponsible'";
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
-	if (!$row = mysql_fetch_row($result)) {
+	if (!$row = GetDatabase()->FetchRow($result)) {
 		return false;
 	} else {
 		return $row[0] == 'yes';

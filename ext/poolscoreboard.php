@@ -41,7 +41,7 @@ include_once 'localization.php';
 
 	$scores = PoolScoreBoard($poolId, $sort, 10);
 
-	while ($row = mysql_fetch_assoc($scores)) {
+	while ($row = GetDatabase()->FetchAssoc($scores)) {
 		echo "<tr><td class='pk_scoreboard_td1'>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
 		echo "<td class='pk_scoreboard_td1'>" . utf8entities($row['teamname']) . "</td>";
 		echo "<td  class='pk_scoreboard_td2'>" . intval($row['games']) . "</td>";
@@ -51,8 +51,6 @@ include_once 'localization.php';
 	}
 
 	echo "</table>";
-
-	CloseConnection();
 	?>
 </body>
 

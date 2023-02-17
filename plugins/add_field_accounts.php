@@ -33,24 +33,24 @@ if (!empty($_POST['create'])) {
 	$season = $_POST['season'];
 	$maxfields = 0;
 	$fields = ReservationFields($season);
-	while ($field = mysql_fetch_assoc($fields)) {
+	while ($field = GetDatabase()->FetchAssoc($fields)) {
 		if (is_numeric($field['fieldname'])) {
 			$name = "field" . intval($field['fieldname']);
 		} else {
 			$name = $field['fieldname'];
 		}
-		$user = DBQueryToValue("SELECT COUNT(*) FROM uo_users WHERE userid='$name'");
+		$user = GetDatabase()->DBQueryToValue("SELECT COUNT(*) FROM uo_users WHERE userid='$name'");
 		if ($user < 1) {
-			DBQuery("INSERT INTO uo_users(name, userid, password, email) VALUES ('$name', '$name', MD5('$name'), '')");
-			DBQuery("INSERT INTO uo_userproperties(userid, name, value) VALUES ('$name', 'poolselector', 'currentseason')");
-			DBQuery("INSERT INTO uo_userproperties(userid, name, value) VALUES ('$name', 'editseason', '$season')");
+			GetDatabase()->DBQuery("INSERT INTO uo_users(name, userid, password, email) VALUES ('$name', '$name', MD5('$name'), '')");
+			GetDatabase()->DBQuery("INSERT INTO uo_userproperties(userid, name, value) VALUES ('$name', 'poolselector', 'currentseason')");
+			GetDatabase()->DBQuery("INSERT INTO uo_userproperties(userid, name, value) VALUES ('$name', 'editseason', '$season')");
 		}
 
 		$games = ReservationGamesByField($field['fieldname'], $season);
-		while ($game = mysql_fetch_assoc($games)) {
-			$exist = DBQueryToValue("SELECT COUNT(*) FROM uo_userproperties WHERE userid='$name' AND value='gameadmin:" . $game['game_id'] . "'");
+		while ($game = GetDatabase()->FetchAssoc($games)) {
+			$exist = GetDatabase()->DBQueryToValue("SELECT COUNT(*) FROM uo_userproperties WHERE userid='$name' AND value='gameadmin:" . $game['game_id'] . "'");
 			if ($user < 1) {
-				DBQuery("INSERT INTO uo_userproperties(userid, name, value) VALUES ('$name', 'userrole', 'gameadmin:" . $game['game_id'] . "')");
+				GetDatabase()->DBQuery("INSERT INTO uo_userproperties(userid, name, value) VALUES ('$name', 'userrole', 'gameadmin:" . $game['game_id'] . "')");
 			}
 		}
 	}
@@ -63,7 +63,7 @@ $html .= "<p>" . ("Create field specific user accounts on select event") . ": <s
 
 $seasons = Seasons();
 
-while ($row = mysql_fetch_assoc($seasons)) {
+while ($row = GetDatabase()->FetchAssoc($seasons)) {
 	$html .= "<option class='dropdown' value='" . utf8entities($row['season_id']) . "'>" . utf8entities($row['name']) . "</option>";
 }
 

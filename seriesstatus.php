@@ -248,7 +248,7 @@ $html .= "<tr><th style='width:200px'>" . _("Player") . "</th><th style='width:2
 <th class='center'>" . _("Assists") . "</th><th class='center'>" . _("Goals") . "</th><th class='center'>" . _("Tot.") . "</th></tr>\n";
 
 $scores = SeriesScoreBoard($seriesinfo['series_id'], "total", 10);
-while ($row = mysql_fetch_assoc($scores)) {
+while ($row = GetDatabase()->FetchAssoc($scores)) {
   $html .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
   $html .= "<td>" . utf8entities($row['teamname']) . "</td>";
   $html .= "<td class='center'>" . intval($row['games']) . "</td>";
@@ -268,7 +268,7 @@ $html .= "<tr><th style='width:100%'>" . _("Player") . "</th><th>" . _("Team") .
 <th class='center'>" . _("Goals") . "</th></tr>\n";
 
 $scores = SeriesScoreBoard($seriesinfo['series_id'], "goal", 10);
-while ($row = mysql_fetch_assoc($scores)) {
+while ($row = GetDatabase()->FetchAssoc($scores)) {
   $html .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
   $html .= "<td>" . utf8entities($row['abbr']) . "</td>";
   $html .= "<td class='center'>" . intval($row['games']) . "</td>";
@@ -286,7 +286,7 @@ $html .= "<tr><th style='width:100%'>" . _("Player") . "</th><th>" . _("Team") .
 <th class='center'>" . _("Assists") . "</th></tr>\n";
 
 $scores = SeriesScoreBoard($seriesinfo['series_id'], "pass", 10);
-while ($row = mysql_fetch_assoc($scores)) {
+while ($row = GetDatabase()->FetchAssoc($scores)) {
   $html .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
   $html .= "<td>" . utf8entities($row['abbr']) . "</td>";
   $html .= "<td class='center'>" . intval($row['games']) . "</td>";
@@ -304,7 +304,7 @@ if (ShowDefenseStats()) {
 
 
   $defenses = SeriesDefenseBoard($seriesinfo['series_id'], "deftotal", 10);
-  while ($row = mysql_fetch_assoc($defenses)) {
+  while ($row = GetDatabase()->FetchAssoc($defenses)) {
     $html .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
     $html .= "<td>" . utf8entities($row['teamname']) . "</td>";
     $html .= "<td>" . _("Games") . "</td>";

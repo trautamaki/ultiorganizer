@@ -274,7 +274,7 @@ function GetScriptName()
 function GetURLBase()
 {
 	$url = "http://";
-	$url .= GetServerName();
+	$url .= Database::GetServerName();
 	$url .= GetScriptName();
 
 	$cutpos = strrpos($url, "/");
@@ -702,7 +702,7 @@ function ResultsetToCsv($result, $separator)
 	$csv_enclosed = '"';
 	$csv_escaped = "\\";
 
-	$fields_cnt = mysql_num_fields($result);
+	$fields_cnt = GetDatabase()->NumFields($result);
 
 	$schema_insert = '';
 
@@ -710,7 +710,7 @@ function ResultsetToCsv($result, $separator)
 		$l = $csv_enclosed . str_replace(
 			$csv_enclosed,
 			$csv_escaped . $csv_enclosed,
-			stripslashes(mysql_field_name($result, $i))
+			stripslashes(GetDatabase()->FieldName($result, $i))
 		) . $csv_enclosed;
 		$schema_insert .= $l;
 		$schema_insert .= $csv_separator;
@@ -720,7 +720,7 @@ function ResultsetToCsv($result, $separator)
 	$out .= $csv_terminated;
 
 	// Format the data
-	while ($row = mysql_fetch_array($result)) {
+	while ($row = GetDatabase()->FetchArray($result)) {
 		$schema_insert = '';
 		for ($j = 0; $j < $fields_cnt; $j++) {
 			if ($row[$j] == '0' || $row[$j] != '') {
@@ -974,7 +974,7 @@ function _handleLiteral($operator, $type, $value)
 	}
 	if ($operator == "IN") {
 		if ($type == "int") {
-			return "(" . mysql_real_escape_string($value) . ")";
+			return "(" . GetDatabase()->RealEscapeString($value) . ")";
 		} else {
 			// split a string at unescaped comma
 			// where backslash is the escape character
@@ -985,7 +985,7 @@ function _handleLiteral($operator, $type, $value)
 			// $aPieces now contains the exploded string
 			// and unescaping can be safely done on each piece
 			foreach ($aPieces as $idx => $piece) {
-				$aPieces[$idx] = mysql_real_escape_string(preg_replace("/\\\\(.)/s", "$1", $piece));
+				$aPieces[$idx] = GetDatabase()->RealEscapeString(preg_replace("/\\\\(.)/s", "$1", $piece));
 			}
 			return "('" . implode("', '", $aPieces) . "')";
 		}
@@ -1016,7 +1016,7 @@ function _handleLiteral($operator, $type, $value)
 	} else if ($type == "int") {
 		return intval($value);
 	} else {
-		return "'" . mysql_real_escape_string($value) . "'";
+		return "'" . GetDatabase()->RealEscapeString($value) . "'";
 	}
 }
 
@@ -1132,14 +1132,14 @@ function GetTableColumns($table)
 		}
 	}
 	$ret = array();
-	$result = DBQuery(sprintf(
+	$result = GetDatabase()->DBQuery(sprintf(
 		"SELECT * FROM %s WHERE 1=0",
-		mysql_real_escape_string($table)
+		GetDatabase()->RealEscapeString($table)
 	));
-	$fields = mysql_num_fields($result);
+	$fields = GetDatabase()->NumFields($result);
 	for ($i = 0; $i < $fields; $i++) {
-		$name  = strtolower(mysql_field_name($result, $i));
-		$ret[$name] = mysql_field_type($result, $i);
+		$name  = strtolower(GetDatabase()->FieldName($result, $i));
+		$ret[$name] = GetDatabase()->FieldType($result, $i);
 	}
 	return $ret;
 }
@@ -1311,9 +1311,9 @@ function CommentRaw($type, $id)
 		"SELECT comment FROM uo_comment
 		WHERE type='%d' AND id='%s'",
 		(int) $type,
-		mysql_real_escape_string($id)
+		GetDatabase()->RealEscapeString($id)
 	);
-	$comment = DBQueryToValue($query);
+	$comment = GetDatabase()->DBQueryToValue($query);
 	if ($comment != -1)
 		return $comment;
 	else
@@ -1350,7 +1350,7 @@ function SetComment($type, $id, $comment)
 		$query = sprintf(
 			"DELETE FROM uo_comment WHERE type='%d' AND id='%s'",
 			(int) $type,
-			mysql_real_escape_string($id)
+			GetDatabase()->RealEscapeString($id)
 		);
 	else {
 		$query = sprintf(
@@ -1358,12 +1358,12 @@ function SetComment($type, $id, $comment)
   				(type, id, comment) 
   				VALUES	(%d,'%s','%s') ON DUPLICATE KEY UPDATE comment='%s'",
 			(int) $type,
-			mysql_real_escape_string($id),
-			mysql_real_escape_string($comment),
-			mysql_real_escape_string($comment)
+			GetDatabase()->RealEscapeString($id),
+			GetDatabase()->RealEscapeString($comment),
+			GetDatabase()->RealEscapeString($comment)
 		);
 	}
-	return DBQuery($query);
+	return GetDatabase()->DBQuery($query);
 }
 
 /**

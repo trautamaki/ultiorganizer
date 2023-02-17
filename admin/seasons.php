@@ -37,7 +37,7 @@ if (!empty($_POST['remove_x']) && !empty($_POST['hiddenDeleteId'])) {
 	//run some test to for safe deletion
 	$series = SeasonSeries($id);
 	if (count($series)) {
-		$html .= "<p class='warning'>" . _("Event has") . " " . mysql_num_rows($series) . " " . _("Division(s)") . ". " . _("Divisions must be removed before removing the event") . ".</p>";
+		$html .= "<p class='warning'>" . _("Event has") . " " . GetDatabase()->NumRows($series) . " " . _("Division(s)") . ". " . _("Divisions must be removed before removing the event") . ".</p>";
 		$ok = false;
 	}
 	$cur = CurrentSeason();
@@ -97,7 +97,7 @@ $html .=  "<tr>
 
 $seasons = Seasons();
 
-while ($row = mysql_fetch_assoc($seasons)) {
+while ($row = GetDatabase()->FetchAssoc($seasons)) {
 	$info = SeasonInfo($row['season_id']);
 
 	$html .=  "<tr>";

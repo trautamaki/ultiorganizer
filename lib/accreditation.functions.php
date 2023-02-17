@@ -19,12 +19,12 @@ function SeasonUnaccredited($season)
 		LEFT JOIN uo_pool pool ON (pp.pool=pool.pool_id)
 		LEFT JOIN uo_series ser ON (pool.series=ser.series_id)
 	WHERE played.accredited=0 AND ser.season='%s'",
-		mysql_real_escape_string($season)
+		GetDatabase()->RealEscapeString($season)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 	return $result;
 }
@@ -37,9 +37,9 @@ function AccreditPlayer($playerId, $source)
 			"UPDATE uo_player SET accredited=1 WHERE player_id=%d",
 			(int)$playerId
 		);
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 		AccreditationLogEntry($playerId, $playerInfo['team'], $source, 1);
 		checkUserAdmin($playerInfo);
@@ -51,18 +51,18 @@ function AccreditPlayer($playerId, $source)
 
 function ExternalLicenseValidityList()
 {
-	return DBQueryToArray("SELECT DISTINCT external_validity FROM uo_license WHERE external_validity IS NOT NULL AND external_validity > 0");
+	return GetDatabase()->DBQueryToArray("SELECT DISTINCT external_validity FROM uo_license WHERE external_validity IS NOT NULL AND external_validity > 0");
 }
 
 function ExternalLicenseTypes()
 {
-	return DBQueryToArray("SELECT DISTINCT external_type FROM uo_license WHERE external_type IS NOT NULL AND external_type > 0");
+	return GetDatabase()->DBQueryToArray("SELECT DISTINCT external_type FROM uo_license WHERE external_type IS NOT NULL AND external_type > 0");
 }
 
 function LicenseData($accreditation_id)
 {
-	return DBQueryToRow("SELECT membership, license, external_id, external_type, external_validity, ultimate 
-		FROM uo_license WHERE accreditation_id='" . mysql_real_escape_string($accreditation_id) . "'");
+	return GetDatabase()->DBQueryToRow("SELECT membership, license, external_id, external_type, external_validity, ultimate 
+		FROM uo_license WHERE accreditation_id='" . GetDatabase()->RealEscapeString($accreditation_id) . "'");
 }
 
 function checkUserAdmin($playerInfo)
@@ -70,13 +70,13 @@ function checkUserAdmin($playerInfo)
 	// Check for existing user for player
 	$query = sprintf(
 		"SELECT userid FROM uo_userproperties WHERE name='userrole' AND value='playeradmin:%s'",
-		mysql_real_escape_string($playerInfo['accreditation_id'])
+		GetDatabase()->RealEscapeString($playerInfo['accreditation_id'])
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
-	if ($userid = mysql_fetch_row($result)) {
+	if ($userid = GetDatabase()->FetchRow($result)) {
 		//Player already administered
 		return;
 	} else {
@@ -84,22 +84,22 @@ function checkUserAdmin($playerInfo)
 		if (validEmail($playerInfo['email'])) {
 			$query = sprintf(
 				"SELECT userid FROM uo_users  WHERE LOWER(email)='%s'",
-				mysql_real_escape_string(strtolower($playerInfo['email']))
+				GetDatabase()->RealEscapeString(strtolower($playerInfo['email']))
 			);
-			$result = mysql_query($query);
+			$result = GetDatabase()->DBQuery($query);
 			if (!$result) {
-				die('Invalid query: ' . mysql_error());
+				die('Invalid query: ' . GetDatabase()->SQLError());
 			}
-			if ($userId = mysql_fetch_row($result)) {
+			if ($userId = GetDatabase()->FetchRow($result)) {
 				$id = $userId[0];
 				$query = sprintf(
 					"INSERT INTO uo_userproperties (userid, name, value) VALUES ('%s', 'userrole', 'playeradmin:%s')",
-					mysql_real_escape_string($id),
-					mysql_real_escape_string($playerInfo['profile_id'])
+					GetDatabase()->RealEscapeString($id),
+					GetDatabase()->RealEscapeString($playerInfo['profile_id'])
 				);
-				$result = mysql_query($query);
+				$result = GetDatabase()->DBQuery($query);
 				if (!$result) {
-					die('Invalid query: ' . mysql_error());
+					die('Invalid query: ' . GetDatabase()->SQLError());
 				}
 				return true;
 			}
@@ -117,9 +117,9 @@ function DeAccreditPlayer($playerId, $source)
 			"UPDATE uo_player SET accredited=0 WHERE player_id=%d",
 			(int)$playerId
 		);
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 		AccreditationLogEntry($playerId, $playerInfo['team'], $source, 0);
 		return $result;
@@ -139,14 +139,14 @@ function AccreditationLogEntry($player, $team, $source, $value, $game = NULL)
 		"INSERT INTO uo_accreditationlog (player, team, userid, source, value, time, game) VALUES (%d, %d, '%s', '%s', %d, now(), %s)",
 		(int)$player,
 		(int)$team,
-		mysql_real_escape_string($_SESSION['uid']),
-		mysql_real_escape_string($source),
+		GetDatabase()->RealEscapeString($_SESSION['uid']),
+		GetDatabase()->RealEscapeString($source),
 		(int)$value,
 		$gameVal
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 }
 
@@ -166,9 +166,9 @@ function AcknowledgeUnaccredited($playerId, $gameId, $source)
 			(int)$playerId,
 			(int)$gameId
 		);
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 		AccreditationLogEntry($playerId, $playerInfo['team'], $source, 1, $gameId);
 		return $result;
@@ -186,9 +186,9 @@ function UnAcknowledgeUnaccredited($playerId, $gameId, $source)
 			(int)$playerId,
 			(int)$gameId
 		);
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if (!$result) {
-			die('Invalid query: ' . mysql_error());
+			die('Invalid query: ' . GetDatabase()->SQLError());
 		}
 		AccreditationLogEntry($playerId, $playerInfo['team'], $source, 0, $gameId);
 		return $result;
@@ -234,12 +234,12 @@ function SeasonAccreditationLog($season)
 			LEFT JOIN uo_users user ON (log.userid=user.userid)
 		WHERE ser.season='%s'
 		ORDER BY log.time DESC",
-		mysql_real_escape_string($season)
+		GetDatabase()->RealEscapeString($season)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 	return $result;
 }

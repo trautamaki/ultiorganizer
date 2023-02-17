@@ -41,14 +41,14 @@ if (!empty($_POST['save'])) {
     $error = 1;
   }
 
-  $uidcheck = mysql_real_escape_string($newUsername);
+  $uidcheck = GetDatabase()->RealEscapeString($newUsername);
 
   if ($uidcheck != $newUsername || preg_match('/[ ]/', $newUsername) || preg_match('/[^a-z0-9._]/i', $newUsername)) {
     $message .= "<p>" . _("User id may not have spaces or special characters") . ".</p>";
     $error = 1;
   }
 
-  $pswcheck = mysql_real_escape_string($newPassword);
+  $pswcheck = GetDatabase()->RealEscapeString($newPassword);
 
   if ($pswcheck != $newPassword) {
     $message .= "<p>" . _("Illegal characters in the password") . ".</p>";

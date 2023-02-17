@@ -25,7 +25,7 @@ if (ENABLE_ADMIN_DB_ACCESS != "enabled") {
 
 				$templine .= $line;
 				if (substr(trim($line), -1, 1) == ';') {
-					mysql_query($templine) or $html .= "<p>" . $templine . ": " . mysql_error() . "</p>";
+					GetDatabase()->DBQuery($templine) or $html .= "<p>" . $templine . ": " . GetDatabase()->SQLError() . "</p>";
 					$templine = '';
 				}
 			}

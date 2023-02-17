@@ -20,15 +20,15 @@ function PlayerInfod($playerId)
 		LEFT JOIN uo_series ser ON (ser.series_id=t.series)
 		LEFT JOIN uo_player_profile pp ON (p.accreditation_id=pp.accreditation_id)
 		WHERE player_id='%s'",
-		mysql_real_escape_string($playerId)
+		GetDatabase()->RealEscapeString($playerId)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
-	return mysql_fetch_assoc($result);
+	return GetDatabase()->FetchAssoc($result);
 }
 
 function Playersd($filter = null, $ordering = null)
@@ -46,7 +46,7 @@ function Playersd($filter = null, $ordering = null)
 		LEFT JOIN uo_series series ON (team.series=series.series_id)
 		LEFT JOIN uo_season season ON (series.season=season.season_id)
 		$where $orderby";
-	return DBQuery(trim($query));
+	return GetDatabase()->DBQuery(trim($query));
 }
 
 function PlayerprofileInfod($accreditation_id)
@@ -56,17 +56,17 @@ function PlayerprofileInfod($accreditation_id)
 		FROM uo_player_profile pp 
 		LEFT JOIN uo_player p ON pp.accreditation_id=p.accreditation_id
 		WHERE pp.accreditation_id='%s'",
-		mysql_real_escape_string($accreditation_id)
+		GetDatabase()->RealEscapeString($accreditation_id)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 	if (hasEditPlayerProfileRight($accreditation_id)) {
-		return mysql_fetch_assoc($result);
+		return GetDatabase()->FetchAssoc($result);
 	} else {
-		$data = mysql_fetch_assoc($result);
+		$data = GetDatabase()->FetchAssoc($result);
 		$publicfields = explode("|", $data['public']);
 		$ret = array();
 		$ret['firstname'] = $data['firstname'];
@@ -100,5 +100,5 @@ function Playerprofilesd($filter = null, $ordering = null)
 		LEFT JOIN uo_season season ON (series.season=season.season_id)
 		$where $orderby";
 
-	return DBQuery(trim($query));
+	return GetDatabase()->DBQuery(trim($query));
 }

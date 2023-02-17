@@ -10,8 +10,6 @@
 session_name("UO_SESSID");
 session_start();
 require_once '../lib/database.php';
-//open database connection
-OpenConnection();
 require_once('../lib/twitteroauth/twitteroauth.php');
 require_once('../lib/user.functions.php');
 require_once('../lib/configuration.functions.php');
@@ -37,8 +35,6 @@ $access_token = $connection->getAccessToken($_REQUEST['oauth_verifier']);
 //Save the access tokens.
 SetTwitterKey($access_token, $_SESSION['purpose'], $_SESSION['id']);
 //$_SESSION['access_token'] = $access_token;
-
-CloseConnection();
 
 //Remove no longer needed request tokens 
 unset($_SESSION['oauth_token']);

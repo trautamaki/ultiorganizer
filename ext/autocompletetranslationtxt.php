@@ -11,4 +11,3 @@ foreach ($result as $lang => $translations) {
 		echo $lang . "\t" . $key . "\t" . $translation . "\n";
 	}
 }
-CloseConnection();

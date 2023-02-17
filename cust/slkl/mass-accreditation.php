@@ -150,14 +150,14 @@ function slklUpdateLicensesFromAccess()
   if (!move_uploaded_file($_FILES['uploadedfile']['tmp_name'], $target_path)) {
     die("<p>There was an error uploading the file, please try again!</p>");
   }
-  //mysql_query("insert into uo_license ( lastname, firstname, membership, birthdate, accreditation_id, women, junior, license) VALUES ('Aalto', 'Anne', 1997, '', '',1473, '', 0, 1, 0, 0)");
-  $result = mysql_query("set autocommit=0");
+  //GetDatabase()->DBQuery("insert into uo_license ( lastname, firstname, membership, birthdate, accreditation_id, women, junior, license) VALUES ('Aalto', 'Anne', 1997, '', '',1473, '', 0, 1, 0, 0)");
+  $result = GetDatabase()->DBQuery("set autocommit=0");
   if (!$result) {
-    die("Can't set autocommit to 0: " . mysql_error() . "<br>\n");
+    die("Can't set autocommit to 0: " . GetDatabase()->SQLError() . "<br>\n");
   }
-  $result = mysql_query("BEGIN");
+  $result = GetDatabase()->DBQuery("BEGIN");
   if (!$result) {
-    die("Can't BEGIN: " . mysql_error() . "<br>\n");
+    die("Can't BEGIN: " . GetDatabase()->SQLError() . "<br>\n");
   }
   $connstr = "DRIVER={Microsoft Access Driver (*.mdb)}; DBQ=$target_path";
   //~ echo "Connstring: $connstr<br>\n";
@@ -166,10 +166,10 @@ function slklUpdateLicensesFromAccess()
   if (!$connAccessODBC) {
     die("<p>Couldn't connect to access. " . odbc_error() . "</p>");
   }
-  $truncresult = mysql_query("truncate table uo_license");
+  $truncresult = GetDatabase()->DBQuery("truncate table uo_license");
   if (!$truncresult) {
     $errors++;
-    $message .= 'Invalid query: ' . mysql_error() . "\n";
+    $message .= 'Invalid query: ' . GetDatabase()->SQLError() . "\n";
     $message .= "Whole query: truncate table uo_license\n";
   }
 
@@ -213,10 +213,10 @@ function slklUpdateLicensesFromAccess()
     			junior,
     			license)
     		VALUES ('%s', '%s', %d, '%s', '%s', %d, %d, %d, %d)",
-      mysql_real_escape_string($fSukunimi),
-      mysql_real_escape_string($fEtunimi),
+      GetDatabase()->RealEscapeString($fSukunimi),
+      GetDatabase()->RealEscapeString($fEtunimi),
       $fJasenmaksu,
-      mysql_real_escape_string($fSyntaika),
+      GetDatabase()->RealEscapeString($fSyntaika),
       $fJasennumero,
       $fUltimate,
       $fNainen,
@@ -224,10 +224,10 @@ function slklUpdateLicensesFromAccess()
       $fUltimateLisenssi
     );
     //~ echo "<p>$i: $query</p>\n";
-    $insResult = mysql_query($query);
+    $insResult = GetDatabase()->DBQuery($query);
     if (!$insResult) {
       $errors++;
-      $message .= 'Invalid query: ' . mysql_error() . "\n";
+      $message .= 'Invalid query: ' . GetDatabase()->SQLError() . "\n";
       $message .= 'Whole query: ' . $query . "<br>\n";
     }
     //checkAccreditation($fJasennumero, $fNainen, $fJunnu, $fUltimateLisenssi, "member_upload");
@@ -236,13 +236,13 @@ function slklUpdateLicensesFromAccess()
   odbc_close($connAccessODBC);
   if ($errors == 0) {
     echo "<p>" . _("License database update ok") . ".</p>";
-    mysql_query("COMMIT");
+    GetDatabase()->DBQuery("COMMIT");
   } else {
     echo "<p>" . _("License database update failed") . "</p>";
-    mysql_query("ROLLBACK");
+    GetDatabase()->DBQuery("ROLLBACK");
     echo $message;
   }
-  mysql_query("set autocommit=1");
+  GetDatabase()->DBQuery("set autocommit=1");
 }
 
 
@@ -365,7 +365,7 @@ function slklUpdateLicensesFromCSV($handle, $season)
     }
 
     //echo "<p>$id $firstname $lastname</p>";
-    $exist = DBQueryRowCount("SELECT accreditation_id FROM uo_license WHERE external_id='" . mysql_real_escape_string($id) . "'");
+    $exist = GetDatabase()->DBQueryRowCount("SELECT accreditation_id FROM uo_license WHERE external_id='" . GetDatabase()->RealEscapeString($id) . "'");
     if ($exist == 1) {
       $query = "UPDATE uo_license SET junior=$junior ";
       if (!empty($membership)) {
@@ -380,25 +380,25 @@ function slklUpdateLicensesFromCSV($handle, $season)
       if (!empty($birthdate)) {
         $query .= ",birthdate='" . $birthdate . "'";
       }
-      $query .= sprintf(" WHERE external_id='%s'", mysql_real_escape_string($id));
-      DBQuery($query);
+      $query .= sprintf(" WHERE external_id='%s'", GetDatabase()->RealEscapeString($id));
+      GetDatabase()->DBQuery($query);
     } else {
 
       //echo "<p>$lastname $firstname ($shortername)</p>";
-      $check1 = "UPPER(lastname) LIKE '" . mysql_real_escape_string($lastname) . "'";
-      $check2 = "UPPER(firstname) LIKE '" . mysql_real_escape_string($firstname) . "'";
-      $check3 = "UPPER(firstname) LIKE '" . mysql_real_escape_string($shortername) . "'";
-      $check4 = "birthdate='" . mysql_real_escape_string($birthdate) . "' AND birthdate!='1971-01-01 00:00:00'";
+      $check1 = "UPPER(lastname) LIKE '" . GetDatabase()->RealEscapeString($lastname) . "'";
+      $check2 = "UPPER(firstname) LIKE '" . GetDatabase()->RealEscapeString($firstname) . "'";
+      $check3 = "UPPER(firstname) LIKE '" . GetDatabase()->RealEscapeString($shortername) . "'";
+      $check4 = "birthdate='" . GetDatabase()->RealEscapeString($birthdate) . "' AND birthdate!='1971-01-01 00:00:00'";
 
-      //$count1 = DBQueryRowCount("SELECT accreditation_id FROM uo_license WHERE ".$check1);
-      $count1 = DBQueryRowCount("SELECT accreditation_id FROM uo_license WHERE " . $check1 . " AND " . $check2 . " AND external_id IS NULL");
-      $count2 = DBQueryRowCount("SELECT accreditation_id FROM uo_license WHERE " . $check1 . " AND " . $check3 . " AND external_id IS NULL");
-      $count3 = DBQueryRowCount("SELECT accreditation_id FROM uo_license WHERE " . $check1 . " AND " . $check4 . " AND external_id IS NULL");
+      //$count1 = GetDatabase()->DBQueryRowCount("SELECT accreditation_id FROM uo_license WHERE ".$check1);
+      $count1 = GetDatabase()->DBQueryRowCount("SELECT accreditation_id FROM uo_license WHERE " . $check1 . " AND " . $check2 . " AND external_id IS NULL");
+      $count2 = GetDatabase()->DBQueryRowCount("SELECT accreditation_id FROM uo_license WHERE " . $check1 . " AND " . $check3 . " AND external_id IS NULL");
+      $count3 = GetDatabase()->DBQueryRowCount("SELECT accreditation_id FROM uo_license WHERE " . $check1 . " AND " . $check4 . " AND external_id IS NULL");
 
       $query = "UPDATE uo_license SET junior=$junior ";
       //$query = "UPDATE uo_license SET external_id=accreditation_id ";
-      //$query .= sprintf(",accreditation_id='%s' ", mysql_real_escape_string($id));
-      $query .= sprintf(",external_id='%s' ", mysql_real_escape_string($id));
+      //$query .= sprintf(",accreditation_id='%s' ", GetDatabase()->RealEscapeString($id));
+      $query .= sprintf(",external_id='%s' ", GetDatabase()->RealEscapeString($id));
       if (!empty($membership)) {
         $query .= ",membership='" . $membership . "'";
       }
@@ -410,13 +410,13 @@ function slklUpdateLicensesFromCSV($handle, $season)
       $query .= ",women='" . $women . "'";
       if ($count1 == 1) {
         $query .= " WHERE $check1 AND $check2";
-        DBQuery($query);
+        GetDatabase()->DBQuery($query);
       } elseif ($count2 == 1) {
         $query .= " WHERE $check1 AND $check3";
-        DBQuery($query);
+        GetDatabase()->DBQuery($query);
       } elseif ($count3 == 1) {
         $query .= " WHERE $check1 AND $check4";
-        DBQuery($query);
+        GetDatabase()->DBQuery($query);
       }
 
       //echo "<p>$lastname $firstname ($shortername): $count1 $count2 $count3</p>";
@@ -432,19 +432,19 @@ function slklUpdateLicensesFromCSV($handle, $season)
         $query = sprintf(
           "INSERT INTO uo_license (lastname, firstname, birthdate, membership, license, junior, women, external_id, external_type,accreditation_id, ultimate)
     				  		VALUES ('%s','%s','%s','%s','%s','%s',%d,'%s','%s','%s',1)",
-          mysql_real_escape_string($lastname),
-          mysql_real_escape_string($firstname),
-          mysql_real_escape_string($birthdate),
-          mysql_real_escape_string($membership),
-          mysql_real_escape_string($license),
-          mysql_real_escape_string($junior),
+          GetDatabase()->RealEscapeString($lastname),
+          GetDatabase()->RealEscapeString($firstname),
+          GetDatabase()->RealEscapeString($birthdate),
+          GetDatabase()->RealEscapeString($membership),
+          GetDatabase()->RealEscapeString($license),
+          GetDatabase()->RealEscapeString($junior),
           (int) $women,
-          mysql_real_escape_string($id),
-          mysql_real_escape_string($license_id),
-          mysql_real_escape_string($id),
+          GetDatabase()->RealEscapeString($id),
+          GetDatabase()->RealEscapeString($license_id),
+          GetDatabase()->RealEscapeString($id),
           1
         );
-        DBQuery($query);
+        GetDatabase()->DBQuery($query);
         $html .= "<p>" . utf8entities($id) . " " . utf8entities($firstname) . " " . utf8entities($lastname) . "</p>";
 
         //check if player already have profile
@@ -458,12 +458,12 @@ function slklUpdateLicensesFromCSV($handle, $season)
                 CreatePlayerProfile($player['player_id']);
                 $playerinfo = PlayerInfo($player['player_id']);
               }
-              $query = "UPDATE uo_player SET accreditation_id='" . mysql_real_escape_string($id) . "' ";
+              $query = "UPDATE uo_player SET accreditation_id='" . GetDatabase()->RealEscapeString($id) . "' ";
               $query .= "WHERE player_id=" . $player['player_id'];
-              DBQuery($query);
-              $query = "UPDATE uo_player_profile SET accreditation_id='" . mysql_real_escape_string($id) . "' ";
+              GetDatabase()->DBQuery($query);
+              $query = "UPDATE uo_player_profile SET accreditation_id='" . GetDatabase()->RealEscapeString($id) . "' ";
               $query .= "WHERE profile_id=" . $playerinfo['profile_id'];
-              DBQuery($query);
+              GetDatabase()->DBQuery($query);
               $found = true;
             }
           }
@@ -471,8 +471,8 @@ function slklUpdateLicensesFromCSV($handle, $season)
       }
     }
 
-    $accreditation_id = DBQueryToValue("SELECT accreditation_id FROM uo_license WHERE external_id='" . mysql_real_escape_string($id) . "'");
-    $profile = DBQueryToRow("SELECT * FROM uo_player_profile WHERE accreditation_id='" . $accreditation_id . "'");
+    $accreditation_id = GetDatabase()->DBQueryToValue("SELECT accreditation_id FROM uo_license WHERE external_id='" . GetDatabase()->RealEscapeString($id) . "'");
+    $profile = GetDatabase()->DBQueryToRow("SELECT * FROM uo_player_profile WHERE accreditation_id='" . $accreditation_id . "'");
 
     if ($profile) {
       $query = "UPDATE uo_player_profile SET accreditation_id='" . $accreditation_id . "' ";
@@ -490,7 +490,7 @@ function slklUpdateLicensesFromCSV($handle, $season)
       }
 
       $query .= sprintf(" WHERE profile_id='%s'", $profile['profile_id']);
-      DBQuery($query);
+      GetDatabase()->DBQuery($query);
     } else {
       if ($women) {
         $gender = 'F';
@@ -501,15 +501,15 @@ function slklUpdateLicensesFromCSV($handle, $season)
       $query = sprintf(
         "INSERT INTO uo_player_profile (firstname,lastname,accreditation_id, gender, email, birthdate) VALUES
 				('%s','%s','%s','%s','%s','%s')",
-        mysql_real_escape_string($firstname),
-        mysql_real_escape_string($lastname),
-        mysql_real_escape_string($id),
-        mysql_real_escape_string($gender),
-        mysql_real_escape_string($email),
-        mysql_real_escape_string($birthdate)
+        GetDatabase()->RealEscapeString($firstname),
+        GetDatabase()->RealEscapeString($lastname),
+        GetDatabase()->RealEscapeString($id),
+        GetDatabase()->RealEscapeString($gender),
+        GetDatabase()->RealEscapeString($email),
+        GetDatabase()->RealEscapeString($birthdate)
       );
 
-      $profileId = DBQueryInsert($query);
+      $profileId = GetDatabase()->DBQueryInsert($query);
     }
   }
   return $html;

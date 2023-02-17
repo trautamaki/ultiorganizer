@@ -13,8 +13,6 @@ flush();
 
 include '../lib/database.php';
 
-OpenConnection();
-
 include_once $include_prefix . 'localization.php';
 include_once $include_prefix . 'lib/user.functions.php';
 include_once $include_prefix . 'lib/common.functions.php';

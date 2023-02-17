@@ -31,13 +31,12 @@ include_once 'localization.php';
 
 	if ($teamId) {
 		$games = TimetableGames($teamId, "team", "coming", "tournaments");
-		if (!mysql_num_rows($games)) {
+		if (!GetDatabase()->NumRows($games)) {
 			echo "\n<p>" . _("No games") . ".</p>\n";
 		} else {
 			echo ExtGameView($games);
 		}
 	}
-	CloseConnection();
 	?>
 </body>
 

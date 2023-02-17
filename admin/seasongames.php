@@ -64,8 +64,8 @@ if (!empty($_POST['remove_x'])) {
 
   //run some test to for safe deletion
   $goals = GameAllGoals($id);
-  if (mysql_num_rows($goals)) {
-    $html .= "<p class='warning'>" . _("Game has") . " " . mysql_num_rows($goals) . " " . _("goals") . ". " . _("Goals must be removed before removing the team") . ".</p>";
+  if (GetDatabase()->NumRows($goals)) {
+    $html .= "<p class='warning'>" . _("Game has") . " " . GetDatabase()->NumRows($goals) . " " . _("goals") . ". " . _("Goals must be removed before removing the team") . ".</p>";
     $ok = false;
   }
   if ($ok) {
@@ -163,7 +163,7 @@ foreach ($pools as $pool) {
   $html .= "<th class='right' colspan='3' ><a class='thlink' href='?view=user/pdfscoresheet&amp;season=$season&amp;pool=" . $pool['pool_id'] . "'>" . _("Print scoresheets") . "</a></th>";
   $html .= "</tr>";
 
-  while ($game = mysql_fetch_assoc($games)) {
+  while ($game = GetDatabase()->FetchAssoc($games)) {
     $i = $game['game_id'];
 
     if (GameHasStarted($game)) {

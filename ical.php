@@ -46,7 +46,7 @@ echo "BEGIN:VCALENDAR\n";
 echo "VERSION:2.0\n";
 echo "PRODID: " . _("Ultiorganizer") . "\n\n";
 
-while ($game = mysql_fetch_assoc($games)) {
+while ($game = GetDatabase()->FetchAssoc($games)) {
   $location = LocationInfo($game['place_id']);
   echo "\nBEGIN:VEVENT";
   echo "\nSUMMARY:" . TeamName($game['hometeam']) . "-" . TeamName($game['visitorteam']);

@@ -94,7 +94,7 @@ if ($teamId) {
   $defenses = SeriesDefenseBoard($seriesId, $sort, 0);
 }
 $i = 1;
-while ($row = mysql_fetch_assoc($defenses)) {
+while ($row = GetDatabase()->FetchAssoc($defenses)) {
   $html .= "<tr>";
   $html .= "<td>" . $i++ . "</td>";
   if ($sort == "name") {

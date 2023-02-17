@@ -29,12 +29,12 @@ if (hasEditPlayersRight($teamId)) {
 
 	$query = sprintf(
 		"SELECT accreditation_id, firstname, lastname, membership, license, birthdate FROM uo_license WHERE firstname like '%%%s%%' and lastname like '%%%s%%'",
-		mysql_real_escape_string($firstname),
-		mysql_real_escape_string($lastname)
+		GetDatabase()->RealEscapeString($firstname),
+		GetDatabase()->RealEscapeString($lastname)
 	);
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
 	// for php 5 onwards
@@ -43,7 +43,7 @@ if (hasEditPlayersRight($teamId)) {
 		$node = $dom->createElement("MemberSet");
 		$parnode = $dom->appendChild($node);
 
-		while ($row = mysql_fetch_assoc($result)) {
+		while ($row = GetDatabase()->FetchAssoc($result)) {
 			$node = $dom->createElement("Member");
 			$newNode = $parnode->appendChild($node);
 
@@ -84,7 +84,7 @@ if (hasEditPlayersRight($teamId)) {
 		$node = $dom->create_element("MemberSet");
 		$parnode = $dom->append_child($node);
 
-		while ($row = mysql_fetch_assoc($result)) {
+		while ($row = GetDatabase()->FetchAssoc($result)) {
 			$node = $dom->create_element("Member");
 			$newNode = $parnode->append_child($node);
 
@@ -124,7 +124,7 @@ if (hasEditPlayersRight($teamId)) {
 		echo "<MemberSet>\n";
 
 		// Iterate through the rows, adding XML nodes for each
-		while ($row = mysql_fetch_assoc($result)) {
+		while ($row = GetDatabase()->FetchAssoc($result)) {
 			echo "<Member>\n";
 			echo "<memberId>" . $row['accreditation_id'] . "</memberId>\n";
 			echo "<Firstname>" . $row['firstname'] . "</Firstname>\n";

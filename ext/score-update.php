@@ -91,4 +91,3 @@ if (!$result) {
 		} else echo _("Missing sender information");
 	}
 }
-CloseConnection();

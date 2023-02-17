@@ -61,7 +61,7 @@ function SeriesPools($seriesId, $onlyvisible = false, $nocontinuingpools = false
 
   $query .= " ORDER BY ordering ASC, name, pool_id";
 
-  return DBQueryToArray($query, true);
+  return GetDatabase()->DBQueryToArray($query, true);
 }
 
 /**
@@ -77,7 +77,7 @@ function SeriesPlacementPoolIds($seriesId)
     (int)$seriesId
   );
 
-  return DBQueryToArray($query);
+  return GetDatabase()->DBQueryToArray($query);
 }
 
 /**
@@ -135,7 +135,7 @@ function SeriesTeams($seriesId, $orderbyseeding = false)
   } else {
     $query .= " ORDER BY t.name, t.team_id";
   }
-  return DBQueryToArray($query);
+  return GetDatabase()->DBQueryToArray($query);
 }
 
 /**
@@ -154,7 +154,7 @@ function SeriesTeamsWithoutPool($seriesId)
 		ORDER BY pj.rank ASC",
     (int)$seriesId
   );
-  return DBQueryToArray($query);
+  return GetDatabase()->DBQueryToArray($query);
 }
 
 function Series($filter = null, $ordering = null)
@@ -168,7 +168,7 @@ function Series($filter = null, $ordering = null)
   $query = sprintf("SELECT series_id, series.name as name, season.name as seasonname, series.season
 	FROM uo_series series LEFT JOIN uo_season season ON (series.season=season.season_id)
 	$where $orderby");
-  return DBQuery(trim($query));
+  return GetDatabase()->DBQuery(trim($query));
 }
 
 /**
@@ -185,7 +185,7 @@ function SeriesAllPlayers($seriesId)
 			WHERE ser.series_id='%d'",
     (int) $seriesId
   );
-  return DBQueryToArray($query);
+  return GetDatabase()->DBQueryToArray($query);
 }
 
 /**
@@ -200,7 +200,7 @@ function SeriesName($serieId)
     (int)$serieId
   );
 
-  return U_(DBQueryToValue($query));
+  return U_(GetDatabase()->DBQueryToValue($query));
 }
 
 /**
@@ -217,7 +217,7 @@ function SeriesSeasonName($serieId)
     (int)$serieId
   );
 
-  return U_(DBQueryToValue($query));
+  return U_(GetDatabase()->DBQueryToValue($query));
 }
 
 /**
@@ -234,7 +234,7 @@ function SeriesSeasonId($serieId)
     (int)$serieId
   );
 
-  return DBQueryToValue($query);
+  return GetDatabase()->DBQueryToValue($query);
 }
 
 /**
@@ -319,7 +319,7 @@ function SeriesScoreBoard($seriesId, $sorting, $limit)
     $query .= " limit $limit";
   }
 
-  return DBQuery($query);
+  return GetDatabase()->DBQuery($query);
 }
 
 /**
@@ -384,7 +384,7 @@ function SeriesDefenseBoard($seriesId, $sorting, $limit)
     $query .= " limit $limit";
   }
 
-  return DBQuery($query);
+  return GetDatabase()->DBQuery($query);
 }
 
 /**
@@ -407,16 +407,16 @@ function SeriesSpiritBoard($seriesId)
     $seriesId
   );
 
-  $scores = DBQuery($query);
+  $scores = GetDatabase()->DBQuery($query);
   $last_team = null;
   $last_category = null;
   $averages = array();
   $total = 0;
-  while ($row = mysql_fetch_assoc($scores)) {
+  while ($row = GetDatabase()->FetchAssoc($scores)) {
     if ($last_team != $row['team_id'] || $last_category != $row['category_id']) {
       if (!is_null($last_category)) {
         if (!isset($factor[$last_category])) {
-          $factor[$last_category] = DBQueryToArray(sprintf("SELECT * FROM uo_spirit_category WHERE category_id=%d", (int) $last_category))[0]['factor'];
+          $factor[$last_category] = GetDatabase()->DBQueryToArray(sprintf("SELECT * FROM uo_spirit_category WHERE category_id=%d", (int) $last_category))[0]['factor'];
         }
         $teamline[$last_category] = SafeDivide($sum, $games);
         $total += SafeDivide($factor[$last_category] * $sum, $games);
@@ -439,7 +439,7 @@ function SeriesSpiritBoard($seriesId)
     ++$games;
   }
   if (!is_null($last_team)) {
-    $factor[$last_category] = DBQueryToArray(sprintf("SELECT * FROM uo_spirit_category WHERE category_id=%d", (int) $last_category))[0]['factor'];
+    $factor[$last_category] = GetDatabase()->DBQueryToArray(sprintf("SELECT * FROM uo_spirit_category WHERE category_id=%d", (int) $last_category))[0]['factor'];
     $teamline[$last_category] = SafeDivide($sum, $games);
     $total += SafeDivide($factor[$last_category] * $sum, $games);
     $teamline['total'] = $total;
@@ -467,7 +467,7 @@ function SeriesAllGames($seriesId)
     (int) $seriesId
   );
 
-  return DBQueryToArray($query);
+  return GetDatabase()->DBQueryToArray($query);
 }
 
 /**
@@ -481,7 +481,7 @@ function SeriesInfo($seriesId)
     "SELECT * FROM uo_series WHERE series_id=%d",
     (int)$seriesId
   );
-  return DBQueryToRow($query, true);
+  return GetDatabase()->DBQueryToRow($query, true);
 }
 
 /**
@@ -501,7 +501,7 @@ function SeriesEnrolledTeams($seriesId)
 		WHERE team.series=%d ORDER BY team.enroll_time ASC",
       (int)$seriesId
     );
-    return DBQuery($query);
+    return GetDatabase()->DBQuery($query);
   } else die("Insufficient rights to get all enrolled teams");
 }
 
@@ -523,7 +523,7 @@ function DeleteSeries($seriesId)
       (int)$seriesId
     );
 
-    return DBQuery($query);
+    return GetDatabase()->DBQuery($query);
   }
 }
 
@@ -542,15 +542,15 @@ function AddSeries($params)
       "INSERT INTO uo_series
 				(name,type,ordering,season,valid,pool_template)
 				VALUES ('%s','%s','%s','%s',%d,%d)",
-      mysql_real_escape_string($params['name']),
-      mysql_real_escape_string($params['type']),
-      mysql_real_escape_string($params['ordering']),
-      mysql_real_escape_string($params['season']),
+      GetDatabase()->RealEscapeString($params['name']),
+      GetDatabase()->RealEscapeString($params['type']),
+      GetDatabase()->RealEscapeString($params['ordering']),
+      GetDatabase()->RealEscapeString($params['season']),
       (int)$params['valid'],
       (int)$params['pool_template']
     );
 
-    $id = DBQueryInsert($query);
+    $id = GetDatabase()->DBQueryInsert($query);
     Log1("series", "add", $id);
     return $id;
   }
@@ -573,15 +573,15 @@ function SetSeries($params)
 			name='%s', type='%s', ordering='%s', valid=%d,
 			pool_template=%d
 			WHERE series_id=%d",
-      mysql_real_escape_string($params['name']),
-      mysql_real_escape_string($params['type']),
-      mysql_real_escape_string($params['ordering']),
+      GetDatabase()->RealEscapeString($params['name']),
+      GetDatabase()->RealEscapeString($params['type']),
+      GetDatabase()->RealEscapeString($params['ordering']),
       (int)$params['valid'],
       (int)$params['pool_template'],
       (int)$params['series_id']
     );
 
-    return DBQuery($query);
+    return GetDatabase()->DBQuery($query);
   }
 }
 
@@ -600,11 +600,11 @@ function SetSeriesName($seriesId, $name)
     $query = sprintf(
       "
 			UPDATE uo_series SET name='%s' WHERE series_id='%s'",
-      mysql_real_escape_string($name),
-      mysql_real_escape_string($seriesId)
+      GetDatabase()->RealEscapeString($name),
+      GetDatabase()->RealEscapeString($seriesId)
     );
 
-    return DBQuery($query);
+    return GetDatabase()->DBQuery($query);
   }
 }
 
@@ -625,7 +625,7 @@ function SeriesEnrolledTeamById($seriesId, $id)
       (int)$seriesId,
       (int)$id
     );
-    return DBQueryToRow($query);
+    return GetDatabase()->DBQueryToRow($query);
   } else die("Insufficient rights to get all enrolled teams");
 }
 
@@ -647,9 +647,9 @@ function SeriesEnrolledTeamsByUser($seriesId, $userid)
 				LEFT JOIN uo_users user ON(team.userid=user.userid)
 				WHERE team.series=%d and team.userid='%s' ORDER BY team.enroll_time ASC",
       (int)$seriesId,
-      mysql_real_escape_string($userid)
+      GetDatabase()->RealEscapeString($userid)
     );
-    return DBQuery($query);
+    return GetDatabase()->DBQuery($query);
   } else die("Insufficient rights to get all enrolled teams for other users");
 }
 
@@ -673,12 +673,12 @@ function AddSeriesEnrolledTeam($seriesId, $userid, $name, $club, $country)
       "INSERT INTO uo_enrolledteam (series, userid, name, clubname, countryname, enroll_time)
 				VALUES (%d, '%s', '%s', '%s', '%s', now())",
       (int)$seriesId,
-      mysql_real_escape_string($userid),
-      mysql_real_escape_string($name),
-      mysql_real_escape_string($club),
-      mysql_real_escape_string($country)
+      GetDatabase()->RealEscapeString($userid),
+      GetDatabase()->RealEscapeString($name),
+      GetDatabase()->RealEscapeString($club),
+      GetDatabase()->RealEscapeString($country)
     );
-    $id = DBQueryInsert($query);
+    $id = GetDatabase()->DBQueryInsert($query);
     Log1("enrolment", "add", $seriesId, "$name");
     return $id;
   } else die("Insufficient rights to add enrolled teams for other users");
@@ -702,7 +702,7 @@ function RemoveSeriesEnrolledTeam($seriesId, $userid, $id)
       $query = sprintf(
         $query,
         (int)$seriesId,
-        mysql_real_escape_string($userid),
+        GetDatabase()->RealEscapeString($userid),
         (int)$id
       );
     } else {
@@ -714,7 +714,7 @@ function RemoveSeriesEnrolledTeam($seriesId, $userid, $id)
       );
     }
     Log1("enrolment", "delete", $seriesId, $id);
-    return DBQuery($query);
+    return GetDatabase()->DBQuery($query);
   } else die("Insufficient rights to delete enrolled teams for other users");
 }
 
@@ -741,24 +741,24 @@ function ConfirmEnrolledTeam($seriesId, $id)
 
     $query = sprintf(
       "INSERT INTO uo_team (name, series, valid) VALUES ('%s', %d, 1)",
-      mysql_real_escape_string($teaminfo['name']),
+      GetDatabase()->RealEscapeString($teaminfo['name']),
       (int)$seriesId
     );
 
-    DBQuery($query);
-    $teamId = mysql_insert_id();
+    GetDatabase()->DBQuery($query);
+    $teamId = GetDatabase()->InsertID();
 
     //update team/country info if available
     if ($countryId) {
-      DBQuery("UPDATE uo_team SET country=$countryId WHERE team_id=$teamId");
+      GetDatabase()->DBQuery("UPDATE uo_team SET country=$countryId WHERE team_id=$teamId");
     }
     if ($clubId) {
-      DBQuery("UPDATE uo_team SET club=$clubId WHERE team_id=$teamId");
+      GetDatabase()->DBQuery("UPDATE uo_team SET club=$clubId WHERE team_id=$teamId");
     }
 
     if ($countryId && !$clubId) {
       $countryinfo = CountryInfo($countryId);
-      DBQuery("UPDATE uo_team SET abbreviation=UPPER('" . $countryinfo['abbreviation'] . "') WHERE team_id=$teamId");
+      GetDatabase()->DBQuery("UPDATE uo_team SET abbreviation=UPPER('" . $countryinfo['abbreviation'] . "') WHERE team_id=$teamId");
     } else {
       $allteams = SeriesTeams($seriesId);
       $notfound = true;
@@ -784,7 +784,7 @@ function ConfirmEnrolledTeam($seriesId, $id)
           }
         }
       }
-      DBQuery("UPDATE uo_team SET abbreviation=UPPER('" . mysql_real_escape_string($abb) . "') WHERE team_id=$teamId");
+      GetDatabase()->DBQuery("UPDATE uo_team SET abbreviation=UPPER('" . GetDatabase()->RealEscapeString($abb) . "') WHERE team_id=$teamId");
     }
 
 
@@ -795,7 +795,7 @@ function ConfirmEnrolledTeam($seriesId, $id)
       (int)$id
     );
 
-    DBQuery($query);
+    GetDatabase()->DBQuery($query);
 
     Log1("enrolment", "confirm", $seriesId, $teamId);
     return $teamId;
@@ -811,23 +811,23 @@ function CanDeleteSeries($seriesId)
 {
   $query = sprintf(
     "SELECT count(*) FROM uo_pool WHERE series='%s'",
-    mysql_real_escape_string($seriesId)
+    GetDatabase()->RealEscapeString($seriesId)
   );
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
-  if (!$row = mysql_fetch_row($result)) return false;
+  if (!$row = GetDatabase()->FetchRow($result)) return false;
   if ($row[0] == 0) {
     $query = sprintf(
       "SELECT count(*) FROM uo_team WHERE series='%s'",
-      mysql_real_escape_string($seriesId)
+      GetDatabase()->RealEscapeString($seriesId)
     );
-    $result = mysql_query($query);
+    $result = GetDatabase()->DBQuery($query);
     if (!$result) {
-      die('Invalid query: ' . mysql_error());
+      die('Invalid query: ' . GetDatabase()->SQLError());
     }
-    if (!$row = mysql_fetch_row($result)) return false;
+    if (!$row = GetDatabase()->FetchRow($result)) return false;
     return $row[0] == 0;
   } else return false;
 }
@@ -855,7 +855,7 @@ function SeriesTeamResponsibles($seriesId)
       (int)$seriesId
     );
 
-    return DBQueryToArray($query);
+    return GetDatabase()->DBQueryToArray($query);
   } else {
     die('Insufficient rights');
   }
@@ -878,14 +878,14 @@ function SeriesCopyTeams($to, $from)
       $query = sprintf(
         "INSERT INTO uo_team(name, club, country, rank, abbreviation, valid, series )
       			VALUES ('%s',%d,%d,%d,'%s',1,%d)",
-        mysql_real_escape_string($team['name']),
+        GetDatabase()->RealEscapeString($team['name']),
         (int) $team['club'],
         (int) $team['country'],
         (int) $team['rank'],
-        mysql_real_escape_string($team['abbreviation']),
+        GetDatabase()->RealEscapeString($team['abbreviation']),
         (int) $to
       );
-      DBQuery($query);
+      GetDatabase()->DBQuery($query);
     }
   } else {
     die('Insufficient rights');

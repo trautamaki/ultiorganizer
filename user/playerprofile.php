@@ -169,7 +169,7 @@ $html .= "<tr><td colspan='2'>" . _("Player details") . "</td><td class='center'
 
 if (CUSTOMIZATIONS == "slkl") {
 	$query = sprintf("SELECT membership, license, external_type, external_validity FROM uo_license WHERE accreditation_id=%d", (int)$pp['accreditation_id']);
-	$row = DBQueryToRow($query);
+	$row = GetDatabase()->DBQueryToRow($query);
 	$html .= "<tr><td class='infocell'>" . _("License Id") . ":</td>";
 
 	if (isSuperAdmin()) {

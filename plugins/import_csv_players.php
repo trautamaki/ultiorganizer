@@ -71,7 +71,7 @@ if (empty($seasonId)) {
 
 	$seasons = Seasons();
 
-	while ($row = mysql_fetch_assoc($seasons)) {
+	while ($row = GetDatabase()->FetchAssoc($seasons)) {
 		$html .= "<option class='dropdown' value='" . utf8entities($row['season_id']) . "'>" . utf8entities($row['name']) . "</option>";
 	}
 

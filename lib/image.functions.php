@@ -7,15 +7,15 @@ function GetImage($imageId)
 		SELECT image, image_type
 		FROM uo_image 
 		WHERE image_id='%s'",
-		mysql_real_escape_string($imageId)
+		GetDatabase()->RealEscapeString($imageId)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
-	return mysql_fetch_assoc($result);
+	return GetDatabase()->FetchAssoc($result);
 }
 
 function GetThumb($imageId)
@@ -25,15 +25,15 @@ function GetThumb($imageId)
 		SELECT thumb
 		FROM uo_image 
 		WHERE image_id='%s'",
-		mysql_real_escape_string($imageId)
+		GetDatabase()->RealEscapeString($imageId)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
-	return mysql_fetch_assoc($result);
+	return GetDatabase()->FetchAssoc($result);
 }
 
 function ImageInfo($imageId)
@@ -43,15 +43,15 @@ function ImageInfo($imageId)
 		SELECT image_type, image_width, image_height, thumb_height, thumb_width, image_size
 		FROM uo_image 
 		WHERE image_id='%s'",
-		mysql_real_escape_string($imageId)
+		GetDatabase()->RealEscapeString($imageId)
 	);
 
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ' . mysql_error());
+		die('Invalid query: ' . GetDatabase()->SQLError());
 	}
 
-	return mysql_fetch_assoc($result);
+	return GetDatabase()->FetchAssoc($result);
 }
 
 function RemoveImage($imageId)
@@ -59,10 +59,10 @@ function RemoveImage($imageId)
 	if (isSuperAdmin()) {
 		$query = sprintf(
 			"DELETE FROM uo_image WHERE image_id='%s'",
-			mysql_real_escape_string($profile['image_id'])
+			GetDatabase()->RealEscapeString($profile['image_id'])
 		);
 
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		return $result;
 	} else {
 		die('Insufficient rights to remove image');

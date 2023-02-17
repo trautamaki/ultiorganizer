@@ -27,7 +27,7 @@ function ResolvePlayoffPoolStandings($poolId)
 		(int)$poolId
 	);
 
-	$teams = DBQueryToArray($query);
+	$teams = GetDatabase()->DBQueryToArray($query);
 	$steams = PoolSchedulingTeams($poolId);
 
 	if (count($teams) <= 1 || count($teams) < count($steams)) {
@@ -56,21 +56,21 @@ function ResolvePlayoffPoolStandings($poolId)
 			(int)$teamId1,
 			(int)$poolId
 		);
-		$games = DBQueryToRow($query);
+		$games = GetDatabase()->DBQueryToRow($query);
 
 		if ($games['team1wins'] > $games['team2wins']) {
-			DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 1) . " WHERE pool=" . intval($poolId) . " AND team=$teamId1");
-			DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 2) . " WHERE pool=" . intval($poolId) . " AND team=$teamId2");
+			GetDatabase()->DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 1) . " WHERE pool=" . intval($poolId) . " AND team=$teamId1");
+			GetDatabase()->DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 2) . " WHERE pool=" . intval($poolId) . " AND team=$teamId2");
 		} elseif ($games['team1wins'] < $games['team2wins']) {
-			DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 1) . " WHERE pool=" . intval($poolId) . " AND team=$teamId2");
-			DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 2) . " WHERE pool=" . intval($poolId) . " AND team=$teamId1");
+			GetDatabase()->DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 1) . " WHERE pool=" . intval($poolId) . " AND team=$teamId2");
+			GetDatabase()->DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 2) . " WHERE pool=" . intval($poolId) . " AND team=$teamId1");
 		} else {
 			//keep current positions
 		}
 		//check if teams can be moved to next round
 		$gamesleft1 = TeamPoolGamesLeft($teamId1, $poolId);
 		$gamesleft2 = TeamPoolGamesLeft($teamId2, $poolId);
-		if (mysql_num_rows($gamesleft1) + mysql_num_rows($gamesleft2) == 0) {
+		if (GetDatabase()->NumRows($gamesleft1) + GetDatabase()->NumRows($gamesleft2) == 0) {
 			TeamMove($teamId1, $poolId, true);
 			TeamMove($teamId2, $poolId, true);
 		}
@@ -79,7 +79,7 @@ function ResolvePlayoffPoolStandings($poolId)
 	if (count($teams) % 2 == 1) {
 		$byeTeamId = $teams[count($teams) - 1]['team_id'];
 		// set activerank to the last position in pool
-		DBQuery("UPDATE uo_team_pool SET activerank=" . (count($teams)) . " WHERE pool=" . intval($poolId) . " AND team=$byeTeamId");
+		GetDatabase()->DBQuery("UPDATE uo_team_pool SET activerank=" . (count($teams)) . " WHERE pool=" . intval($poolId) . " AND team=$byeTeamId");
 		// and attempt to move
 		TeamMove($byeTeamId, $poolId, true);
 	}
@@ -99,10 +99,10 @@ function CheckSpecialRanking($poolId)
 			WHERE tp.pool='%s'",
 		(int)$poolId
 	);
-	$specialranking = DBQueryToArray($query);
+	$specialranking = GetDatabase()->DBQueryToArray($query);
 	foreach ($specialranking as $row) {
 		//		print_r($row);
-		DBQuery("UPDATE uo_team_pool SET activerank=" . $row['newrank'] . " WHERE pool=" . intval($row['pool']) . " AND team=" . $row['team']);
+		GetDatabase()->DBQuery("UPDATE uo_team_pool SET activerank=" . $row['newrank'] . " WHERE pool=" . intval($row['pool']) . " AND team=" . $row['team']);
 	}
 }
 
@@ -119,7 +119,7 @@ function ResolveCrossMatchPoolStandings($poolId)
 		(int)$poolId
 	);
 
-	$teams = DBQueryToArray($query);
+	$teams = GetDatabase()->DBQueryToArray($query);
 
 	if (count($teams) <= 1) {
 		return;
@@ -147,14 +147,14 @@ function ResolveCrossMatchPoolStandings($poolId)
 			(int)$teamId1,
 			(int)$poolId
 		);
-		$games = DBQueryToRow($query);
+		$games = GetDatabase()->DBQueryToRow($query);
 
 		if ($games['team1wins'] > $games['team2wins']) {
-			DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 1) . " WHERE pool=" . intval($poolId) . " AND team=$teamId1");
-			DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 2) . " WHERE pool=" . intval($poolId) . " AND team=$teamId2");
+			GetDatabase()->DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 1) . " WHERE pool=" . intval($poolId) . " AND team=$teamId1");
+			GetDatabase()->DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 2) . " WHERE pool=" . intval($poolId) . " AND team=$teamId2");
 		} elseif ($games['team1wins'] < $games['team2wins']) {
-			DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 1) . " WHERE pool=" . intval($poolId) . " AND team=$teamId2");
-			DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 2) . " WHERE pool=" . intval($poolId) . " AND team=$teamId1");
+			GetDatabase()->DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 1) . " WHERE pool=" . intval($poolId) . " AND team=$teamId2");
+			GetDatabase()->DBQuery("UPDATE uo_team_pool SET activerank=" . ($i + 2) . " WHERE pool=" . intval($poolId) . " AND team=$teamId1");
 		} else {
 			//keep current positions
 		}
@@ -162,7 +162,7 @@ function ResolveCrossMatchPoolStandings($poolId)
 		$gamesleft1 = TeamPoolGamesLeft($teamId1, $poolId);
 		$gamesleft2 = TeamPoolGamesLeft($teamId2, $poolId);
 
-		if (mysql_num_rows($gamesleft1) + mysql_num_rows($gamesleft2) == 0) {
+		if (GetDatabase()->NumRows($gamesleft1) + GetDatabase()->NumRows($gamesleft2) == 0) {
 			TeamMove($teamId1, $poolId);
 			TeamMove($teamId2, $poolId);
 		}
@@ -246,19 +246,19 @@ function ResolveSwissdrawPoolStandings($poolId)
 		FROM uo_team AS j INNER JOIN uo_team_pool AS js ON (j.team_id = js.team) 
 		WHERE js.pool='%s' 
 		ORDER BY js.activerank ASC, js.rank ASC",
-		mysql_real_escape_string($poolId)
+		GetDatabase()->RealEscapeString($poolId)
 	);
 
-	$standings = mysql_query($query);
+	$standings = GetDatabase()->DBQuery($query);
 
 	$points = array();
 	$i = 0;
 
-	if (mysql_num_rows($standings) <= 1) {
+	if (GetDatabase()->NumRows($standings) <= 1) {
 		return;
 	}
 
-	while ($row = mysql_fetch_assoc($standings)) {
+	while ($row = GetDatabase()->FetchAssoc($standings)) {
 		// retrieve nr of games, victory points, average opponent's victory points
 		$stats1 = TeamVictoryPointsByPool($poolId, $row['team_id']);
 
@@ -286,17 +286,17 @@ function ResolveSwissdrawPoolStandings($poolId)
 
 
 	//update results
-	for ($i = 0; $i < mysql_num_rows($standings) && !empty($points[$i]['team']); $i++) {
+	for ($i = 0; $i < GetDatabase()->NumRows($standings) && !empty($points[$i]['team']); $i++) {
 		//echo "<p>win t".$points[$i]['team']." v".$points[$i]['wins']." s".$points[$i]['arank']."</p>";
 		$query = sprintf(
 			"UPDATE uo_team_pool 
 				SET activerank='%s' WHERE pool='%s' AND team='%s'",
-			mysql_real_escape_string($points[$i]['arank']),
-			mysql_real_escape_string($poolId),
-			mysql_real_escape_string($points[$i]['team'])
+			GetDatabase()->RealEscapeString($points[$i]['arank']),
+			GetDatabase()->RealEscapeString($poolId),
+			GetDatabase()->RealEscapeString($points[$i]['team'])
 		);
 
-		mysql_query($query);
+		GetDatabase()->DBQuery($query);
 	}
 }
 
@@ -312,19 +312,19 @@ function ResolveSeriesPoolStandings($poolId)
 	FROM uo_team AS j INNER JOIN uo_team_pool AS js ON (j.team_id = js.team) 
 	WHERE js.pool='%s' 
 	ORDER BY js.activerank ASC, js.rank ASC",
-		mysql_real_escape_string($poolId)
+		GetDatabase()->RealEscapeString($poolId)
 	);
 
-	$standings = mysql_query($query);
+	$standings = GetDatabase()->DBQuery($query);
 
 	$points = array();
 	$i = 0;
 
-	if (mysql_num_rows($standings) <= 1) {
+	if (GetDatabase()->NumRows($standings) <= 1) {
 		return;
 	}
 
-	while ($row = mysql_fetch_assoc($standings)) {
+	while ($row = GetDatabase()->FetchAssoc($standings)) {
 		$points[$i]['team'] = $row['team_id'];
 		$points[$i]['arank'] = 1;
 		$i++;
@@ -414,25 +414,25 @@ function ResolveSeriesPoolStandings($poolId)
 	}
 
 	//update results
-	for ($i = 0; $i < mysql_num_rows($standings) && !empty($points[$i]['team']); $i++) {
+	for ($i = 0; $i < GetDatabase()->NumRows($standings) && !empty($points[$i]['team']); $i++) {
 		//echo "<p>win t".$points[$i]['team']." v".$points[$i]['wins']." s".$points[$i]['arank']."</p>";
 		$query = sprintf(
 			"UPDATE uo_team_pool
 			SET activerank='%s' WHERE pool='%s' AND team='%s'",
-			mysql_real_escape_string($points[$i]['arank']),
-			mysql_real_escape_string($poolId),
-			mysql_real_escape_string($points[$i]['team'])
+			GetDatabase()->RealEscapeString($points[$i]['arank']),
+			GetDatabase()->RealEscapeString($poolId),
+			GetDatabase()->RealEscapeString($points[$i]['team'])
 		);
 
-		mysql_query($query);
+		GetDatabase()->DBQuery($query);
 	}
 
 	//test if pool is played
-	$games = DBQueryRowCount("SELECT game_id
+	$games = GetDatabase()->DBQueryRowCount("SELECT game_id
 		FROM uo_game game
 		LEFT JOIN uo_pool p ON (p.pool_id=game.pool)
 		WHERE p.pool_id=$poolId");
-	$played = DBQueryRowCount("SELECT game_id
+	$played = GetDatabase()->DBQueryRowCount("SELECT game_id
 		FROM uo_game game
 		LEFT JOIN uo_pool p ON (p.pool_id=game.pool)
 		WHERE p.pool_id=$poolId AND (game.hasstarted>0) AND game.isongoing=0");
@@ -446,7 +446,7 @@ function ResolveSeriesPoolStandings($poolId)
 			(int)$poolId
 		);
 
-		$duplicates = DBQueryRowCount($query);
+		$duplicates = GetDatabase()->DBQueryRowCount($query);
 		if (!$duplicates) {
 			$topools = PoolMovingsFromPool($poolId);
 
@@ -456,7 +456,7 @@ function ResolveSeriesPoolStandings($poolId)
 					PoolMakeMove($pool['frompool'], $pool['fromplacing'], false);
 					//set pool visible
 					$query = sprintf("UPDATE uo_pool SET visible='1' WHERE pool_id=%d", (int)$pool['topool']);
-					DBQuery($query);
+					GetDatabase()->DBQuery($query);
 				}
 			}
 		}
@@ -577,12 +577,12 @@ function UpdateStandings($to, $from)
 
 function getMatchesWins($points, $poolId, $shared = false)
 {
-	$sameteams = mysql_real_escape_string($points[0]['team']);
+	$sameteams = GetDatabase()->RealEscapeString($points[0]['team']);
 	for ($i = 1; $i < count($points); $i++) {
-		$sameteams .= "," . mysql_real_escape_string($points[$i]['team']);
+		$sameteams .= "," . GetDatabase()->RealEscapeString($points[$i]['team']);
 	}
 	for ($i = 0; $i < count($points); $i++) {
-		$team = mysql_real_escape_string($points[$i]['team']);
+		$team = GetDatabase()->RealEscapeString($points[$i]['team']);
 		$query = sprintf(
 			"
 		SELECT COUNT(*) AS games,
@@ -597,13 +597,13 @@ function getMatchesWins($points, $poolId, $shared = false)
 			$team,
 			$team,
 			$team,
-			mysql_real_escape_string($poolId)
+			GetDatabase()->RealEscapeString($poolId)
 		);
 		if ($shared)
 			$query .= sprintf(" AND hometeam IN (%s) AND visitorteam IN (%s)", $sameteams, $sameteams);
 
-		$result = mysql_query($query);
-		$stats1 = mysql_fetch_assoc($result);
+		$result = GetDatabase()->DBQuery($query);
+		$stats1 = GetDatabase()->FetchAssoc($result);
 
 		$points[$i]['games'] = $stats1['games'];
 		$points[$i]['wins'] = $stats1['wins'];
@@ -614,9 +614,9 @@ function getMatchesWins($points, $poolId, $shared = false)
 
 function getMatchesGoals($points, $poolId, $shared = false)
 {
-	$sameteams = mysql_real_escape_string($points[0]['team']);
+	$sameteams = GetDatabase()->RealEscapeString($points[0]['team']);
 	for ($i = 1; $i < count($points); $i++) {
-		$sameteams .= "," . mysql_real_escape_string($points[$i]['team']);
+		$sameteams .= "," . GetDatabase()->RealEscapeString($points[$i]['team']);
 	}
 	//reset counters
 	for ($i = 0; $i < count($points); $i++) {
@@ -627,7 +627,7 @@ function getMatchesGoals($points, $poolId, $shared = false)
 
 	// 	foreach ($points as $point) {
 	for ($i = 0; $i < count($points); $i++) {
-		$team = mysql_real_escape_string($points[$i]['team']);
+		$team = GetDatabase()->RealEscapeString($points[$i]['team']);
 
 		$query = sprintf(
 			"
@@ -637,13 +637,13 @@ function getMatchesGoals($points, $poolId, $shared = false)
 			  AND game_id IN (SELECT game FROM uo_game_pool WHERE pool='%s')",
 			$team,
 			$team,
-			mysql_real_escape_string($poolId)
+			GetDatabase()->RealEscapeString($poolId)
 		);
 		if ($shared)
 			$query .= sprintf(" AND hometeam IN (%s) AND visitorteam IN (%s)", $sameteams, $sameteams);
 
-		$result = mysql_query($query);
-		while ($stats = mysql_fetch_assoc($result)) {
+		$result = GetDatabase()->DBQuery($query);
+		while ($stats = GetDatabase()->FetchAssoc($result)) {
 			if ($stats['hometeam'] == $points[$i]['team']) {
 				$points[$i]['goalsmade'] += $stats['homescore'];
 				$points[$i]['goalsagainst'] += $stats['visitorscore'];
@@ -664,7 +664,7 @@ function TeamPoolStanding($teamId, $poolId)
 		(int)$poolId,
 		(int)$teamId
 	);
-	return DBQueryToValue($query);
+	return GetDatabase()->DBQueryToValue($query);
 }
 
 function TeamSeriesStanding($teamId)

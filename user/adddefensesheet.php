@@ -230,7 +230,7 @@ echo "<tr><th>" . _("Home") . "</th>\n";
 //home team used timeouts
 $i = 0;
 $timeouts = GameTimeouts($gameId);
-while ($timeout = mysql_fetch_assoc($timeouts)) {
+while ($timeout = GetDatabase()->FetchAssoc($timeouts)) {
 	if (intval($timeout['ishome'])) {
 		echo "<td><input class='input' onkeyup=\"validTime(this);\" type='text' size='5' maxlength='8' id='hto$i' name='hto$i' value='" . SecToMin($timeout['time']) . "' /></td>\n";
 		$i++;
@@ -252,7 +252,7 @@ echo "<tr><th>" . _("Away") . "</th>\n";
 //away team used timeouts
 $i = 0;
 $timeouts = GameTimeouts($gameId);
-while ($timeout = mysql_fetch_assoc($timeouts)) {
+while ($timeout = GetDatabase()->FetchAssoc($timeouts)) {
 	if (!intval($timeout['ishome'])) {
 		echo "<td><input class='input' onkeyup=\"validTime(this);\" type='text' size='5' maxlength='8' id='ato$i' name='ato$i' value='" . SecToMin($timeout['time']) . "' /></td>\n";
 		$i++;
@@ -369,7 +369,7 @@ echo "<th style='$style_mid'>" . _("Not callahan") . "</th><th style='$style_rig
 $scores = GameDefenses($gameId);
 
 $i = 0;
-while ($row = mysql_fetch_assoc($scores)) {
+while ($row = GetDatabase()->FetchAssoc($scores)) {
 
 	echo "<tr>";
 	echo "<td class='center' style='width: 25px;color:#B0B0B0;'>", $i + 1, "</td>\n";

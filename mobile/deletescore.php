@@ -6,7 +6,7 @@ $html = "";
 $gameId = intval(iget("game"));
 $result = GameGoals($gameId);
 $scores = array();
-while ($row = mysql_fetch_assoc($result)) {
+while ($row = GetDatabase()->FetchAssoc($result)) {
 	$scores[] = $row;
 }
 

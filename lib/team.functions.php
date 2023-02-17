@@ -9,7 +9,7 @@ function TeamPlayerArray($teamId)
 {
   $ret = array();
   if ($result = TeamPlayerList($teamId)) {
-    while ($row = mysql_fetch_assoc($result)) {
+    while ($row = GetDatabase()->FetchAssoc($result)) {
       $ret["" . $row['player_id']] = $row['firstname'] . " " . $row['lastname'];
     }
   }
@@ -20,7 +20,7 @@ function TeamPlayerAccreditationArray($teamId)
 {
   $ret = array();
   if ($result = TeamPlayerList($teamId)) {
-    while ($row = mysql_fetch_assoc($result)) {
+    while ($row = GetDatabase()->FetchAssoc($result)) {
       $ret["" . $row['accreditation_id']] = $row['firstname'] . " " . $row['lastname'];
     }
   }
@@ -33,9 +33,9 @@ function TeamPlayerList($teamId)
     "SELECT player_id, firstname, lastname, num, accredited, accreditation_id, profile_id FROM uo_player WHERE team = %d ORDER BY lastname ASC, firstname ASC",
     (int)$teamId
   );
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
   return $result;
@@ -45,15 +45,15 @@ function TeamName($teamId)
 {
   $query = sprintf(
     "SELECT name FROM uo_team WHERE team_id='%s'",
-    mysql_real_escape_string($teamId)
+    GetDatabase()->RealEscapeString($teamId)
   );
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
-  $row = mysql_fetch_assoc($result);
+  $row = GetDatabase()->FetchAssoc($result);
   $name = $row["name"];
-  mysql_free_result($result);
+  GetDatabase()->FreeResult($result);
 
   return $name;
 }
@@ -64,7 +64,7 @@ function TeamPseudoName($pteamId)
     "SELECT name FROM uo_scheduling_name WHERE scheduling_id=%d",
     (int)$pteamId
   );
-  return DBQueryToValue($query);
+  return GetDatabase()->DBQueryToValue($query);
 }
 
 function TeamInfo($teamId)
@@ -79,15 +79,15 @@ function TeamInfo($teamId)
 		LEFT JOIN uo_club club ON (team.club=club.club_id)
 		LEFT JOIN uo_country c ON (team.country=c.country_id)
 		WHERE team.team_id = '%s'",
-    mysql_real_escape_string($teamId)
+    GetDatabase()->RealEscapeString($teamId)
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
-  return  mysql_fetch_assoc($result);
+  return  GetDatabase()->FetchAssoc($result);
 }
 
 function Teams($filter = null, $ordering = null)
@@ -103,7 +103,7 @@ function Teams($filter = null, $ordering = null)
 		LEFT JOIN uo_series series ON (team.series=series.series_id)
 		LEFT JOIN uo_season season ON (series.season=season.season_id)
 		$where $orderby";
-  return DBQuery(trim($query));
+  return GetDatabase()->DBQuery(trim($query));
 }
 
 function TeamListAll($grouped = false, $onlyold = false, $namefilter = "")
@@ -124,7 +124,7 @@ function TeamListAll($grouped = false, $onlyold = false, $namefilter = "")
       if ($namefilter == "#") {
         $query .= " WHERE UPPER(team.name) REGEXP '^[0-9]'";
       } else {
-        $query .= " WHERE UPPER(team.name) LIKE '" . mysql_real_escape_string($namefilter) . "%'";
+        $query .= " WHERE UPPER(team.name) LIKE '" . GetDatabase()->RealEscapeString($namefilter) . "%'";
       }
     }
 
@@ -146,13 +146,13 @@ function TeamListAll($grouped = false, $onlyold = false, $namefilter = "")
       if ($namefilter == "#") {
         $query .= " WHERE UPPER(team.name) REGEXP '^[0-9]'";
       } else {
-        $query .= " WHERE UPPER(team.name) LIKE '" . mysql_real_escape_string($namefilter) . "%'";
+        $query .= " WHERE UPPER(team.name) LIKE '" . GetDatabase()->RealEscapeString($namefilter) . "%'";
       }
     }
 
     $query .= sprintf(" ORDER BY team.name, ser.name, club.name, pool.name");
   }
-  return  DBQuery($query);
+  return  GetDatabase()->DBQuery($query);
 }
 
 function TeamProfile($teamId)
@@ -161,15 +161,15 @@ function TeamProfile($teamId)
     "SELECT tp.team_id, tp.captain, tp.coach, tp.story, tp.achievements, tp.profile_image
 		FROM uo_team_profile tp 
 		WHERE tp.team_id = '%s'",
-    mysql_real_escape_string($teamId)
+    GetDatabase()->RealEscapeString($teamId)
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
-  return  mysql_fetch_assoc($result);
+  return  GetDatabase()->FetchAssoc($result);
 }
 
 function TeamFullInfo($teamId)
@@ -181,15 +181,15 @@ function TeamFullInfo($teamId)
 		LEFT JOIN uo_team_pool pjs ON (pjs.team=pj.team_id)
 		LEFT JOIN uo_club club ON (pj.club=club.club_id)
 		WHERE pj.team_id = '%s'",
-    mysql_real_escape_string($teamId)
+    GetDatabase()->RealEscapeString($teamId)
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
-  return  mysql_fetch_assoc($result);
+  return  GetDatabase()->FetchAssoc($result);
 }
 
 function TeamPoolInfo($teamId, $poolId)
@@ -201,16 +201,16 @@ function TeamPoolInfo($teamId, $poolId)
 		LEFT JOIN uo_pool ps ON (pjs.pool=ps.pool_id) 		
 		LEFT JOIN uo_club club ON (pj.club=club.club_id)
 		WHERE pj.team_id = '%s' AND ps.pool_id='%s'",
-    mysql_real_escape_string($teamId),
-    mysql_real_escape_string($poolId)
+    GetDatabase()->RealEscapeString($teamId),
+    GetDatabase()->RealEscapeString($poolId)
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
-  return  mysql_fetch_assoc($result);
+  return  GetDatabase()->FetchAssoc($result);
 }
 
 function TeamPlayedSeasons($name, $type)
@@ -222,13 +222,13 @@ function TeamPlayedSeasons($name, $type)
 		LEFT JOIN uo_series ser ON (ps.series=ser.series_id) 
 		WHERE pj.name='%s' AND ser.type='%s' 
 		ORDER BY season_id, pool",
-    mysql_real_escape_string($name),
-    mysql_real_escape_string($type)
+    GetDatabase()->RealEscapeString($name),
+    GetDatabase()->RealEscapeString($type)
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
   return $result;
@@ -242,12 +242,12 @@ function TeamSeason($teamId)
     (int)$teamId
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
-  $row = mysql_fetch_row($result);
+  $row = GetDatabase()->FetchRow($result);
 
   return $row[0];
 }
@@ -262,14 +262,14 @@ function TeamComingGames($teamId, $placeId)
 		INNER JOIN uo_team AS Vj ON (p.visitorteam=Vj.team_id)) 
 		WHERE (p.reservation='%s') AND (p.hometeam='%s' OR p.visitorteam='%s') 
 		ORDER BY time ASC",
-    mysql_real_escape_string($placeId),
-    mysql_real_escape_string($teamId),
-    mysql_real_escape_string($teamId)
+    GetDatabase()->RealEscapeString($placeId),
+    GetDatabase()->RealEscapeString($teamId),
+    GetDatabase()->RealEscapeString($teamId)
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
   return $result;
@@ -286,14 +286,14 @@ function TeamTournamentGames($teamId, $reservationId)
 		WHERE p.hometeam = Kj.team_id And p.visitorteam = Vj.team_id AND p.reservation = '%s' 
 			AND (p.visitorteam = '%s' OR p.hometeam = '%s') AND (time < Now()) 
 		ORDER BY time ASC",
-    mysql_real_escape_string($reservationId),
-    mysql_real_escape_string($teamId),
-    mysql_real_escape_string($teamId)
+    GetDatabase()->RealEscapeString($reservationId),
+    GetDatabase()->RealEscapeString($teamId),
+    GetDatabase()->RealEscapeString($teamId)
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
   return $result;
@@ -314,14 +314,14 @@ function TeamGames($teamId)
 				LEFT JOIN uo_team_pool pjs ON(pp.pool=pjs.pool AND pjs.team='%s') WHERE pp.valid=true 
 					AND (pp.visitorteam='%s' OR pp.hometeam='%s') AND (pp.hasstarted>0)
 				ORDER BY pp.pool",
-    mysql_real_escape_string($teamId),
-    mysql_real_escape_string($teamId),
-    mysql_real_escape_string($teamId)
+    GetDatabase()->RealEscapeString($teamId),
+    GetDatabase()->RealEscapeString($teamId),
+    GetDatabase()->RealEscapeString($teamId)
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
   return $result;
@@ -338,7 +338,7 @@ function SchedulingNameByMoveTo($topool, $torank)
     (int) $torank
   );
 
-  return DBQueryToRow($query);
+  return GetDatabase()->DBQueryToRow($query);
 }
 
 
@@ -351,14 +351,14 @@ function TeamSerieGames($teamId, $serieId)
 			FROM uo_game pp 
 			WHERE pp.pool='%s' AND pp.valid=true AND (pp.visitorteam='%s' OR pp.hometeam='%s') 
 			ORDER BY pp.time ASC",
-    mysql_real_escape_string($serieId),
-    mysql_real_escape_string($teamId),
-    mysql_real_escape_string($teamId)
+    GetDatabase()->RealEscapeString($serieId),
+    GetDatabase()->RealEscapeString($teamId),
+    GetDatabase()->RealEscapeString($teamId)
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
   return $result;
@@ -374,12 +374,12 @@ function TeamPoolCountBYEs($teamId, $poolId)
 			LEFT JOIN uo_team hometeam ON (pp.hometeam=hometeam.team_id)
 			LEFT JOIN uo_team visitorteam ON (pp.visitorteam=visitorteam.team_id)
 			WHERE pps.pool='%s' AND ((pp.visitorteam='%s' AND hometeam.valid=2) OR (pp.hometeam='%s' AND visitorteam.valid=2))",
-    mysql_real_escape_string($poolId),
-    mysql_real_escape_string($teamId),
-    mysql_real_escape_string($teamId)
+    GetDatabase()->RealEscapeString($poolId),
+    GetDatabase()->RealEscapeString($teamId),
+    GetDatabase()->RealEscapeString($teamId)
   );
 
-  return DBQueryToValue($query);
+  return GetDatabase()->DBQueryToValue($query);
 }
 
 function TeamPoolGames($teamId, $poolId)
@@ -392,13 +392,13 @@ function TeamPoolGames($teamId, $poolId)
 			RIGHT JOIN uo_game_pool pps ON(pps.game=pp.game_id)
 			WHERE pps.pool='%s' AND pp.valid=true AND (pp.visitorteam='%s' OR pp.hometeam='%s') 
 			ORDER BY pp.time ASC",
-    mysql_real_escape_string($poolId),
-    mysql_real_escape_string($teamId),
-    mysql_real_escape_string($teamId)
+    GetDatabase()->RealEscapeString($poolId),
+    GetDatabase()->RealEscapeString($teamId),
+    GetDatabase()->RealEscapeString($teamId)
   );
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
   return $result;
@@ -414,16 +414,16 @@ function TeamPoolLastGame($teamId, $poolId)
 		RIGHT JOIN uo_game_pool pps ON(pps.game=pp.game_id)
 		WHERE pps.pool='%s' AND pp.valid=true AND pps.timetable=1 AND (pp.visitorteam='%s' OR pp.hometeam='%s') 
 		ORDER BY pp.time DESC LIMIT 1",
-    mysql_real_escape_string($poolId),
-    mysql_real_escape_string($teamId),
-    mysql_real_escape_string($teamId)
+    GetDatabase()->RealEscapeString($poolId),
+    GetDatabase()->RealEscapeString($teamId),
+    GetDatabase()->RealEscapeString($teamId)
   );
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
-  return mysql_fetch_assoc($result);
+  return GetDatabase()->FetchAssoc($result);
 }
 
 function TeamGetNextGames($teamId, $poolId)
@@ -436,16 +436,16 @@ function TeamGetNextGames($teamId, $poolId)
 		LEFT JOIN uo_reservation res ON (pp.reservation=res.id)
 		WHERE pps.pool='%s' AND pp.valid=true AND pps.timetable=1 AND (pp.visitorteam='%s' OR pp.hometeam='%s') 
 		ORDER BY pp.time ASC",
-    mysql_real_escape_string($poolId),
-    mysql_real_escape_string($teamId),
-    mysql_real_escape_string($teamId)
+    GetDatabase()->RealEscapeString($poolId),
+    GetDatabase()->RealEscapeString($teamId),
+    GetDatabase()->RealEscapeString($teamId)
   );
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
-  return mysql_fetch_assoc($result);
+  return GetDatabase()->FetchAssoc($result);
 }
 
 
@@ -459,14 +459,14 @@ function TeamPoolGamesLeft($teamId, $poolId)
 			WHERE pps.pool='%s' AND pp.valid=true 
 				AND (pp.hasstarted=0 OR pp.isongoing=1) AND (hometeam=%d OR visitorteam=%d)					
 			ORDER BY pp.time ASC",
-    mysql_real_escape_string($poolId),
-    mysql_real_escape_string($teamId),
-    mysql_real_escape_string($teamId)
+    GetDatabase()->RealEscapeString($poolId),
+    GetDatabase()->RealEscapeString($teamId),
+    GetDatabase()->RealEscapeString($teamId)
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
   return $result;
@@ -480,7 +480,7 @@ function TeamStanding($teamId, $poolId)
     (int)$poolId,
     (int)$teamId
   );
-  return DBQueryToValue($query, true);
+  return GetDatabase()->DBQueryToValue($query, true);
 }
 
 function TeamMove($teamId, $frompool, $inplayofftree = false)
@@ -507,7 +507,7 @@ function TeamMove($teamId, $frompool, $inplayofftree = false)
       (int)$move['torank']
     );
 
-    $team_exist = count(DBQueryToArray($query));
+    $team_exist = count(GetDatabase()->DBQueryToArray($query));
 
     //same team
     if ($team_exist && $team_exist['team'] == $teamId) {
@@ -526,7 +526,7 @@ function TeamMove($teamId, $frompool, $inplayofftree = false)
         (int)$move['topool']
       );
 
-      $games = DBQueryRowCount($query);
+      $games = GetDatabase()->DBQueryRowCount($query);
       if ($games) {
         echo "<p>" . _("Move not allowed. Game already played!") . "</p>";
         return;
@@ -551,7 +551,7 @@ function TeamMove($teamId, $frompool, $inplayofftree = false)
     (int)$move['torank']
   );
 
-  $result = DBQuery($query);
+  $result = GetDatabase()->DBQuery($query);
 
   //update team pool
   $query = sprintf(
@@ -561,7 +561,7 @@ function TeamMove($teamId, $frompool, $inplayofftree = false)
     (int)$move['torank']
   );
 
-  DBQuery($query);
+  GetDatabase()->DBQuery($query);
 
   //replace pseudo team with real team in games
   if (isRespTeamHomeTeam()) {
@@ -580,7 +580,7 @@ function TeamMove($teamId, $frompool, $inplayofftree = false)
       (int)$move['scheduling_id']
     );
   }
-  DBQuery($query);
+  GetDatabase()->DBQuery($query);
 
   $query = sprintf(
     "UPDATE uo_game SET
@@ -589,7 +589,7 @@ function TeamMove($teamId, $frompool, $inplayofftree = false)
     (int)$move['scheduling_id']
   );
 
-  DBQuery($query);
+  GetDatabase()->DBQuery($query);
 
   //set move done
   $query = sprintf(
@@ -599,13 +599,13 @@ function TeamMove($teamId, $frompool, $inplayofftree = false)
     (int)$fromplacing
   );
 
-  DBQuery($query);
+  GetDatabase()->DBQuery($query);
 
   //set pool visible
   if ($poolinfo['follower'] != $move['topool']) {
     $query = sprintf("UPDATE uo_pool SET visible='1' WHERE pool_id=%d", (int)$move['topool']);
-    DBQuery($query);
-    DBQuery($query);
+    GetDatabase()->DBQuery($query);
+    GetDatabase()->DBQuery($query);
   }
 
   // check if special ranking rules apply in the destination pool
@@ -623,14 +623,14 @@ function TeamPoolGamesAgainst($teamId1, $teamId2, $poolId)
 			WHERE pps.pool='%s' AND pp.valid=true AND 
 			(pp.visitorteam='%s' AND pp.hometeam='%s')
 			ORDER BY pp.time ASC",
-    mysql_real_escape_string($poolId),
-    mysql_real_escape_string($teamId1),
-    mysql_real_escape_string($teamId2)
+    GetDatabase()->RealEscapeString($poolId),
+    GetDatabase()->RealEscapeString($teamId1),
+    GetDatabase()->RealEscapeString($teamId2)
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
   return $result;
@@ -649,14 +649,14 @@ function TeamPlayedGames($name, $seriestype, $sorting, $curSeason = false)
 	LEFT JOIN uo_team pj2 ON (pp.visitorteam=pj2.team_id)
 	WHERE (pj1.name='%s' OR pj2.name='%s') AND ser.type='%s' 
 	AND pp.valid=true",
-    mysql_real_escape_string($name),
-    mysql_real_escape_string($name),
-    mysql_real_escape_string($seriestype)
+    GetDatabase()->RealEscapeString($name),
+    GetDatabase()->RealEscapeString($name),
+    GetDatabase()->RealEscapeString($seriestype)
   );
 
   if (!$curSeason) {
     $curentSeason = CurrentSeason();
-    $query .= sprintf(" AND ser.season!='%s'", mysql_real_escape_string($curentSeason));
+    $query .= sprintf(" AND ser.season!='%s'", GetDatabase()->RealEscapeString($curentSeason));
   }
 
   switch ($sorting) {
@@ -677,9 +677,9 @@ function TeamPlayedGames($name, $seriestype, $sorting, $curSeason = false)
       $query .= " ORDER BY ser.season DESC, ps.name ASC, hometeamname ASC, visitorteamname ASC";
       break;
   }
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
   return $result;
@@ -708,12 +708,12 @@ function TeamStatsByPool($poolId, $teamId)
     (int)$poolId
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
-  return mysql_fetch_assoc($result);
+  return GetDatabase()->FetchAssoc($result);
 }
 
 function TeamStats($teamId)
@@ -737,12 +737,12 @@ function TeamStats($teamId)
     (int)$teamId
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
-  return mysql_fetch_assoc($result);
+  return GetDatabase()->FetchAssoc($result);
 }
 
 function TeamVictoryPointsByPool($poolId, $teamId)
@@ -785,16 +785,16 @@ ON swiss.pool=tot.pool AND tot.opp_id=swiss.team_id
 		
 WHERE tot.team_id='%d' AND tot.pool='%s'
 GROUP BY tot.pool,tot.team_id",
-    mysql_real_escape_string($teamId),
-    mysql_real_escape_string($poolId)
+    GetDatabase()->RealEscapeString($teamId),
+    GetDatabase()->RealEscapeString($poolId)
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
-  return mysql_fetch_assoc($result);
+  return GetDatabase()->FetchAssoc($result);
 }
 
 
@@ -821,12 +821,12 @@ function TeamPoints($teamId)
     (int)$teamId
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
-  return mysql_fetch_assoc($result);
+  return GetDatabase()->FetchAssoc($result);
 }
 
 function TeamPointsByPool($poolId, $teamId)
@@ -852,21 +852,21 @@ function TeamPointsByPool($poolId, $teamId)
     (int)$teamId
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
-  return mysql_fetch_assoc($result);
+  return GetDatabase()->FetchAssoc($result);
 }
 
 function TeamScoreBoard($teamId, $pools, $sorting, $limit)
 {
   if ($pools) {
     if (is_array($pools)) {
-      $pools = mysql_real_escape_string(implode(",", $pools));
+      $pools = GetDatabase()->RealEscapeString(implode(",", $pools));
     } else {
-      $pools = mysql_real_escape_string($pools);
+      $pools = GetDatabase()->RealEscapeString($pools);
     }
 
     $query = sprintf(
@@ -961,9 +961,9 @@ function TeamScoreBoard($teamId, $pools, $sorting, $limit)
     $query .= " limit $limit";
   }
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
   return $result;
@@ -974,9 +974,9 @@ function TeamScoreBoardWithDefenses($teamId, $pools, $sorting, $limit)
 {
   if ($pools) {
     if (is_array($pools)) {
-      $pools = mysql_real_escape_string(implode(",", $pools));
+      $pools = GetDatabase()->RealEscapeString(implode(",", $pools));
     } else {
-      $pools = mysql_real_escape_string($pools);
+      $pools = GetDatabase()->RealEscapeString($pools);
     }
     // This part needs to be tested......but should work
     $query = sprintf(
@@ -1083,9 +1083,9 @@ function TeamScoreBoardWithDefenses($teamId, $pools, $sorting, $limit)
     $query .= " limit $limit";
   }
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
   return $result;
@@ -1117,11 +1117,11 @@ function GetAllPlayedGames($team1, $team2, $seriestype, $sorting)
 		WHERE ((REPLACE(pj1.name,' ','')='%s' AND REPLACE(pj2.name,' ','')='%s') OR (REPLACE(pj1.name,' ','')='%s' AND REPLACE(pj2.name,' ','')='%s'))
 			AND (pp.hasstarted > 0)
 		AND ser.type='%s' AND pp.valid=true ",
-    mysql_real_escape_string($team1),
-    mysql_real_escape_string($team2),
-    mysql_real_escape_string($team2),
-    mysql_real_escape_string($team1),
-    mysql_real_escape_string($seriestype)
+    GetDatabase()->RealEscapeString($team1),
+    GetDatabase()->RealEscapeString($team2),
+    GetDatabase()->RealEscapeString($team2),
+    GetDatabase()->RealEscapeString($team1),
+    GetDatabase()->RealEscapeString($seriestype)
   );
 
   switch ($sorting) {
@@ -1141,7 +1141,7 @@ function GetAllPlayedGames($team1, $team2, $seriestype, $sorting)
       $query .= " ORDER BY s.starttime DESC, ps.name ASC, hometeamname ASC, visitorteamname ASC";
       break;
   }
-  return DBQuery($query);
+  return GetDatabase()->DBQuery($query);
 }
 
 function TeamResponsibleGames($teamId, $placeId)
@@ -1160,9 +1160,9 @@ function TeamResponsibleGames($teamId, $placeId)
     (int)$teamId
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
 
   return $result;
@@ -1175,10 +1175,10 @@ function TeamGetTeamsByName($teamname)
     "SELECT t.team_id FROM uo_team t 
     	LEFT JOIN uo_team_stats ts ON(ts.team_id=t.team_id)
 		WHERE ts.team_id IS NOT NULL AND t.name LIKE '%s%%' GROUP BY t.team_id ORDER BY t.team_id DESC",
-    mysql_real_escape_string($teamname)
+    GetDatabase()->RealEscapeString($teamname)
   );
 
-  $teams = DBQueryToArray($query);
+  $teams = GetDatabase()->DBQueryToArray($query);
 
   return $teams;
 }
@@ -1186,18 +1186,18 @@ function TeamCopyRoster($copyfrom, $copyto)
 {
   if (hasEditPlayersRight($copyto)) {
     $team_players = TeamPlayerList($copyfrom);
-    while ($player = mysql_fetch_assoc($team_players)) {
+    while ($player = GetDatabase()->FetchAssoc($team_players)) {
       $query = sprintf(
         "INSERT INTO uo_player(firstname, lastname, profile_id, accreditation_id, team, num)
       			VALUES ('%s','%s',%d,'%s',%d,%d)",
-        mysql_real_escape_string($player["firstname"]),
-        mysql_real_escape_string($player["lastname"]),
+        GetDatabase()->RealEscapeString($player["firstname"]),
+        GetDatabase()->RealEscapeString($player["lastname"]),
         (int)$player["profile_id"],
-        mysql_real_escape_string($player["accreditation_id"]),
+        GetDatabase()->RealEscapeString($player["accreditation_id"]),
         (int)$copyto,
         (int)$player["num"]
       );
-      DBQuery($query);
+      GetDatabase()->DBQuery($query);
     }
   } else {
     die('Insufficient rights to edit roster');
@@ -1223,9 +1223,9 @@ function GetTeamPlayers()
     (int)$search
   );
 
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
   return $result;
 }
@@ -1238,11 +1238,11 @@ function RemovePlayer($playerId)
 
     $query = sprintf(
       "DELETE FROM uo_player WHERE player_id='%s'",
-      mysql_real_escape_string($playerId)
+      GetDatabase()->RealEscapeString($playerId)
     );
-    $result = mysql_query($query);
+    $result = GetDatabase()->DBQuery($query);
     if (!$result) {
-      die('Invalid query: ' . mysql_error());
+      die('Invalid query: ' . GetDatabase()->SQLError());
     }
 
     return $result;
@@ -1262,11 +1262,11 @@ function AddPlayer($teamId, $firstname, $lastname, $profileId, $num = -1)
       $query = sprintf(
         "INSERT INTO uo_player_profile (firstname,lastname,num) VALUES
 				('%s','%s',%d)",
-        mysql_real_escape_string($firstname),
-        mysql_real_escape_string($lastname),
+        GetDatabase()->RealEscapeString($firstname),
+        GetDatabase()->RealEscapeString($lastname),
         (int)$num
       );
-      $profileId = DBQueryInsert($query);
+      $profileId = GetDatabase()->DBQueryInsert($query);
       $accreditationId = 0;
     }
     $query = "INSERT INTO uo_player (firstname, lastname, profile_id, accreditation_id,team";
@@ -1278,8 +1278,8 @@ function AddPlayer($teamId, $firstname, $lastname, $profileId, $num = -1)
     $query .= ") ";
     $query .= sprintf(
       "VALUES ('%s', '%s', %d, '%s', %d",
-      mysql_real_escape_string($firstname),
-      mysql_real_escape_string($lastname),
+      GetDatabase()->RealEscapeString($firstname),
+      GetDatabase()->RealEscapeString($lastname),
       (int)$profileId,
       $accreditationId,
       (int)$teamId
@@ -1289,7 +1289,7 @@ function AddPlayer($teamId, $firstname, $lastname, $profileId, $num = -1)
       $query .= sprintf(",%d", (int)$num);
     }
     $query .= sprintf(")");
-    $playerId = DBQueryInsert($query);
+    $playerId = GetDatabase()->DBQueryInsert($query);
     Log1("player", "add", $playerId, $teamId);
 
     return $playerId;
@@ -1302,13 +1302,13 @@ function CanDeletePlayer($playerId)
 {
   $query = sprintf(
     "SELECT count(*) FROM uo_played WHERE player='%s'",
-    mysql_real_escape_string($playerId)
+    GetDatabase()->RealEscapeString($playerId)
   );
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
-  if (!$row = mysql_fetch_row($result)) return false;
+  if (!$row = GetDatabase()->FetchRow($result)) return false;
   return ($row[0] == 0);
 }
 
@@ -1320,11 +1320,11 @@ function SetTeamProfile($profile)
     if (!empty($profile['abbreviation'])) {
       $query = sprintf(
         "UPDATE uo_team SET abbreviation='%s' WHERE team_id='%s'",
-        mysql_real_escape_string($profile['abbreviation']),
-        mysql_real_escape_string($profile['team_id'])
+        GetDatabase()->RealEscapeString($profile['abbreviation']),
+        GetDatabase()->RealEscapeString($profile['team_id'])
       );
 
-      DBQuery($query);
+      GetDatabase()->DBQuery($query);
     }
 
     $query = sprintf(
@@ -1332,41 +1332,41 @@ function SetTeamProfile($profile)
 			SELECT team_id
 			FROM uo_team_profile 
 			WHERE team_id='%s'",
-      mysql_real_escape_string($profile['team_id'])
+      GetDatabase()->RealEscapeString($profile['team_id'])
     );
 
-    $result = mysql_query($query);
+    $result = GetDatabase()->DBQuery($query);
     if (!$result) {
-      die('Invalid query: ' . mysql_error());
+      die('Invalid query: ' . GetDatabase()->SQLError());
     }
 
     //add
-    if (mysql_num_rows($result) == 0) {
+    if (GetDatabase()->NumRows($result) == 0) {
       $query = sprintf(
         "INSERT INTO uo_team_profile (team_id,
 			captain, coach, story, achievements) VALUES 
 			('%s', '%s', '%s', '%s', '%s')",
-        mysql_real_escape_string($profile['team_id']),
-        mysql_real_escape_string($profile['captain']),
-        mysql_real_escape_string($profile['coach']),
-        mysql_real_escape_string($profile['story']),
-        mysql_real_escape_string($profile['achievements'])
+        GetDatabase()->RealEscapeString($profile['team_id']),
+        GetDatabase()->RealEscapeString($profile['captain']),
+        GetDatabase()->RealEscapeString($profile['coach']),
+        GetDatabase()->RealEscapeString($profile['story']),
+        GetDatabase()->RealEscapeString($profile['achievements'])
       );
       //update
     } else {
       $query = sprintf(
         "UPDATE uo_team_profile SET captain='%s', coach='%s',
 				story='%s', achievements='%s' WHERE team_id='%s'",
-        mysql_real_escape_string($profile['captain']),
-        mysql_real_escape_string($profile['coach']),
-        mysql_real_escape_string($profile['story']),
-        mysql_real_escape_string($profile['achievements']),
-        mysql_real_escape_string($profile['team_id'])
+        GetDatabase()->RealEscapeString($profile['captain']),
+        GetDatabase()->RealEscapeString($profile['coach']),
+        GetDatabase()->RealEscapeString($profile['story']),
+        GetDatabase()->RealEscapeString($profile['achievements']),
+        GetDatabase()->RealEscapeString($profile['team_id'])
       );
     }
-    $result = mysql_query($query);
+    $result = GetDatabase()->DBQuery($query);
     if (!$result) {
-      die('Invalid query: ' . mysql_error());
+      die('Invalid query: ' . GetDatabase()->SQLError());
     }
 
     LogTeamProfileUpdate($profile['team_id']);
@@ -1425,11 +1425,11 @@ function SetTeamProfileImage($teamId, $filename)
 
     $query = sprintf(
       "UPDATE uo_team_profile SET profile_image='%s' WHERE team_id='%s'",
-      mysql_real_escape_string($filename),
-      mysql_real_escape_string($teamId)
+      GetDatabase()->RealEscapeString($filename),
+      GetDatabase()->RealEscapeString($teamId)
     );
 
-    DBQuery($query);
+    GetDatabase()->DBQuery($query);
   } else {
     die('Insufficient rights to edit team profile');
   }
@@ -1458,10 +1458,10 @@ function RemoveTeamProfileImage($teamId)
 
       $query = sprintf(
         "UPDATE uo_team_profile SET profile_image=NULL WHERE team_id='%s'",
-        mysql_real_escape_string($teamId)
+        GetDatabase()->RealEscapeString($teamId)
       );
 
-      DBQuery($query);
+      GetDatabase()->DBQuery($query);
     }
   } else {
     die('Insufficient rights to edit team profile');
@@ -1476,25 +1476,25 @@ function AddTeam($params)
 			INSERT INTO uo_team
 			(name, pool, rank, valid, series) 
 			VALUES ('%s', '%s', '%s', '%s', '%s')",
-      mysql_real_escape_string($params['name']),
-      mysql_real_escape_string($params['pool']),
-      mysql_real_escape_string($params['rank']),
-      mysql_real_escape_string($params['valid']),
-      mysql_real_escape_string($params['series'])
+      GetDatabase()->RealEscapeString($params['name']),
+      GetDatabase()->RealEscapeString($params['pool']),
+      GetDatabase()->RealEscapeString($params['rank']),
+      GetDatabase()->RealEscapeString($params['valid']),
+      GetDatabase()->RealEscapeString($params['series'])
     );
 
-    $result = DBQuery($query);
-    $teamId = mysql_insert_id();
+    $result = GetDatabase()->DBQuery($query);
+    $teamId = GetDatabase()->InsertID();
 
     if (!empty($params['country'])) {
-      DBQuery("UPDATE uo_team SET country=" . (int)$params['country'] . " WHERE team_id=$teamId");
+      GetDatabase()->DBQuery("UPDATE uo_team SET country=" . (int)$params['country'] . " WHERE team_id=$teamId");
     }
     if (!empty($params['club'])) {
-      DBQuery("UPDATE uo_team SET club=" . (int)$params['club'] . " WHERE team_id=$teamId");
+      GetDatabase()->DBQuery("UPDATE uo_team SET club=" . (int)$params['club'] . " WHERE team_id=$teamId");
     }
 
     if (!empty($params['abbreviation'])) {
-      DBQuery("UPDATE uo_team SET abbreviation='" . $params['abbreviation'] . "' WHERE team_id=$teamId");
+      GetDatabase()->DBQuery("UPDATE uo_team SET abbreviation='" . $params['abbreviation'] . "' WHERE team_id=$teamId");
     }
 
     Log1("team", "add", $teamId);
@@ -1513,22 +1513,22 @@ function SetTeam($params)
 			name='%s', pool='%s', abbreviation='%s',
 			rank='%s', valid='%s', series='%s'
 			WHERE team_id='%s'",
-      mysql_real_escape_string($params['name']),
-      mysql_real_escape_string($params['pool']),
-      mysql_real_escape_string($params['abbreviation']),
-      mysql_real_escape_string($params['rank']),
-      mysql_real_escape_string($params['valid']),
-      mysql_real_escape_string($params['series']),
-      mysql_real_escape_string($params['team_id'])
+      GetDatabase()->RealEscapeString($params['name']),
+      GetDatabase()->RealEscapeString($params['pool']),
+      GetDatabase()->RealEscapeString($params['abbreviation']),
+      GetDatabase()->RealEscapeString($params['rank']),
+      GetDatabase()->RealEscapeString($params['valid']),
+      GetDatabase()->RealEscapeString($params['series']),
+      GetDatabase()->RealEscapeString($params['team_id'])
     );
 
-    $result = DBQuery($query);
+    $result = GetDatabase()->DBQuery($query);
 
     if (!empty($params['country'])) {
-      DBQuery("UPDATE uo_team SET country=" . (int)$params['country'] . " WHERE team_id=" . (int)$params['team_id']);
+      GetDatabase()->DBQuery("UPDATE uo_team SET country=" . (int)$params['country'] . " WHERE team_id=" . (int)$params['team_id']);
     }
     if (!empty($params['club'])) {
-      DBQuery("UPDATE uo_team SET club=" . (int)$params['club'] . " WHERE team_id=" . (int)$params['team_id']);
+      GetDatabase()->DBQuery("UPDATE uo_team SET club=" . (int)$params['club'] . " WHERE team_id=" . (int)$params['team_id']);
     }
 
     return $result;
@@ -1544,11 +1544,11 @@ function SetTeamName($teamId, $name)
     $query = sprintf(
       "
 			UPDATE uo_team SET name='%s' WHERE team_id='%s'",
-      mysql_real_escape_string($name),
-      mysql_real_escape_string($teamId)
+      GetDatabase()->RealEscapeString($name),
+      GetDatabase()->RealEscapeString($teamId)
     );
 
-    return DBQuery($query);
+    return GetDatabase()->DBQuery($query);
   } else {
     die('Insufficient rights to edit team');
   }
@@ -1561,11 +1561,11 @@ function SetTeamOwner($teamId, $clubId)
     $query = sprintf(
       "
 			UPDATE uo_team SET club='%s' WHERE team_id='%s'",
-      mysql_real_escape_string($clubId),
-      mysql_real_escape_string($teamId)
+      GetDatabase()->RealEscapeString($clubId),
+      GetDatabase()->RealEscapeString($teamId)
     );
 
-    return DBQuery($query);
+    return GetDatabase()->DBQuery($query);
   } else {
     die('Insufficient rights to edit team');
   }
@@ -1586,9 +1586,9 @@ function SetTeamSerieRank($teamId, $poolId, $rank, $activerank)
       (int) $poolId
     );
 
-    $result = mysql_query($query);
+    $result = GetDatabase()->DBQuery($query);
     if (!$result) {
-      die('Invalid query: ' . mysql_error());
+      die('Invalid query: ' . GetDatabase()->SQLError());
     }
 
     return $result;
@@ -1611,9 +1611,9 @@ function SetTeamPoolRank($teamId, $poolId, $rank)
       (int) $poolId
     );
 
-    $result = mysql_query($query);
+    $result = GetDatabase()->DBQuery($query);
     if (!$result) {
-      die('Invalid query: ' . mysql_error());
+      die('Invalid query: ' . GetDatabase()->SQLError());
     }
 
     return $result;
@@ -1636,9 +1636,9 @@ function SetTeamRank($teamId, $poolId, $activerank)
       (int) $poolId
     );
 
-    $result = mysql_query($query);
+    $result = GetDatabase()->DBQuery($query);
     if (!$result) {
-      die('Invalid query: ' . mysql_error());
+      die('Invalid query: ' . GetDatabase()->SQLError());
     }
 
     return $result;
@@ -1659,7 +1659,7 @@ function SetTeamSeeding($seriesId, $teamId, $seed)
       (int)$teamId
     );
 
-    return DBQuery($query);
+    return GetDatabase()->DBQuery($query);
   } else {
     die('Insufficient rights to edit team rank');
   }
@@ -1677,17 +1677,17 @@ function DeleteTeam($teamId)
 
     $query = sprintf(
       "DELETE FROM uo_team_pool WHERE team='%s'",
-      mysql_real_escape_string($teamId)
+      GetDatabase()->RealEscapeString($teamId)
     );
 
-    $result = mysql_query($query);
+    $result = GetDatabase()->DBQuery($query);
     if (!$result) {
-      die('Invalid query: ' . mysql_error());
+      die('Invalid query: ' . GetDatabase()->SQLError());
     }
 
-    $result = mysql_query($query);
+    $result = GetDatabase()->DBQuery($query);
     if (!$result) {
-      die('Invalid query: ' . mysql_error());
+      die('Invalid query: ' . GetDatabase()->SQLError());
     }
 
     $query = sprintf(
@@ -1695,9 +1695,9 @@ function DeleteTeam($teamId)
       (int)$teamId
     );
 
-    $result = mysql_query($query);
+    $result = GetDatabase()->DBQuery($query);
     if (!$result) {
-      die('Invalid query: ' . mysql_error());
+      die('Invalid query: ' . GetDatabase()->SQLError());
     }
 
 
@@ -1714,21 +1714,21 @@ function CanDeleteTeam($teamId)
     (int)$teamId,
     (int)$teamId
   );
-  $result = mysql_query($query);
+  $result = GetDatabase()->DBQuery($query);
   if (!$result) {
-    die('Invalid query: ' . mysql_error());
+    die('Invalid query: ' . GetDatabase()->SQLError());
   }
-  if (!$row = mysql_fetch_row($result)) return false;
+  if (!$row = GetDatabase()->FetchRow($result)) return false;
   if ($row[0] == 0) {
     $query = sprintf(
       "SELECT count(*) FROM uo_player WHERE team=%d",
       (int)$teamId
     );
-    $result = mysql_query($query);
+    $result = GetDatabase()->DBQuery($query);
     if (!$result) {
-      die('Invalid query: ' . mysql_error());
+      die('Invalid query: ' . GetDatabase()->SQLError());
     }
-    if (!$row = mysql_fetch_row($result)) return false;
+    if (!$row = GetDatabase()->FetchRow($result)) return false;
     return $row[0] == 0;
   } else return false;
 }
@@ -1741,11 +1741,11 @@ function AddTeamProfileUrl($teamId, $type, $url, $name)
       "INSERT INTO uo_urls (owner,owner_id,type,name,url)
 				VALUES('team',%d,'%s','%s','%s')",
       (int)$teamId,
-      mysql_real_escape_string($type),
-      mysql_real_escape_string($name),
-      mysql_real_escape_string($url)
+      GetDatabase()->RealEscapeString($type),
+      GetDatabase()->RealEscapeString($name),
+      GetDatabase()->RealEscapeString($url)
     );
-    return DBQuery($query);
+    return GetDatabase()->DBQuery($query);
   } else {
     die('Insufficient rights to add url');
   }
@@ -1758,7 +1758,7 @@ function RemoveTeamProfileUrl($teamId, $urlId)
       "DELETE FROM uo_urls WHERE url_id=%d",
       (int)$urlId
     );
-    return DBQuery($query);
+    return GetDatabase()->DBQuery($query);
   } else {
     die('Insufficient rights to remove url');
   }
@@ -1801,9 +1801,9 @@ function TeamsToCsv($season, $separator)
 		WHERE ser.season='%s'
 		GROUP BY j.team_id
 		ORDER BY ser.ordering, j.name",
-    mysql_real_escape_string($season)
+    GetDatabase()->RealEscapeString($season)
   );
 
-  $result = DBQuery($query);
+  $result = GetDatabase()->DBQuery($query);
   return ResultsetToCsv($result, $separator);
 }

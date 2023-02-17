@@ -14,7 +14,7 @@ $title = _("Enrolled teams") . ": " . utf8entities($seasonInfo['name']);
 
 $orgarray = "";
 $result = ClubList(true);
-while ($row = @mysql_fetch_assoc($result)) {
+while ($row = @GetDatabase()->FetchAssoc($result)) {
 	$orgarray .= "\"" . $row['name'] . "\",";
 }
 $orgarray = trim($orgarray, ',');
@@ -91,7 +91,7 @@ foreach ($result as $row) {
 		$result2 = SeriesEnrolledTeamsByUser($row['series_id'], $_SESSION['uid']);
 	}
 
-	while ($row2 = mysql_fetch_assoc($result2)) {
+	while ($row2 = GetDatabase()->FetchAssoc($result2)) {
 
 		echo "<tr><td>";
 		if (!intval($seasonInfo['isnationalteams'])) {

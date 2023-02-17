@@ -22,7 +22,7 @@ function upgrade47()
 			LEFT JOIN uo_series ser ON (ps.series=ser.series_id)
 			LEFT JOIN uo_location pl ON (pr.location=pl.id)");
 
-	while ($row = mysql_fetch_assoc($results)) {
+	while ($row = GetDatabase()->FetchAssoc($results)) {
 		runQuery("UPDATE uo_reservation SET season='" . $row['season'] . "'
 			WHERE id='" . $row['id'] . "'");
 	}
@@ -140,7 +140,7 @@ function upgrade56()
 		addColumn('uo_player_profile', 'email', "varchar(100) DEFAULT NULL");
 
 		$results = runQuery("SELECT accreditation_id, email FROM uo_player WHERE email IS NOT NULL");
-		while ($row = mysql_fetch_assoc($results)) {
+		while ($row = GetDatabase()->FetchAssoc($results)) {
 			$query = sprintf(
 				"UPDATE uo_player_profile SET email='%s' WHERE accreditation_id='%s'",
 				$row['email'],
@@ -176,10 +176,10 @@ function upgrade58()
 
 		//name from uo_player
 		$results = runQuery("SELECT accreditation_id, firstname FROM uo_player WHERE firstname IS NOT NULL");
-		while ($row = mysql_fetch_assoc($results)) {
+		while ($row = GetDatabase()->FetchAssoc($results)) {
 			$query = sprintf(
 				"UPDATE uo_player_profile SET firstname='%s' WHERE accreditation_id='%s'",
-				mysql_real_escape_string(trim($row['firstname'])),
+				GetDatabase()->RealEscapeString(trim($row['firstname'])),
 				$row['accreditation_id']
 			);
 			runQuery($query);
@@ -187,10 +187,10 @@ function upgrade58()
 
 		//if uo_license has name use the one from there.
 		$results = runQuery("SELECT accreditation_id, firstname FROM uo_license WHERE firstname IS NOT NULL");
-		while ($row = mysql_fetch_assoc($results)) {
+		while ($row = GetDatabase()->FetchAssoc($results)) {
 			$query = sprintf(
 				"UPDATE uo_player_profile SET firstname='%s' WHERE accreditation_id='%s'",
-				mysql_real_escape_string(trim($row['firstname'])),
+				GetDatabase()->RealEscapeString(trim($row['firstname'])),
 				$row['accreditation_id']
 			);
 			runQuery($query);
@@ -201,10 +201,10 @@ function upgrade58()
 
 		//name from uo_player
 		$results = runQuery("SELECT accreditation_id, lastname FROM uo_player WHERE lastname IS NOT NULL");
-		while ($row = mysql_fetch_assoc($results)) {
+		while ($row = GetDatabase()->FetchAssoc($results)) {
 			$query = sprintf(
 				"UPDATE uo_player_profile SET lastname='%s' WHERE accreditation_id='%s'",
-				mysql_real_escape_string(trim($row['lastname'])),
+				GetDatabase()->RealEscapeString(trim($row['lastname'])),
 				$row['accreditation_id']
 			);
 			runQuery($query);
@@ -212,10 +212,10 @@ function upgrade58()
 
 		//if uo_license has name use the one from there.
 		$results = runQuery("SELECT accreditation_id, lastname FROM uo_license WHERE lastname IS NOT NULL");
-		while ($row = mysql_fetch_assoc($results)) {
+		while ($row = GetDatabase()->FetchAssoc($results)) {
 			$query = sprintf(
 				"UPDATE uo_player_profile SET lastname='%s' WHERE accreditation_id='%s'",
-				mysql_real_escape_string(trim($row['lastname'])),
+				GetDatabase()->RealEscapeString(trim($row['lastname'])),
 				$row['accreditation_id']
 			);
 			runQuery($query);
@@ -226,7 +226,7 @@ function upgrade58()
 
 		//num from uo_player
 		$results = runQuery("SELECT accreditation_id, num FROM uo_player WHERE num IS NOT NULL");
-		while ($row = mysql_fetch_assoc($results)) {
+		while ($row = GetDatabase()->FetchAssoc($results)) {
 			$query = sprintf(
 				"UPDATE uo_player_profile SET num='%s' WHERE accreditation_id='%s'",
 				trim($row['num']),
@@ -260,7 +260,7 @@ function upgrade59()
 	if (!hasColumn('uo_reservation', 'date')) {
 		addColumn('uo_reservation', 'date', "datetime DEFAULT NULL");
 		$results = runQuery("SELECT * FROM uo_reservation WHERE starttime IS NOT NULL");
-		while ($row = mysql_fetch_assoc($results)) {
+		while ($row = GetDatabase()->FetchAssoc($results)) {
 			$query = sprintf(
 				"UPDATE uo_reservation SET date='%s' WHERE id='%s'",
 				ToInternalTimeFormat(ShortDate($row['starttime'])),
@@ -275,44 +275,44 @@ function upgrade60()
 {
 
 	$dprofiles = runQuery("SELECT * FROM uo_player_profile WHERE accreditation_id!=profile_id");
-	while ($profile = mysql_fetch_assoc($dprofiles)) {
+	while ($profile = GetDatabase()->FetchAssoc($dprofiles)) {
 		runQuery("DELETE FROM uo_player_profile WHERE accreditation_id='" . $profile['accreditation_id'] . "'");
 	}
 
 	$licenses = runQuery("SELECT * FROM uo_license");
-	while ($license = mysql_fetch_assoc($licenses)) {
+	while ($license = GetDatabase()->FetchAssoc($licenses)) {
 
 		$hasprofile = runQuery("SELECT * FROM uo_player_profile WHERE accreditation_id='" . $license['accreditation_id'] . "'");
 
-		if (mysql_num_rows($hasprofile) == 0) {
+		if (GetDatabase()->NumRows($hasprofile) == 0) {
 			$query = sprintf(
 				"INSERT INTO uo_player_profile (profile_id,firstname,lastname,birthdate,accreditation_id) VALUES
 				('%s','%s','%s','%s','%s')",
-				mysql_real_escape_string($license['accreditation_id']),
-				mysql_real_escape_string($license['firstname']),
-				mysql_real_escape_string($license['lastname']),
-				mysql_real_escape_string($license['birthdate']),
-				mysql_real_escape_string($license['accreditation_id'])
+				GetDatabase()->RealEscapeString($license['accreditation_id']),
+				GetDatabase()->RealEscapeString($license['firstname']),
+				GetDatabase()->RealEscapeString($license['lastname']),
+				GetDatabase()->RealEscapeString($license['birthdate']),
+				GetDatabase()->RealEscapeString($license['accreditation_id'])
 			);
-			$profileId = DBQueryInsert($query);
+			$profileId = GetDatabase()->DBQueryInsert($query);
 		}
 	}
 
 	$players = runQuery("SELECT * FROM uo_player GROUP BY profile_id");
-	while ($player = mysql_fetch_assoc($players)) {
+	while ($player = GetDatabase()->FetchAssoc($players)) {
 
 		$hasprofile = runQuery("SELECT * FROM uo_player_profile WHERE profile_id='" . $player['profile_id'] . "'");
 
-		if (mysql_num_rows($hasprofile) == 0) {
+		if (GetDatabase()->NumRows($hasprofile) == 0) {
 			$query = sprintf(
 				"INSERT INTO uo_player_profile (profile_id,firstname,lastname,num) VALUES
 				('%s','%s','%s','%s')",
-				mysql_real_escape_string($player['profile_id']),
-				mysql_real_escape_string($player['firstname']),
-				mysql_real_escape_string($player['lastname']),
-				mysql_real_escape_string($player['num'])
+				GetDatabase()->RealEscapeString($player['profile_id']),
+				GetDatabase()->RealEscapeString($player['firstname']),
+				GetDatabase()->RealEscapeString($player['lastname']),
+				GetDatabase()->RealEscapeString($player['num'])
 			);
-			$profileId = DBQueryInsert($query);
+			$profileId = GetDatabase()->DBQueryInsert($query);
 		}
 	}
 }
@@ -482,7 +482,7 @@ function upgrade71()
 	}
 
 	$results = runQuery("SELECT * FROM uo_location");
-	while ($row = mysql_fetch_assoc($results)) {
+	while ($row = GetDatabase()->FetchAssoc($results)) {
 		foreach ($row as $key => $value) {
 			if (substr($key, 0, 5) === "info_") {
 				if (!empty($value)) {
@@ -492,8 +492,8 @@ function upgrade71()
 							'INSERT INTO `uo_location_info` (`location_id`, `locale`, `info`)
             VALUES ("%d", "%s", "%s")',
 							$row['id'],
-							mysql_real_escape_string($locale),
-							mysql_real_escape_string($value)
+							GetDatabase()->RealEscapeString($locale),
+							GetDatabase()->RealEscapeString($value)
 						)
 					);
 				}
@@ -640,7 +640,7 @@ function upgrade75()
 		// update WFDF scores
 		$categoriesResult = runQuery("SELECT * FROM `uo_spirit_category` WHERE mode=1002");
 		$categories = array();
-		while ($cat = mysql_fetch_assoc($categoriesResult)) {
+		while ($cat = GetDatabase()->FetchAssoc($categoriesResult)) {
 			$categories[$cat['index']] = $cat['category_id'];
 		}
 
@@ -655,7 +655,7 @@ function upgrade75()
        LEFT JOIN uo_season sn on (ss.season = sn.season_id)";
 		$results = runQuery($query);
 
-		while ($row = mysql_fetch_assoc($results)) {
+		while ($row = GetDatabase()->FetchAssoc($results)) {
 			for ($i = 1; $i <= 5; ++$i) {
 				runQuery(
 					sprintf(
@@ -680,7 +680,7 @@ function upgrade75()
 		// update remaining, simple scores
 		$categoriesResult = runQuery("SELECT * FROM `uo_spirit_category` WHERE mode=1001");
 		$categories = array();
-		while ($cat = mysql_fetch_assoc($categoriesResult)) {
+		while ($cat = GetDatabase()->FetchAssoc($categoriesResult)) {
 			$categories[$cat['index']] = $cat['category_id'];
 		}
 
@@ -694,7 +694,7 @@ function upgrade75()
     (g.homesotg IS NOT NULL OR g.visitorsotg IS NOT NULL)
     AND sn.spiritmode = 1001";
 		$results = runQuery($query);
-		while ($row = mysql_fetch_assoc($results)) {
+		while ($row = GetDatabase()->FetchAssoc($results)) {
 			runQuery(sprintf(
 				"INSERT INTO `uo_spirit_score` (game_id, team_id, category_id, value)
              VALUES (%d, %d, %d, %d)",
@@ -733,7 +733,7 @@ function upgrade76()
       ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE utf8_general_ci");
 
 		foreach ($locales as $localestr => $localename) {
-			$loc = mysql_real_escape_string(str_replace(".", "_", $localestr));
+			$loc = GetDatabase()->RealEscapeString(str_replace(".", "_", $localestr));
 			runQuery(sprintf(
 				"INSERT INTO uo_translation 
           (SELECT translation_key, '%s' AS locale, `%s` AS translation 
@@ -750,9 +750,9 @@ function upgrade76()
 
 function runQuery($query)
 {
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
-		die('Invalid query: ("' . $query . '")' . "<br/>\n" . mysql_error());
+		die('Invalid query: ("' . $query . '")' . "<br/>\n" . GetDatabase()->SQLError());
 	}
 	return $result;
 }
@@ -767,7 +767,7 @@ function addColumn($table, $column, $type)
 function hasColumn($table, $column)
 {
 	$query = "SELECT max(" . $column . ") FROM " . $table;
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if (!$result) {
 		return false;
 	} else return true;
@@ -776,15 +776,15 @@ function hasColumn($table, $column)
 function hasRow($table, $column, $value)
 {
 	$query = "SELECT * FROM $table WHERE $column='" . $value . "'";
-	$result = mysql_query($query);
-	return mysql_num_rows($result);
+	$result = GetDatabase()->DBQuery($query);
+	return GetDatabase()->NumRows($result);
 }
 
 function hasTable($table)
 {
 	$query = "SHOW TABLES FROM " . DB_DATABASE;
-	$tables = mysql_query($query);
-	while (list($temp) = mysql_fetch_array($tables)) {
+	$tables = GetDatabase()->DBQuery($query);
+	while (list($temp) = GetDatabase()->FetchArray($tables)) {
 		if ($temp == $table) {
 			return TRUE;
 		}
@@ -808,7 +808,7 @@ function getPositions($pos)
 function renameTable($oldtable, $newtable)
 {
 	$query = "SHOW COLUMNS FROM $newtable";
-	$result = mysql_query($query);
+	$result = GetDatabase()->DBQuery($query);
 	if ($result) return true;
 	$query = "RENAME TABLE $oldtable TO $newtable";
 	runQuery($query);
@@ -821,8 +821,8 @@ function renameField($table, $oldfield, $newfield)
 		return true;
 	}
 	$query = "SHOW COLUMNS FROM $table WHERE FIELD='" . $oldfield . "'";
-	$result = mysql_query($query);
-	if ($row = mysql_fetch_assoc($result)) {
+	$result = GetDatabase()->DBQuery($query);
+	if ($row = GetDatabase()->FetchAssoc($result)) {
 		$query = "ALTER TABLE $table CHANGE $oldfield $newfield " . $row['Type'];
 		if ($row['Null'] == "YES") {
 			$query .= " NULL ";
@@ -837,8 +837,8 @@ function renameField($table, $oldfield, $newfield)
 function changeToAutoIncrementField($table, $field)
 {
 	$query = "SHOW COLUMNS FROM $table WHERE FIELD='" . $field . "'";
-	$result = mysql_query($query);
-	if ($row = mysql_fetch_assoc($result)) {
+	$result = GetDatabase()->DBQuery($query);
+	if ($row = GetDatabase()->FetchAssoc($result)) {
 		$query = "ALTER TABLE $table CHANGE $field $field " . $row['Type'] . " NOT NULL auto_increment";
 		runQuery($query);
 	}
@@ -849,7 +849,7 @@ function dropField($table, $field)
 {
 	if (hasColumn($table, $field)) {
 		$query = "ALTER TABLE $table DROP $field";
-		$result = mysql_query($query);
+		$result = GetDatabase()->DBQuery($query);
 		if ($result) return true;
 		else return false;
 	}
@@ -861,7 +861,7 @@ function copyProfileImages()
 
 	//club images
 	$results = runQuery("SELECT * FROM uo_club WHERE image IS NOT NULL");
-	while ($row = mysql_fetch_assoc($results)) {
+	while ($row = GetDatabase()->FetchAssoc($results)) {
 		$image = GetImage($row['image']);
 		if ($image) {
 			$type = $image['image_type'];
@@ -897,8 +897,8 @@ function copyProfileImages()
 			CreateThumb($basedir . $imgname, $basedir . "thumbs/" . $imgname, 160, 120);
 			$query = sprintf(
 				"UPDATE uo_club SET profile_image='%s' WHERE club_id='%s'",
-				mysql_real_escape_string($imgname),
-				mysql_real_escape_string($row['club_id'])
+				GetDatabase()->RealEscapeString($imgname),
+				GetDatabase()->RealEscapeString($row['club_id'])
 			);
 			runQuery($query);
 			unlink($target);
@@ -907,7 +907,7 @@ function copyProfileImages()
 
 	//team images
 	$results = runQuery("SELECT * FROM uo_team_profile WHERE image IS NOT NULL");
-	while ($row = mysql_fetch_assoc($results)) {
+	while ($row = GetDatabase()->FetchAssoc($results)) {
 		$image = GetImage($row['image']);
 		if ($image) {
 			$type = $image['image_type'];
@@ -943,8 +943,8 @@ function copyProfileImages()
 			CreateThumb($basedir . $imgname, $basedir . "thumbs/" . $imgname, 320, 240);
 			$query = sprintf(
 				"UPDATE uo_team_profile SET profile_image='%s' WHERE team_id='%s'",
-				mysql_real_escape_string($imgname),
-				mysql_real_escape_string($row['team_id'])
+				GetDatabase()->RealEscapeString($imgname),
+				GetDatabase()->RealEscapeString($row['team_id'])
 			);
 			runQuery($query);
 			unlink($target);
@@ -953,7 +953,7 @@ function copyProfileImages()
 
 	//player images
 	$results = runQuery("SELECT * FROM uo_player_profile WHERE image IS NOT NULL");
-	while ($row = mysql_fetch_assoc($results)) {
+	while ($row = GetDatabase()->FetchAssoc($results)) {
 		$image = GetImage($row['image']);
 		if ($image) {
 			$type = $image['image_type'];
@@ -989,8 +989,8 @@ function copyProfileImages()
 			CreateThumb($basedir . $imgname, $basedir . "thumbs/" . $imgname, 120, 160);
 			$query = sprintf(
 				"UPDATE uo_player_profile SET profile_image='%s' WHERE accreditation_id='%s'",
-				mysql_real_escape_string($imgname),
-				mysql_real_escape_string($row['accreditation_id'])
+				GetDatabase()->RealEscapeString($imgname),
+				GetDatabase()->RealEscapeString($row['accreditation_id'])
 			);
 			runQuery($query);
 			unlink($target);

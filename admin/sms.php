@@ -56,7 +56,7 @@ if (!empty($_POST["sms_1"])) {
 
 $sms = GetAllSMS();
 
-if (mysql_num_rows($sms)) {
+if (GetDatabase()->NumRows($sms)) {
 	echo "<table border='0' width='500'><tr>
 			<th>" . _("Msg") . "</th>
 			<th>" . _("To1") . "</th>
@@ -69,7 +69,7 @@ if (mysql_num_rows($sms)) {
 }
 
 $smscount = 0;
-while ($row = mysql_fetch_assoc($sms)) {
+while ($row = GetDatabase()->FetchAssoc($sms)) {
 
 	echo "<tr>";
 	echo "<td>" . utf8entities($row['msg']) . "</td>";

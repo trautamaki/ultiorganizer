@@ -3,7 +3,7 @@ include '../../lib/database.php';
 
 $sql = "SHOW TABLES";
 
-$tables = $database->DBQueryToArray($sql, false);
+$tables = $database->GetDatabase()->DBQueryToArray($sql, false);
 
 echo "<?php\n\n";
 foreach ($tables as $table) {

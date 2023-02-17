@@ -2,8 +2,7 @@
 $include_prefix = "../";
 
 //Open database connection
-include_once '../lib/database.php';
-
+include_once $include_prefix . 'lib/database.php';
 include_once $include_prefix . 'lib/common.functions.php';
 include_once $include_prefix . 'lib/user.functions.php';
 include_once $include_prefix . 'lib/facebook.functions.php';
