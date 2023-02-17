@@ -41,7 +41,7 @@ if (!empty($_POST['save']) || !empty($_POST['add'])) {
 		$tp['name'] = trim($_POST['name']);
 		$tp['abbreviation'] = trim($_POST['abbreviation']);
 
-		$tp['pool'] = $team_info['pool'];
+		$tp['pool'] = $_POST['pool'];
 		$tp['rank'] = intval($_POST['rank']);
 		$tp['series'] = $seriesId;
 
