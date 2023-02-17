@@ -164,11 +164,11 @@ if (GameHasStarted($game_result) > 0) {
       $width_a = $points[$i][0] * $offset;
 
       if ($points[$i][1] == -2) {
-        $title = SecToMin($points[$i][4]) . " halftime";
+        $td_title = SecToMin($points[$i][4]) . " halftime";
       } else {
-        $title = SecToMin($points[$i][4]) . " " . $points[$i][5] . "-" . $points[$i][6] . " " . $points[$i][3] . " -> " . $points[$i][2];
+        $td_title = SecToMin($points[$i][4]) . " " . $points[$i][5] . "-" . $points[$i][6] . " " . $points[$i][3] . " -> " . $points[$i][2];
       }
-      $html .= "<td style='width:" . $width_a . "px' class='$color' title='$title'></td>\n";
+      $html .= "<td style='width:" . $width_a . "px' class='$color' title='$td_title'></td>\n";
     }
     $html .= "</tr></table>\n";
 
