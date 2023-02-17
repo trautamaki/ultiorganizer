@@ -784,7 +784,7 @@ function SeriesCopyTeams($to, $from) {
   if (isSeasonAdmin(SeriesSeasonId($to))) {
     $teams = SeriesTeams($from);
     foreach($teams as $team){
-      $query = sprintf("INSERT INTO uo_team(name, club, country, rank, abbreviation, valid, series )
+      $query = sprintf("INSERT INTO uo_team(name, club, country, `rank`, abbreviation, valid, series )
       			VALUES ('%s',%d,%d,%d,'%s',1,%d)",
           DB()->RealEscapeString($team['name']),
           (int) $team['club'],
