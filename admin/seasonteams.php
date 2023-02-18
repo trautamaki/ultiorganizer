@@ -4,7 +4,8 @@ include_once 'lib/series.functions.php';
 include_once 'lib/pool.functions.php';
 include_once 'lib/team.functions.php';
 include_once 'lib/club.functions.php';
-include_once 'lib/country.functions.php';
+
+include_once 'classes/Country.php';
 
 $LAYOUT_ID = SEASONTEAMS;
 $html = "";
@@ -162,9 +163,9 @@ foreach ($teams as $team) {
 
   if (intval($seasonInfo['isinternational'])) {
     if (!intval($seasonInfo['isnationalteams'])) {
-      $html .= "<td>" . CountryDropListWithValues("country$team_id", "country$team_id", $teaminfo['country'], "80px") . "</td>";
+      $html .= "<td>" . Country::countryDropListWithValues(GetDatabase(), "country$team_id", "country$team_id", $teaminfo['country'], "80px") . "</td>";
     } else {
-      $html .= "<td>" . CountryDropListWithValues("country$team_id", "country$team_id", $teaminfo['country'], "") . "</td>";
+      $html .= "<td>" . Country::countryDropListWithValues(GetDatabase(), "country$team_id", "country$team_id", $teaminfo['country'], "") . "</td>";
     }
   }
   $html .= "<td>";
@@ -202,9 +203,9 @@ if (!intval($seasonInfo['isnationalteams'])) {
 }
 if (intval($seasonInfo['isinternational'])) {
   if (!intval($seasonInfo['isnationalteams'])) {
-    $html .= "<td style='padding-top:15px'>" . CountryDropListWithValues("country0", "country0", "", "80px") . "</td>";
+    $html .= "<td style='padding-top:15px'>" . Country::countryDropListWithValues(GetDatabase(), "country0", "country0", "", "80px") . "</td>";
   } else {
-    $html .= "<td style='padding-top:15px'>" . CountryDropListWithValues("country0", "country0", "", "") . "</td>";
+    $html .= "<td style='padding-top:15px'>" . Country::countryDropListWithValues(GetDatabase(), "country0", "country0", "", "") . "</td>";
   }
 }
 

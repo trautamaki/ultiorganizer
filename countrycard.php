@@ -1,18 +1,19 @@
 <?php
 include_once 'lib/team.functions.php';
-include_once 'lib/country.functions.php';
+
+include_once 'classes/Country.php';
 
 $html = "";
 $countryId = intval(iget("country"));
-$profile = CountryInfo($countryId);
+$country = new Country(GetDatabase(), $countryId);
 
-$title = utf8entities(_($profile['name']));
+$title = $contry->getName();
 
-$html .= "<h1>" . utf8entities(_($profile['name'])) . "</h1>";
-$html .= "<img class='flag' src='images/flags/medium/" . $profile['flagfile'] . "' alt=''/>";
+$html .= "<h1>" . $contry->getName() . "</h1>";
+$html .= "<img class='flag' src='images/flags/medium/" . $contry->getFlagFile() . "' alt=''/>";
 $season = CurrentSeason();
 if (!empty($season)) {
-  $teams = CountryTeams($countryId, $season);
+  $teams = (new Country(GetDatabase(), $countryId))->getTeams($season);
   if (count($teams)) {
     $html .= "<h2>" . CurrentSeasonName() . ":</h2>\n";
     $html .= "<table style='white-space: nowrap;' border='0' cellspacing='0' cellpadding='2' width='90%'>\n";
@@ -35,7 +36,7 @@ if (!empty($season)) {
   }
 }
 
-$teams = CountryTeams($countryId);
+$teams = (new Country(GetDatabase(), $countryId))->getTeams($season);
 if (count($teams)) {
 
   $national_html = "";

@@ -306,7 +306,7 @@ foreach ($settings as $setting) {
 	if ($setting['name'] == "DefaultTimezone") {
 		$htmltmp2 .= "<tr>";
 		$htmltmp2 .= "<td class='infocell'>" . _("Default Timezone") . ": </td><td>";
-		$dateTimeZone = GetTimeZoneArray();
+		$dateTimeZone = Country::getTimeZoneArray();
 		$htmltmp2 .= "<select class='dropdown' id='DefaultTimezone' name='DefaultTimezone'>\n";
 		foreach ($dateTimeZone as $tz) {
 			if ($setting['value'] == $tz) {

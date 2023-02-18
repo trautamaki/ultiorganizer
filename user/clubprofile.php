@@ -6,9 +6,10 @@ include_once $include_prefix . 'lib/player.functions.php';
 include_once $include_prefix . 'lib/club.functions.php';
 include_once $include_prefix . 'lib/pool.functions.php';
 include_once $include_prefix . 'lib/reservation.functions.php';
-include_once $include_prefix . 'lib/country.functions.php';
 include_once $include_prefix . 'lib/url.functions.php';
 include_once $include_prefix . 'lib/image.functions.php';
+
+include_once 'classes/Country.php';
 
 $max_file_size = 5 * 1024 * 1024; //5 MB
 $max_new_links = 3;
@@ -134,7 +135,7 @@ if (isSuperAdmin() || hasEditTeamsRight($teaminfo['series'])) {
 }
 
 $html .= "<tr><td class='infocell'>" . _("Country") . ":</td>";
-$html .= "<td>" . CountryDropListWithValues("country", "country", $op['country']) . "</td></tr>\n";
+$html .= "<td>" . Country::countryDropListWithValues(GetDatabase(), "country", "country", $op['country']) . "</td></tr>\n";
 
 $html .= "<tr><td class='infocell'>" . _("City") . ":</td>";
 $html .= "<td><input class='input' maxlength='100' size='40' name='city' value='" . utf8entities($op['city']) . "'/></td></tr>\n";

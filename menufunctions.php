@@ -3,6 +3,8 @@ include_once $include_prefix . 'lib/season.functions.php';
 include_once $include_prefix . 'lib/game.functions.php';
 include_once $include_prefix . 'lib/statistical.functions.php';
 
+include_once $include_prefix . 'classes/Country.php';
+
 if (is_file('cust/' . CUSTOMIZATIONS . '/head.php')) {
   include_once 'cust/' . CUSTOMIZATIONS . '/head.php';
 } else {
@@ -636,7 +638,7 @@ function leftMenu($id = 0, $pagestart = true, $printable = false)
     echo "<a class='subnav' href=\"?view=allplayers\">&raquo; " . utf8entities(_("Players")) . "</a>\n";
     echo "<a class='subnav' href=\"?view=allteams\">&raquo; " . utf8entities(_("Teams")) . "</a>\n";
     echo "<a class='subnav' href=\"?view=allclubs\">&raquo; " . utf8entities(_("Clubs")) . "</a>\n";
-    $countries = CountryList(true, true);
+    $countries = Country::countryList(GetDatabase(), true, true);
     if (count($countries)) {
       echo "<a class='subnav' href=\"?view=allcountries\">&raquo; " . utf8entities(_("Countries")) . "</a>\n";
     }

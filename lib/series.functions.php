@@ -1,7 +1,7 @@
 <?php
 include_once $include_prefix . 'lib/club.functions.php';
-include_once $include_prefix . 'lib/country.functions.php';
 
+include_once 'classes/Country.php';
 
 /**
  * Returns selected division based on url or session variable.
@@ -732,7 +732,7 @@ function ConfirmEnrolledTeam($seriesId, $id)
   if (hasEditTeamsRight($seriesId)) {
     $teaminfo = SeriesEnrolledTeamById($seriesId, $id);
     $clubId = ClubId($teaminfo['clubname']);
-    $countryId = CountryId($teaminfo['countryname']);
+    $countryId = Country::getCountryIdByName(GetDatabase(), $teaminfo['countryname']);
 
     //clubname not found
     if (!empty($teaminfo['clubname']) && $clubId == -1) {
@@ -750,6 +750,7 @@ function ConfirmEnrolledTeam($seriesId, $id)
 
     //update team/country info if available
     if ($countryId) {
+      $country = new Country(GetDatabase(), $countryId);
       GetDatabase()->DBQuery("UPDATE uo_team SET country=$countryId WHERE team_id=$teamId");
     }
     if ($clubId) {
@@ -757,8 +758,8 @@ function ConfirmEnrolledTeam($seriesId, $id)
     }
 
     if ($countryId && !$clubId) {
-      $countryinfo = CountryInfo($countryId);
-      GetDatabase()->DBQuery("UPDATE uo_team SET abbreviation=UPPER('" . $countryinfo['abbreviation'] . "') WHERE team_id=$teamId");
+      $country = new Country(GetDatabase(), $countryId);
+      GetDatabase()->DBQuery("UPDATE uo_team SET abbreviation=UPPER('" . $country->getAbbreviation() . "') WHERE team_id=$teamId");
     } else {
       $allteams = SeriesTeams($seriesId);
       $notfound = true;

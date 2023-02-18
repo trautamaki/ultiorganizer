@@ -335,7 +335,7 @@ $html .= "<tr><td class='infocell' style='vertical-align:top'>" . htmlentities(_
 		<td><textarea class='input' rows='10' cols='70' name='comment'>" . htmlentities($comment) . "</textarea></td></tr>";
 
 $html .= "<tr><td class='infocell'>" . _("Timezone") . ": </td><td>";
-$dateTimeZone = GetTimeZoneArray();
+$dateTimeZone = Country::getTimeZoneArray();
 $html .= "<select class='dropdown' id='timezone' name='timezone'>\n";
 $html .= "<option value=''></option>\n";
 foreach ($dateTimeZone as $tz) {

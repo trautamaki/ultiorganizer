@@ -4,7 +4,8 @@ include_once 'lib/series.functions.php';
 include_once 'lib/season.functions.php';
 include_once 'lib/pool.functions.php';
 include_once 'lib/club.functions.php';
-include_once 'lib/country.functions.php';
+
+include_once 'classes/Country.php';
 
 $LAYOUT_ID = ADDSEASONTEAMS;
 $html = "";
@@ -155,7 +156,7 @@ $html .= "</td></tr>";
 
 if (intval($seasonInfo['isinternational'])) {
 	$html .= "<tr><td class='infocell'>" . _("Country") . ":</td>\n";
-	$html .= "<td>" . CountryDropListWithValues("country", "country", $tp['country']) . "</td></tr>";
+	$html .= "<td>" . Country::countryDropListWithValues(GetDatabase(), "country", "country", $tp['country']) . "</td></tr>";
 }
 $html .= "<tr><td class='infocell'>" . _("Abbreviation") . ":</td>";
 $html .= "<td><input class='input' id='abbreviation' name='abbreviation' maxlength='15' size='16' value='" . utf8entities($tp['abbreviation']) . "'/></td></tr>";

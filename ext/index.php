@@ -4,8 +4,9 @@ include_once 'lib/season.functions.php';
 include_once 'lib/common.functions.php';
 include_once 'lib/series.functions.php';
 include_once 'lib/team.functions.php';
-include_once 'lib/country.functions.php';
 include_once 'lib/configuration.functions.php';
+
+include_once 'classes/Country.php';
 
 $title = _("Ultiorganizer links");
 $html = "";
@@ -112,7 +113,7 @@ if (!empty($season)) {
 
 
 	$selector .= "<p>" . _("Select country") . ":\n";
-	$selector .= CountryDropListWithValues("country", "country", $selcountry);
+	$selector .= Country::countryDropListWithValues(GetDatabase(), "country", "country", $selcountry);
 	$selector .= "</p>\n";
 }
 if (!empty($selseries)) {

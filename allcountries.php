@@ -1,11 +1,11 @@
 <?php
-include_once 'lib/country.functions.php';
+include_once 'classes/Country.php';
 
 $title = _("Countries");
 $html = "";
 $counter = 0;
 $maxcols = 5;
-$countries = CountryList(true, true);
+$countries = Country::countryList(getDatabase(), true, true);
 $html .= "<h1>" . _("Countries") . "</h1>\n";
 $html .= "<table width='100%' border='0' cellspacing='0' cellpadding='2'>\n";
 foreach ($countries as $country) {
@@ -15,9 +15,9 @@ foreach ($countries as $country) {
   }
 
   $html .= "<td style='width:20%'>";
-  $html .= "<a href='?view=countrycard&amp;country=" . $country['country_id'] . "'>";
-  $html .= "<img src='images/flags/small/" . $country['flagfile'] . "' alt=''/><br/>";
-  $html .= utf8entities($country['name']) . "</a></td>";
+  $html .= "<a href='?view=countrycard&amp;country=" . $country->getId() . "'>";
+  $html .= "<img src='images/flags/small/" . $country->getFlagFile() . "' alt=''/><br/>";
+  $html .= $country->getName() . "</a></td>";
 
   $counter++;
   if ($counter >= $maxcols) {

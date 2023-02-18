@@ -27,6 +27,7 @@ include_once 'localization.php';
 	include_once '../lib/game.functions.php';
 	include_once '../lib/timetable.functions.php';
 
+	include_once '../classes/Country.php';
 
 	$season = iget("season");
 	$seasoninfo = SeasonInfo($season);
@@ -34,7 +35,7 @@ include_once 'localization.php';
 	$countryId = iget("country");
 
 	$prevdivision = "";
-	$allpools = CountryPools($season, $countryId);
+	$allpools = (new Country(GetDatabase(), $countryId))->getPools($season);
 
 	while ($pool = GetDatabase()->FetchAssoc($allpools)) {
 		$poolinfo = PoolInfo($pool['pool_id']);

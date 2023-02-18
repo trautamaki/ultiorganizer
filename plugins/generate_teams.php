@@ -22,6 +22,8 @@ if (!isSuperAdmin()) {
 include_once 'lib/season.functions.php';
 include_once 'lib/series.functions.php';
 
+include_once 'classes/Country.php';
+
 $html = "";
 $title = ("Team generator");
 $seasonId = "";
@@ -34,11 +36,11 @@ if (isset($_POST['generate'])) {
 
 	$seriesId = $_POST['seriesid'];
 	$amount = intval($_POST['amount']) + 1;
-	$countries = CountryList(true);
+	$countries = Country::countryList(GetDatabase(), true);
 	$max = count($countries) - 1;
 
 	for ($i = 1; $i < $amount; $i++) {
-		$id = AddSeriesEnrolledTeam($seriesId, $_SESSION['uid'], "Team $i", "Club $i", $countries[rand(0, $max)]['name']);
+		$id = AddSeriesEnrolledTeam($seriesId, $_SESSION['uid'], "Team $i", "Club $i", $countries[rand(0, $max)]->getName());
 		ConfirmEnrolledTeam($seriesId, $id);
 	}
 }

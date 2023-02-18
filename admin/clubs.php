@@ -1,7 +1,8 @@
 <?php
 include_once 'menufunctions.php';
 include_once 'lib/club.functions.php';
-include_once 'lib/country.functions.php';
+
+include_once 'classes/Country.php';
 
 $html = "";
 if (isset($_POST['removeclub_x']) && isset($_POST['hiddenDeleteId'])) {
@@ -21,18 +22,22 @@ if (isset($_POST['removeclub_x']) && isset($_POST['hiddenDeleteId'])) {
 	}
 } elseif (isset($_POST['removecountry_x']) && isset($_POST['hiddenDeleteId'])) {
 	$id = $_POST['hiddenDeleteId'];
-	RemoveCountry($id);
+	(new Country(GetDatabase(), $id))->remove();
 } elseif (isset($_POST['addcountry']) && !empty($_POST['name']) && !empty($_POST['abbreviation']) && !empty($_POST['flag'])) {
-	AddCountry($_POST['name'], $_POST['abbreviation'], $_POST['flag']);
+	Country::create(
+		GetDatabase(),
+		array('name', 'abbreviation', 'flagfile'),
+		array($_POST['name'], $_POST['abbreviation'], $_POST['flag'])
+	);
 } elseif (isset($_POST['savecountry']) && !empty($_POST['valid'])) {
 	//invalidate all valid countries
-	$countries = CountryList(true);
+	$countries = Country::countryList(GetDatabase(), true);
 	foreach ($countries as $row) {
-		SetCountryValidity($row['country_id'], false);
+		$row->setValidity(false);
 	}
 	//revalidate
 	foreach ($_POST["valid"] as $countryId) {
-		SetCountryValidity($countryId, true);
+		$row->setValidity(true);
 	}
 }
 
@@ -90,23 +95,23 @@ $html .= "<table border='0'>\n";
 $html .= "<tr><th>" . _("Id") . "</th> <th>" . _("Name") . "</th><th>" . _("Abbreviation") . "</th><th>" . _("Teams") . "</th><th>" . _("Valid") . "</th><th></th></tr>\n";
 
 $i = 0;
-$countries = CountryList(false);
+$countries = Country::countryList(GetDatabase(), false);
 foreach ($countries as $row) {
 
 	$html .= "<tr>";
-	$html .= "<td>" . $row['country_id'] . "&#160;</td>";
-	$html .=  "<td>" . utf8entities($row['name']) . "</td>";
-	$html .=  "<td class='center'>" . utf8entities($row['abbreviation']) . "</td>";
+	$html .= "<td>" . $row->getId() . "&#160;</td>";
+	$html .=  "<td>" . $row->getName() . "</td>";
+	$html .=  "<td class='center'>" . $row->getAbbreviation() . "</td>";
 
-	$html .= "<td class='center'>" . CountryNumOfTeams($row['country_id']) . "</td>";
-	if (intval($row['valid'])) {
-		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . utf8entities($row['country_id']) . "' checked='checked'/></td>";
+	$html .= "<td class='center'>" . $row->getNumOfTeams() . "</td>";
+	if (intval($row->getValid())) {
+		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . $row->getId() . "' checked='checked'/></td>";
 	} else {
-		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . utf8entities($row['country_id']) . "'/></td>";
+		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . $row->getId() . "'/></td>";
 	}
 
-	if (CanDeleteCountry($row['country_id'])) {
-		$html .=  "<td class='center'><input class='deletebutton' type='image' src='images/remove.png' alt='X' name='removecountry' value='" . _("X") . "' onclick=\"setId('" . $row['country_id'] . "');\"/></td>";
+	if ($row->canDelete()) {
+		$html .=  "<td class='center'><input class='deletebutton' type='image' src='images/remove.png' alt='X' name='removecountry' value='" . _("X") . "' onclick=\"setId('" . $row->getId() . "');\"/></td>";
 	}
 
 	$html .= "</tr>\n";

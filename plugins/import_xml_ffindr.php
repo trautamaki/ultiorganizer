@@ -24,6 +24,9 @@ include_once 'lib/series.functions.php';
 if (is_file('cust/' . CUSTOMIZATIONS . '/teamplayers.functions.php')) {
   include_once 'cust/' . CUSTOMIZATIONS . '/teamplayers.functions.php';
 }
+
+include_once 'classes/Country.php';
+
 $imported = false;
 $html = "";
 $title = ("Import FFindr data from XML-file");
@@ -490,7 +493,7 @@ class XMLHandler
 
         $countryname = isset($row['COUNTRY']) ? $row['COUNTRY'] : "";
 
-        $data['country'] = CountryId($countryname);
+        $data['country'] = Country::getCountryIdByName(GetDatabase(), $countryname);
 
         $this->clubId = ClubId($row['NAME']);
 

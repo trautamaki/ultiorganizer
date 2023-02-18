@@ -2,7 +2,8 @@
 include_once $include_prefix . 'lib/season.functions.php';
 include_once $include_prefix . 'lib/series.functions.php';
 include_once $include_prefix . 'lib/club.functions.php';
-include_once $include_prefix . 'lib/country.functions.php';
+
+include_once $include_prefix . 'classes/Country.php';
 
 $LAYOUT_ID = ENROLLTEAM;
 if (empty($_GET['season'])) {
@@ -133,7 +134,7 @@ foreach ($result as $row) {
 		echo "</td>\n";
 	}
 	if (intval($seasonInfo['isinternational'])) {
-		echo "<td>" . CountryDropList("countryname$hiddenIndex", "countryname") . "</td>";
+		echo "<td>" . Country::countryDropList(GetDatabase(), "countryname$hiddenIndex", "countryname") . "</td>";
 	}
 
 	$userinfo = UserInfo($_SESSION['uid']);
