@@ -1,6 +1,5 @@
 <?php
 include_once 'menufunctions.php';
-include_once 'lib/club.functions.php';
 include_once 'lib/reservation.functions.php';
 include_once 'lib/plugin.functions.php';
 $html = "";

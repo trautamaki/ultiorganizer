@@ -1,57 +1,49 @@
 <?php
 include_once 'lib/team.functions.php';
-include_once 'lib/club.functions.php';
 include_once 'lib/url.functions.php';
 
 include_once 'classes/Country.php';
+include_once 'classes/Club.php';
 
 $html = "";
 $clubId = iget("club");
-$profile = ClubInfo($clubId);
+$club = new Club(GetDatabase(), $clubId);
 
-$title = _("Club Card") . ": " . utf8entities($profile['name']);
+$title = _("Club Card") . ": " . $club->getName();
 
-$html .= "<h1>" . utf8entities($profile['name']) . "</h1>";
+$html .= "<h1>" . $club->getName() . "</h1>";
 
 $html .= "<table style='width:100%'><tr>";
 
-if (!empty($profile['profile_image'])) {
-  $html .= "<td style='width:165px'><a href='" . UPLOAD_DIR . "clubs/$clubId/" . $profile['profile_image'] . "'>";
-  $html .= "<img src='" . UPLOAD_DIR . "clubs/$clubId/thumbs/" . $profile['profile_image'] . "' alt='" . _("Profile image") . "'/></a></td>";
+if (!empty($club->getProfileImage())) {
+  $html .= "<td style='width:165px'><a href='" . UPLOAD_DIR . "clubs/$clubId/" . $club->getProfileImage() . "'>";
+  $html .= "<img src='" . UPLOAD_DIR . "clubs/$clubId/thumbs/" . $club->getProfileImage() . "' alt='" . _("Profile image") . "'/></a></td>";
 } else {
   $html .= "<td></td>";
 }
 
 $html .= "<td style='vertical-align:top;text-align:left'><table border='0'>";
 $html .= "<tr><td></td></tr>";
-if ($profile['country'] > 0) {
-  $country = new Country(GetDatabase(), $profile['country']);
+$country = $club->getCountry();
+if ($country->getId() > 0) {
   $html .= "<tr><td class='profileheader'>" . _("Country") . ":</td>";
   $html .= "<td style='white-space: nowrap;'><div style='float: left; clear: left;'>";
   $html .= "<a href='?view=countrycard&amp;country=" . $country->getId() . "'>" . $country->getName() . "</a>";
   $html .= "</div><div>&nbsp;<img src='images/flags/tiny/" . $country->getFlagfile() . "' alt=''/></div>";
   $html .= "</td></tr>\n";
 }
-if (!empty($profile['city'])) {
+if (!empty($club->getCity())) {
   $html .= "<tr><td class='profileheader'>" . _("City") . ":</td>";
-  $html .= "<td>" . utf8entities($profile['city']) . "</td></tr>\n";
+  $html .= "<td>" . $club->getCity() . "</td></tr>\n";
 }
 
-if (!empty($profile['founded'])) {
+if (!empty($club->getFounded())) {
   $html .= "<tr><td class='profileheader'>" . _("Founded") . ":</td>";
-  $html .= "<td>" . $profile['founded'] . "</td></tr>\n";
+  $html .= "<td>" . $club->getFounded() . "</td></tr>\n";
 }
 
-if (!empty($profile['homepage'])) {
-  $html .= "<tr><td class='profileheader'>" . _("Homepage") . ":</td>";
-  if (substr(strtolower($profile['homepage']), 0, 4) == "http") {
-    $html .= "<td><a href='" . $profile['homepage'] . "'>" . utf8entities($profile['homepage']) . "</a></td></tr>\n";
-  } else {
-    $html .= "<td><a href='http://" . $profile['homepage'] . "'>" . utf8entities($profile['homepage']) . "</a></td></tr>\n";
-  }
-}
-if (!empty($profile['contacts'])) {
-  $contacts = utf8entities($profile['contacts']);
+if (!empty($club->getContacts())) {
+  $contacts = $club->getContacts();
   $contacts = str_replace("\n", '<br/>', $contacts);
   $html .= "<tr><td class='profileheader' style='vertical-align:top'>" . _("Contacts") . ":</td>";
   $html .= "<td>" . $contacts . "</td></tr>\n";
@@ -60,16 +52,16 @@ if (!empty($profile['contacts'])) {
 $html .= "</table>";
 $html .= "</td></tr>";
 
-if (!empty($profile['story'])) {
-  $story = utf8entities($profile['story']);
+if (!empty($club->getStory())) {
+  $story = $club->getStory();
   $story = str_replace("\n", '<br/>', $story);
   $html .= "<tr><td colspan='2'>" . $story . "</td></tr>\n";
 }
-if (!empty($profile['achievements'])) {
+if (!empty($club->getAchievements())) {
   $html .= "<tr><td colspan='2'>&nbsp;</td></tr>\n";
   $html .= "<tr><td class='profileheader' colspan='2'>" . _("Achievements") . ":</td></tr>\n";
   $html .= "<tr><td colspan='2'></td></tr>\n";
-  $achievements = utf8entities($profile['achievements']);
+  $achievements = $club->getAchievements();
   $achievements = str_replace("\n", '<br/>', $achievements);
   $html .= "<tr><td colspan='2'>" . $achievements . "</td></tr>\n";
 }
@@ -119,7 +111,7 @@ if (count($urls)) {
 
 $html .= "</table>";
 
-$teams = ClubTeams($clubId, CurrentSeason());
+$teams = $club->getTeams();
 if (GetDatabase()->NumRows($teams)) {
   $html .= "<h2>" . U_(CurrentSeasonName()) . ":</h2>\n";
   $html .= "<table style='white-space: nowrap;' border='0' cellspacing='0' cellpadding='2' width='90%'>\n";
@@ -141,7 +133,7 @@ if (GetDatabase()->NumRows($teams)) {
   $html .= "</table>\n";
 }
 
-$teams = ClubTeamsHistory($clubId);
+$teams = $club->getTeamsHistory();
 if (GetDatabase()->NumRows($teams)) {
   $html .= "<h2>" . _("History") . ":</h2>\n";
   $html .= "<table style='white-space: nowrap;' border='0' cellspacing='0' cellpadding='2' width='90%'>\n";

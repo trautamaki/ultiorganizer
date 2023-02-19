@@ -26,6 +26,7 @@ if (is_file('cust/' . CUSTOMIZATIONS . '/teamplayers.functions.php')) {
 }
 
 include_once 'classes/Country.php';
+include_once 'classes/Club.php';
 
 $imported = false;
 $html = "";
@@ -495,7 +496,7 @@ class XMLHandler
 
         $data['country'] = Country::getCountryIdByName(GetDatabase(), $countryname);
 
-        $this->clubId = ClubId($row['NAME']);
+        $this->clubId = Club::clubIdFromName(GetDatabase(), $row['NAME']);
 
         $cond = "club_id=" . $this->clubId;
         $this->SetRow("uo_club", $data, $cond);

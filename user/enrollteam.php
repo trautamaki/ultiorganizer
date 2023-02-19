@@ -1,9 +1,9 @@
 <?php
 include_once $include_prefix . 'lib/season.functions.php';
 include_once $include_prefix . 'lib/series.functions.php';
-include_once $include_prefix . 'lib/club.functions.php';
 
 include_once $include_prefix . 'classes/Country.php';
+include_once $include_prefix . 'classes/Club.php';
 
 $LAYOUT_ID = ENROLLTEAM;
 if (empty($_GET['season'])) {
@@ -14,9 +14,9 @@ $seasonInfo = SeasonInfo($season);
 $title = _("Enrolled teams") . ": " . utf8entities($seasonInfo['name']);
 
 $orgarray = "";
-$result = ClubList(true);
-while ($row = @GetDatabase()->FetchAssoc($result)) {
-	$orgarray .= "\"" . $row['name'] . "\",";
+$clubs = Club::clubList(GetDatabase(), true);
+foreach ($clubs as $club) {
+	$orgarray .= "\"" . $club->getName() . "\",";
 }
 $orgarray = trim($orgarray, ',');
 

@@ -1,7 +1,6 @@
 <?php
-include_once $include_prefix . 'lib/club.functions.php';
-
-include_once 'classes/Country.php';
+include_once $include_prefix . 'classes/Country.php';
+include_once $include_prefix . 'classes/Club.php';
 
 /**
  * Returns selected division based on url or session variable.
@@ -731,12 +730,12 @@ function ConfirmEnrolledTeam($seriesId, $id)
 {
   if (hasEditTeamsRight($seriesId)) {
     $teaminfo = SeriesEnrolledTeamById($seriesId, $id);
-    $clubId = ClubId($teaminfo['clubname']);
+    $clubId = Club::clubIdFromName(GetDatabase(), $teaminfo['clubname']);
     $countryId = Country::getCountryIdByName(GetDatabase(), $teaminfo['countryname']);
 
     //clubname not found
     if (!empty($teaminfo['clubname']) && $clubId == -1) {
-      $clubId = AddClub($seriesId, $teaminfo['clubname']);
+      $clubId = Club::add(GetDatabase(), $seriesId, $teaminfo['clubname']);
     }
 
     $query = sprintf(

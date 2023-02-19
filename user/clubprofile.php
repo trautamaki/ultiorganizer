@@ -3,13 +3,13 @@ include_once $include_prefix . 'lib/team.functions.php';
 include_once $include_prefix . 'lib/common.functions.php';
 include_once $include_prefix . 'lib/season.functions.php';
 include_once $include_prefix . 'lib/player.functions.php';
-include_once $include_prefix . 'lib/club.functions.php';
 include_once $include_prefix . 'lib/pool.functions.php';
 include_once $include_prefix . 'lib/reservation.functions.php';
 include_once $include_prefix . 'lib/url.functions.php';
 include_once $include_prefix . 'lib/image.functions.php';
 
 include_once 'classes/Country.php';
+include_once 'classes/Club.php';
 
 $max_file_size = 5 * 1024 * 1024; //5 MB
 $max_new_links = 3;
@@ -32,7 +32,7 @@ if (isset($_SERVER['HTTP_REFERER']))
 else
 	$backurl = "?view=user/teamplayers&team=$teamId";
 
-
+$club = new Club(GetDatabase(), $clubId);
 
 //club profile
 $op = array(
@@ -53,7 +53,7 @@ if (isset($_POST['save'])) {
 	if (!empty($_POST['name']))
 		$op['name'] = $_POST['name'];
 	else
-		$op['name'] = ClubName($clubId);
+		$op['name'] = $club->getName();
 
 	$op['founded'] = intval($_POST['founded']);
 	$op['contacts'] = $_POST['contacts'];
@@ -67,7 +67,7 @@ if (isset($_POST['save'])) {
 	else
 		$op['valid'] = 0;
 
-	SetClubProfile($teamId, $op);
+	$club->setProfile($teamId, $op);
 
 	for ($i = 0; $i < $max_new_links; $i++) {
 
@@ -76,35 +76,34 @@ if (isset($_POST['save'])) {
 			if (!empty($_POST["urlname$i"])) {
 				$name = $_POST["urlname$i"];
 			}
-			AddClubProfileUrl($teamId, $clubId, $_POST["urltype$i"], $_POST["url$i"], $name);
+			$club->addProfileUrl($teamId, $clubId, $_POST["urltype$i"], $_POST["url$i"], $name);
 		}
 	}
 
 	if (is_uploaded_file($_FILES['picture']['tmp_name'])) {
-		$html .= UploadClubImage($teamId, $clubId);
+		$html .= $clubId->uploadImage($teamId);
 	}
 } elseif (isset($_POST['remove'])) {
-	RemoveClubProfileImage($teamId, $clubId);
+	$club->removeProfileImage($teamId);
 } elseif (isset($_POST['removeurl_x'])) {
 	$id = $_POST['hiddenDeleteId'];
-	RemoveClubProfileUrl($teamId, $clubId, $id);
+	$club->removeClubProfileUrl($teamId, $id);
 }
 
-$club = ClubInfo($clubId);
 if ($club) {
-	$op['name'] = $club['name'];
-	$op['profile_image'] = $club['profile_image'];
-	$op['club_id'] = $club['club_id'];
-	$op['founded'] = $club['founded'];
-	$op['valid'] = $club['valid'];
-	$op['country'] = $club['country'];
-	$op['city'] = $club['city'];
-	$op['contacts'] = $club['contacts'];
-	$op['story'] = $club['story'];
-	$op['achievements'] = $club['achievements'];
+	$op['name'] = $club->getName();
+	$op['profile_image'] = $club->getProfileImage();
+	$op['club_id'] = $club->getId();
+	$op['founded'] = $club->getFounded();
+	$op['valid'] = $club->getValid();
+	$op['country'] = $club->getCountry();
+	$op['city'] = $club->getCity();
+	$op['contacts'] = $club->getContacts();
+	$op['story'] = $club->getStory();
+	$op['achievements'] = $club->getAchievements();
 }
 
-$title = _("Club information") . ": " . utf8entities($club['name']);
+$title = _("Club information") . ": " . utf8entities($club->getName());
 $html .= file_get_contents('script/disable_enter.js.inc');
 
 $menutabs[_("Roster")] = "?view=user/teamplayers&team=$teamId";
@@ -115,15 +114,15 @@ $html .= pageMenu($menutabs, "", false);
 $html .= "<form method='post' enctype='multipart/form-data' action='?view=user/clubprofile&amp;team=$teamId&amp;club=$clubId'>\n";
 if (isSuperAdmin() || hasEditTeamsRight($teaminfo['series'])) {
 
-	if (intval($club['valid']))
+	if (intval($club->getValid()))
 		$html .= "<p><input class='input' type='checkbox' id='valid' name='valid' checked='checked'/>";
 	else
 		$html .= "<p><input class='input' type='checkbox' id='valid' name='valid'/>";
 	$html .= " " . _("Show on club list") . "</p>\n";
-} elseif (intval($club['valid'])) {
-	$html .= "<div><input type='hidden' id='valid' name='valid' value='" . utf8entities($club['valid']) . "'/></div>";
+} elseif (intval($club->getValid())) {
+	$html .= "<div><input type='hidden' id='valid' name='valid' value='" . utf8entities($club->getValid()) . "'/></div>";
 }
-$html .= "<h1>" . utf8entities($club['name']) . "</h1>";
+$html .= "<h1>" . utf8entities($club->getName()) . "</h1>";
 
 $html .= "<table>";
 
@@ -203,9 +202,9 @@ $html .= "</td></tr>\n";
 
 
 $html .= "<tr><td class='infocell' style='vertical-align:top'>" . _("Current image") . ":</td>";
-if (!empty($club['profile_image'])) {
-	$html .= "<td><a href='" . UPLOAD_DIR . "clubs/$clubId/" . $club['profile_image'] . "'>";
-	$html .= "<img src='" . UPLOAD_DIR . "clubs/$clubId/thumbs/" . $club['profile_image'] . "' alt='" . _("Profile image") . "'/></a></td>";
+if (!empty($club->getProfileImage())) {
+	$html .= "<td><a href='" . UPLOAD_DIR . "clubs/$clubId/" . $club->getProfileImage() . "'>";
+	$html .= "<img src='" . UPLOAD_DIR . "clubs/$clubId/thumbs/" . $club->getProfileImage() . "' alt='" . _("Profile image") . "'/></a></td>";
 	$html .= "</tr>\n";
 	$html .= "<tr><td class='infocell'></td>";
 	$html .= "<td><input class='button' type='submit' name='remove' value='" . _("Delete image") . "' /></td></tr>\n";

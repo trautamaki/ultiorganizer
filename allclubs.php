@@ -1,5 +1,5 @@
 <?php
-include_once 'lib/club.functions.php';
+include_once 'classes/Club.php';
 
 $title = _("All clubs");
 $html = "";
@@ -30,16 +30,15 @@ if ($filter == "ALL") {
 $html .= "</tr></table>\n";
 
 $html .= "<table style='white-space: nowrap;width:100%;'>\n";
-$clubs = ClubList(true, $filter);
+$clubs = Club::clubList(GetDatabase(), true, $filter);
 
 $firstchar = " ";
 $listletter = " ";
 $counter = 0;
 
-while ($club = GetDatabase()->FetchAssoc($clubs)) {
-
+foreach ($clubs as $club) {
   if ($filter == "ALL") {
-    $firstchar = strtoupper(substr(utf8_decode($club['name']), 0, 1));
+    $firstchar = strtoupper(substr($club->getName(), 0, 1));
     if ($listletter != $firstchar && in_array($firstchar, $validletters)) {
       $listletter = $firstchar;
       if ($counter > 0 && $counter <= $maxcols) {
@@ -50,15 +49,17 @@ while ($club = GetDatabase()->FetchAssoc($clubs)) {
       $counter = 0;
     }
   }
+
   if ($counter == 0) {
     $html .= "<tr>\n";
   }
 
   $html .= "<td style='width:33%'>";
-  if (intval($club['country'])) {
-    $html .= "<img height='10' src='images/flags/tiny/" . $club['flagfile'] . "' alt=''/>&nbsp;";
+  if (intval($club->getCountryId())) {
+    $html .= "<img height='10' src='images/flags/tiny/" . $club->getCountry()->getFlagFile() . "' alt=''/>&nbsp;";
   }
-  $html .= "<a href='?view=clubcard&amp;club=" . $club['club_id'] . "'>" . utf8entities($club['name']) . "</a>";
+
+  $html .= "<a href='?view=clubcard&amp;club=" . $club->getId() . "'>" . $club->getName() . "</a>";
   $html .= "</td>";
   $counter++;
 

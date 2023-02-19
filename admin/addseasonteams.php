@@ -3,9 +3,9 @@ include_once 'lib/team.functions.php';
 include_once 'lib/series.functions.php';
 include_once 'lib/season.functions.php';
 include_once 'lib/pool.functions.php';
-include_once 'lib/club.functions.php';
 
 include_once 'classes/Country.php';
+include_once 'classes/Club.php';
 
 $LAYOUT_ID = ADDSEASONTEAMS;
 $html = "";
@@ -47,11 +47,11 @@ if (!empty($_POST['save']) || !empty($_POST['add'])) {
 		$tp['series'] = $seriesId;
 
 		if (!empty($_POST['club'])) {
-			$clubId = ClubId($_POST['club']);
+			$clubId = Club::clubIdFromName(GetDatabase(), $_POST['club']);
 
 			//slot owner club not found
 			if ($clubId == -1) {
-				$clubId = AddClub($seriesId, $_POST['club']);
+				$clubId = Club::add(GetDatabase(), $seriesId, $_POST['club']);
 			}
 			$tp['club'] = $clubId;
 		}
@@ -91,9 +91,9 @@ if (!empty($_POST['save']) || !empty($_POST['add'])) {
 }
 
 $orgarray = "";
-$result = ClubList(true);
-while ($row = @GetDatabase()->FetchAssoc($result)) {
-	$orgarray .= "\"" . $row['name'] . "\",";
+$clubs = Club::clubList(GetDatabase(), true);
+foreach ($clubs as $club) {
+	$orgarray .= "\"" . $club->getName() . "\",";
 }
 $orgarray = trim($orgarray, ',');
 
@@ -144,9 +144,10 @@ if ($teamId) {
 
 $html .= "<table cellpadding='2px' class='yui-skin-sam'><tr><td class='infocell'>" . _("Name") . ":</td><td>";
 if (!intval($seasonInfo['isnationalteams'])) {
+	$club = new Club(GetDatabase(), $tp['club']);
 	$html .= "<input class='input' id='name' name='name' size='50' value='" . utf8entities($tp['name']) . "'/></td></tr>";
 	$html .= "<tr><td class='infocell'>" . _("Club") . ":</td>\n";
-	$html .= "<td><div id='orgAutoComplete'><input class='input' type='text' id='club' name='club' size='50' value='" . utf8entities(ClubName($tp['club'])) . "'/>";
+	$html .= "<td><div id='orgAutoComplete'><input class='input' type='text' id='club' name='club' size='50' value='" . $club->getName() . "'/>";
 	$html .= "<div id='orgContainer'></div>";
 	$html .= "</div>";
 } else {

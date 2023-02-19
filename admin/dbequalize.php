@@ -1,9 +1,11 @@
 <?php
 include_once 'lib/season.functions.php';
 include_once 'lib/team.functions.php';
-include_once 'lib/club.functions.php';
 include_once 'lib/pool.functions.php';
 include_once 'lib/series.functions.php';
+
+include_once 'classes/Club.php';
+
 $LAYOUT_ID = DBEQUALIZER;
 $title = _("Database equalization");
 $filter = 'teams';
@@ -26,18 +28,19 @@ if (isset($_POST['rename']) && !empty($_POST['ids']) && isSuperAdmin()) {
 			SetTeamName($id, $name);
 		} elseif ($filter == 'clubs') {
 			if ($id != $name) {
-				$result .= "<p>" . utf8entities(ClubName($id)) . " --> " . utf8entities(ClubName($name)) . "</p>";
+				$club = new Club(GetDatabase(), $id);
+				$result .= "<p>" . $club->getName() . " --> " . $club->getName() . "</p>";
 				$teams = TeamListAll();
 				while ($team = GetDatabase()->FetchAssoc($teams)) {
 					if ($team['club'] == $id) {
 						SetTeamOwner($team['team_id'], $name);
 					}
 				}
-				if (CanDeleteClub($id)) {
-					$result .= "<p>" . utf8entities(ClubName($id)) . " " . _("removed") . "</p>";
-					RemoveClub($id);
+				if ($club->canDelete()) {
+					$result .= "<p>" . $club->getName() . " " . _("removed") . "</p>";
+					$club->remove();
 				} else {
-					$result .= "<p class='warning'>" . utf8entities(ClubName($id)) . " " . _("cannot delete") . "</p>";
+					$result .= "<p class='warning'>" . $club->getName() . " " . _("cannot delete") . "</p>";
 				}
 			}
 		} elseif ($filter == 'pools') {
@@ -62,11 +65,12 @@ if (isset($_POST['rename']) && !empty($_POST['ids']) && isSuperAdmin()) {
 				$result .= "<p class='warning'>" . utf8entities(TeamName($id)) . " " . _("cannot delete") . "</p>";
 			}
 		} elseif ($filter == 'clubs') {
-			if (CanDeleteClub($id)) {
-				$result .= "<p>" . utf8entities(ClubName($id)) . " " . _("removed") . "</p>";
-				RemoveClub($id);
+			$club = new Club(GetDatabase(), $id);
+			if ($club->canDelete()) {
+				$result .= "<p>" . $club->getName() . " " . _("removed") . "</p>";
+				$club->remove();
 			} else {
-				$result .= "<p class='warning'>" . utf8entities(ClubName($id)) . " " . _("cannot delete") . "</p>";
+				$result .= "<p class='warning'>" . $club->getName() . " " . _("cannot delete") . "</p>";
 			}
 		} elseif ($filter == 'pools') {
 			if (CanDeletePool($id)) {
@@ -106,13 +110,13 @@ $html .=  "</div>\n";
 
 $html .=  "<form id='ids' method='post' action='" . utf8entities($baseurl) . "'>\n";
 
+$clubs = Club::clubList(GetDatabase());
 if ($filter == 'clubs') {
 	$html .=  "<p>" . _("Club to keep") . ":\n";
 	//$html .=  "<input class='input' size='50' name='newname' value=''/></p>";
 	$html .=  "<select class='dropdown' name='newname'>";
-	$clubs = ClubList();
-	while ($row = GetDatabase()->FetchAssoc($clubs)) {
-		$html .= "<option class='dropdown' value='" . utf8entities($row['club_id']) . "'>" . utf8entities($row['name']) . "</option>";
+	foreach ($clubs as $club) {
+		$html .= "<option class='dropdown' value='" . $club->getId() . "'>" . $club->getName() . "</option>";
 	}
 	$html .=  "</select></p>";
 	$html .= "<p><input class='button' type='submit' name='rename' value='" . _("Join selected") . "'/>";
@@ -153,12 +157,11 @@ if ($filter == 'teams') {
 		$html .= "</tr>\n";
 	}
 } elseif ($filter == 'clubs') {
-	$clubs = ClubList();
 	$html .= "<th>" . _("Name") . "</th><th>" . _("Teams") . "</th></tr>\n";
-	while ($club = GetDatabase()->FetchAssoc($clubs)) {
-		if ($prevname != $club['name']) {
+	foreach ($clubs as $club) {
+		if ($prevname != $club->getName()) {
 			$counter++;
-			$prevname = $club['name'];
+			$prevname = $club->getName();
 		}
 		if ($counter % 2) {
 			$html .= "<tr class='highlight'>";
@@ -166,9 +169,9 @@ if ($filter == 'teams') {
 			$html .= "<tr>";
 		}
 
-		$html .= "<td><input type='checkbox' name='ids[]' value='" . utf8entities($club['club_id']) . "'/></td>";
-		$html .= "<td><b>" . utf8entities($club['name']) . "</b></td>";
-		$html .= "<td class='center'>" . ClubNumOfTeams($club['club_id']) . "</td>";
+		$html .= "<td><input type='checkbox' name='ids[]' value='" . $club->getId() . "'/></td>";
+		$html .= "<td><b>" . $club->getName() . "</b></td>";
+		$html .= "<td class='center'>" . $club->numOfTeams() . "</td>";
 		$html .= "</tr>\n";
 	}
 } elseif ($filter == 'pools') {

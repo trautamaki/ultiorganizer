@@ -5198,17 +5198,17 @@ msgstr "Sa"
 msgid "Move not allowed. Game already played!"
 msgstr "Transfer nicht erlaubt. Spiel ist schon gespielt!"
 
-#: lib/team.functions.php:1201 lib/club.functions.php:197
+#: lib/team.functions.php:1201 classes/Club.php:237
 #: lib/player.functions.php:516
 msgid "File is too large"
 msgstr "Datei ist zu groß"
 
-#: lib/team.functions.php:1209 lib/club.functions.php:205
+#: lib/team.functions.php:1209 classes/Club.php:244
 #: lib/player.functions.php:524
 msgid "File is not supported image format"
 msgstr "Dateiformat wird nicht unterstützt"
 
-#: lib/team.functions.php:1213 lib/club.functions.php:209
+#: lib/team.functions.php:1213 classes/Club.php:248
 #: lib/player.functions.php:528
 msgid "Missing gd extension for image handling."
 msgstr "Missing gd extensinon for image handiling."

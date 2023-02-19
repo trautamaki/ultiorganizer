@@ -1,24 +1,24 @@
 <?php
 include_once 'menufunctions.php';
-include_once 'lib/club.functions.php';
 
 include_once 'classes/Country.php';
+include_once 'classes/Club.php';
 
 $html = "";
 if (isset($_POST['removeclub_x']) && isset($_POST['hiddenDeleteId'])) {
 	$id = $_POST['hiddenDeleteId'];
-	RemoveClub($id);
+	(new Club(GetDatabase(), $id))->remove($id);
 } elseif (isset($_POST['addclub']) && !empty($_POST['name'])) {
-	AddClub(0, $_POST['name']);
+	Club::add(GetDatabase(), 0, $_POST['name']);
 } elseif (isset($_POST['saveclub']) && !empty($_POST['valid'])) {
 	//invalidate all valid clubs
-	$clubs = ClubList(true);
-	while ($row = GetDatabase()->FetchAssoc($clubs)) {
-		SetClubValidity($row['club_id'], false);
+	$clubs = Club::clubList(GetDatabase(), true);
+	foreach ($clubs as $club) {
+		$club->setValidity(false);
 	}
 	//revalidate
 	foreach ($_POST["valid"] as $clubId) {
-		SetClubValidity($clubId, true);
+		$club->setValidity(true);
 	}
 } elseif (isset($_POST['removecountry_x']) && isset($_POST['hiddenDeleteId'])) {
 	$id = $_POST['hiddenDeleteId'];
@@ -60,23 +60,23 @@ $html .= "<table border='0'>\n";
 $html .= "<tr><th>" . _("Id") . "</th> <th>" . _("Name") . "</th><th>" . _("Teams") . "</th><th>" . _("Valid") . "</th><th></th></tr>\n";
 
 $i = 0;
-$clubs = ClubList();
-while ($row = GetDatabase()->FetchAssoc($clubs)) {
-
+$clubs = Club::clubList(GetDatabase());
+foreach ($clubs as $club) {
 	$html .= "<tr>";
-	$html .= "<td>" . $row['club_id'] . "&#160;</td>";
-	$html .=  "<td><a href='?view=user/clubprofile&amp;club=" . $row['club_id'] . "'>" . utf8entities($row['name']) . "</a></td>";
+	$html .= "<td>" . $club->getId() . "&#160;</td>";
+	$html .=  "<td><a href='?view=user/clubprofile&amp;club=" . $club->getId() . "'>" . $club->getName() . "</a></td>";
 
-	$html .= "<td class='center'>" . ClubNumOfTeams($row['club_id']) . "</td>";
-	if (intval($row['valid'])) {
-		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . utf8entities($row['club_id']) . "' checked='checked'/></td>";
+	$html .= "<td class='center'>" . $club->numOfTeams() . "</td>";
+	if (intval($club->getValid())) {
+		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . $club->getId() . "' checked='checked'/></td>";
 	} else {
-		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . utf8entities($row['club_id']) . "'/></td>";
+		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . $club->getId() . "'/></td>";
 	}
 
-	if (CanDeleteClub($row['club_id'])) {
-		$html .=  "<td class='center'><input class='deletebutton' type='image' src='images/remove.png' alt='X' name='removeclub' value='" . _("X") . "' onclick=\"setId('" . $row['club_id'] . "');\"/></td>";
+	if ($club->canDelete()) {
+		$html .=  "<td class='center'><input class='deletebutton' type='image' src='images/remove.png' alt='X' name='removeclub' value='" . _("X") . "' onclick=\"setId('" . $club->getId() . "');\"/></td>";
 	}
+
 	$html .= "</tr>\n";
 	$i++;
 }

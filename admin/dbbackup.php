@@ -1,6 +1,5 @@
 <?php
 include_once 'menufunctions.php';
-include_once 'lib/club.functions.php';
 include_once 'lib/reservation.functions.php';
 $html = "";
 if (isset($_POST['backup']) && !empty($_POST['tables']) && isSuperAdmin()) {

@@ -3,9 +3,9 @@ include_once 'lib/season.functions.php';
 include_once 'lib/series.functions.php';
 include_once 'lib/pool.functions.php';
 include_once 'lib/team.functions.php';
-include_once 'lib/club.functions.php';
 
 include_once 'classes/Country.php';
+include_once 'classes/Club.php';
 
 $LAYOUT_ID = SEASONTEAMS;
 $html = "";
@@ -51,9 +51,9 @@ if (!empty($_POST['add'])) {
   $tp['club'] = !empty($_POST['club0']) ? $_POST['club0'] : "";
   $tp['rank'] = !empty($_POST["seed0"]) ? $_POST["seed0"] : "0";
   if (!empty($tp['club'])) {
-    $clubId = ClubId($tp['club']);
+    $clubId = Club::clubIdFromName(GetDatabase(), $tp['club']);
     if ($clubId == -1) {
-      $clubId = AddClub($series_id, $tp['club']);
+      $clubId = Club::add(GetDatabase(), $series_id, $tp['club']);
     }
     $tp['club'] = $clubId;
   }
@@ -72,9 +72,9 @@ if (!empty($_POST['save'])) {
     $tp['club'] = !empty($_POST["club$team_id"]) ? $_POST["club$team_id"] : "";
     $tp['rank'] = !empty($_POST["seed$team_id"]) ? $_POST["seed$team_id"] : "0";
     if (!empty($tp['club'])) {
-      $clubId = ClubId($tp['club']);
+      $clubId = Club::clubIdFromName(GetDatabase(), $tp['club']);
       if ($clubId == -1) {
-        $clubId = AddClub($series_id, $tp['club']);
+        $clubId = Club::add(GetDatabase(), $series_id, $tp['club']);
       }
       $tp['club'] = $clubId;
     }

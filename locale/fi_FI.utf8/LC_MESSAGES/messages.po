@@ -5253,17 +5253,17 @@ msgstr "La"
 msgid "Move not allowed. Game already played!"
 msgstr "Siirto ei sallittu. Peli on jo pelattu!"
 
-#: lib/team.functions.php:1201 lib/club.functions.php:197
+#: lib/team.functions.php:1201 classes/Club.php:237
 #: lib/player.functions.php:516
 msgid "File is too large"
 msgstr "Tiedosto on liian suuri"
 
-#: lib/team.functions.php:1209 lib/club.functions.php:205
+#: lib/team.functions.php:1209 classes/Club.php:244
 #: lib/player.functions.php:524
 msgid "File is not supported image format"
 msgstr "Tiedosto ei ole tuettu kuvaformaatti"
 
-#: lib/team.functions.php:1213 lib/club.functions.php:209
+#: lib/team.functions.php:1213 classes/Club.php:248
 #: lib/player.functions.php:528
 #, fuzzy
 msgid "Missing gd extension for image handling."
