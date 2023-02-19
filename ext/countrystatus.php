@@ -1,5 +1,6 @@
 <?php
 include_once 'localization.php';
+include_once 'classes/Game.php';
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns='http://www.w3.org/1999/xhtml' xml:lang='fi' lang='fi'>
@@ -80,34 +81,36 @@ include_once 'localization.php';
 			if ($poolinfo['mvgames'] == 0 || $poolinfo['mvgames'] == 2) {
 				$mvgames = PoolMovedGames($poolinfo['pool_id']);
 				foreach ($games as $game) {
-					if ($game['homecountryid'] == $countryId || $game['visitorcountryid'] == $countryId) {
+					// TODO add properties
+					if (TeamInfo($game->getHomeTeam())['country'] == $countryId || TeamInfo($game->getVisitorTeam())['country'] == $countryId) {
 						echo "<tr>";
-						echo "<td style='border:none' class='pk_ser_td1'>" . utf8entities($game['hometeamname']) . "</td>\n";
+						echo "<td style='border:none' class='pk_ser_td1'>" . TeamName($game->getHomeTeam()) . "</td>\n";
 						echo "<td style='border:none' class='pk_ser_td1'>-</td>\n";
-						echo "<td style='border:none' class='pk_ser_td1'>" . utf8entities($game['visitorteamname']) . "</td>\n";
-						echo "<td style='border:none' class='pk_ser_td1'>" . intval($game['homescore']) . "</td>\n";
+						echo "<td style='border:none' class='pk_ser_td1'>" . TeamName($game->getVisitorTeam()) . "</td>\n";
+						echo "<td style='border:none' class='pk_ser_td1'>" . $game->getHomeScore() . "</td>\n";
 						echo "<td style='border:none' class='pk_ser_td1'>-</td>\n";
-						echo "<td style='border:none' class='pk_ser_td1'>" . intval($game['visitorscore']) . "</td>\n";
+						echo "<td style='border:none' class='pk_ser_td1'>" . $game->getVisitorScore() . "</td>\n";
 						echo "</tr>";
 					}
 				}
 			}
 			$games = TimetableGames($poolinfo['pool_id'], "pool", "all", "series");
-			while ($game = GetDatabase()->FetchAssoc($games)) {
-				if ($game['homecountryid'] == $countryId || $game['visitorcountryid'] == $countryId) {
+			// TODO use classes in loop
+			foreach ($games as $game) {
+				if (TeamInfo($game->getHomeTeam())['country'] == $countryId || TeamInfo($game->getVisitorTeam())['country'] == $countryId) {
 					echo "<tr>";
-					echo "<td style='width:35%;border:none' class='pk_ser_td1'>" . utf8entities($game['hometeamname']) . "</td>\n";
+					echo "<td style='width:35%;border:none' class='pk_ser_td1'>" . TeamName($game->getHomeTeam()) . "</td>\n";
 					echo "<td style='width:5%;border:none' class='pk_ser_td1'>-</td>\n";
-					echo "<td style='width:35%;border:none' class='pk_ser_td1'>" . utf8entities($game['visitorteamname']) . "</td>\n";
+					echo "<td style='width:35%;border:none' class='pk_ser_td1'>" . TeamName($game->getVisitorTeam()) . "</td>\n";
 
-					if (!GameHasStarted($game)) {
+					if (!$game->hasStarted()) {
 						echo "<td style='width:10%;border:none' class='pk_ser_td1'>?</td>\n";
 						echo "<td style='width:5%;border:none' class='pk_ser_td1'>-</td>\n";
 						echo "<td style='width:10%;border:none' class='pk_ser_td1'>?</td>\n";
 					} else {
-						echo "<td style='width:10%;border:none' class='pk_ser_td1'>" . intval($game['homescore']) . "</td>\n";
+						echo "<td style='width:10%;border:none' class='pk_ser_td1'>" . $game->getHomeScore() . "</td>\n";
 						echo "<td style='width:5%;border:none' class='pk_ser_td1'>-</td>\n";
-						echo "<td style='width:10%;border:none' class='pk_ser_td1'>" . intval($game['visitorscore']) . "</td>\n";
+						echo "<td style='width:10%;border:none' class='pk_ser_td1'>" . $game->getVisitorScore() . "</td>\n";
 					}
 					echo "</tr>";
 				}
@@ -207,7 +210,7 @@ include_once 'localization.php';
 						$games++;
 						$game = "&nbsp;";
 						if (!$pseudoteams) {
-							$results = GameHomeTeamResults($team['team_id'], $pool['pool_id']);
+							$results = Game::getHomeTeamResults($team['team_id'], $pool['pool_id']);
 							foreach ($results as $res) {
 								$game .= $res['homescore'] . "-" . $res['visitorscore'];
 							}

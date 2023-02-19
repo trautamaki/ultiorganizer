@@ -22,6 +22,8 @@ if (!isSuperAdmin()) {
 include_once 'lib/season.functions.php';
 include_once 'lib/series.functions.php';
 
+include_once 'classes/Game.php';
+
 $html = "";
 $title = ("Import data from CSV file");
 
@@ -138,7 +140,7 @@ if (isset($_POST['import'])) {
 						continue;
 					}
 
-					$game_result = GameInfo($gameId);
+					$game = new Game(GetDatabase(), $gameId);
 					if ($game_result) {
 						//$html .= "<p>Already exist $team</p>";
 						continue;

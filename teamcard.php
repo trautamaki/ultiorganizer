@@ -190,12 +190,11 @@ if (ShowDefenseStats()) {
   }
 }
 $allgames = TimetableGames($teamId, "team", "all", "time");
-if (GetDatabase()->NumRows($allgames)) {
+if (count($allgames)) {
   $html .= "<h2>" . U_(SeasonName($teaminfo['season'])) . ":</h2>\n";
   $html .=  "<p>" . _("Division") . ": <a href='?view=poolstatus&amp;series=" . $teaminfo['series'] . "'>" . utf8entities(U_($teaminfo['seriesname'])) . "</a></p>";
   $html .= "<table style='width:80%'>\n";
-  while ($game = GetDatabase()->FetchAssoc($allgames)) {
-    //function GameRow($game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
+  foreach ($allgames as $game) {
     $html .= GameRow($game, false, false, false, false, false, true);
   }
 
@@ -509,9 +508,7 @@ if (ShowDefenseStats()) {
     $html .= "<td>" . ($total_goals_made - $total_goals_against) . "</td>";
     $html .= "</tr>";
 
-
     $html .= "</table>";
-
     $html .= $tmphtml;
   }
 }
@@ -524,7 +521,7 @@ if (empty($sort)) {
 }
 
 $played = TeamPlayedGames($teaminfo['name'], $teaminfo['type'], $sort);
-if (GetDatabase()->NumRows($played)) {
+if (count($played)) {
   $html .= "<h2>" . _("Game history") . "</h2>";
 
   $viewUrl = "?view=teamcard&amp;team=$teamId&amp;";
@@ -536,28 +533,26 @@ if (GetDatabase()->NumRows($played)) {
   $html .= "<th><a class='thsort' href=\"" . $viewUrl . "sort=serie\">" . _("Division") . "</a></th></tr>";
   $curSeason = Currentseason();
 
-  while ($row = GetDatabase()->FetchAssoc($played)) {
-    if ($row['season_id'] == $curSeason) {
+  foreach ($played as $game) {
+    if ($game->getSeason() == $curSeason) {
       continue;
     }
-    if (GameHasStarted($row)) {
-      $seasonName = SeasonName($row['season_id']);
+    if ($game->hasStarted()) {
+      $seasonName = SeasonName($game->getSeason());
 
-      if ($row['homescore'] > $row['visitorscore'])
-        $html .= "<tr><td><b>" . utf8entities($row['hometeamname']) . "</b>";
+      if ($game->getHomeScore() > $game->getVisitorScore())
+        $html .= "<tr><td><b>" . TeamName($game->getHomeTeam()) . "</b>";
       else
-        $html .= "<tr><td>" . utf8entities($row['hometeamname']);
+        $html .= "<tr><td>" . TeamName($game->getHomeTeam());
 
 
-      if ($row['homescore'] < $row['visitorscore'])
-        $html .= " - <b>" . utf8entities($row['visitorteamname']) . "</b></td>";
+      if ($game->getHomeScore() < $game->getVisitorScore())
+        $html .= " - <b>" . TeamName($game->getVisitorTeam()) . "</b></td>";
       else
-        $html .= " - " . utf8entities($row['visitorteamname']) . "</td>";
+        $html .= " - " . TeamName($game->getVisitorTeam()) . "</td>";
 
-
-      $html .= "<td><a href=\"?view=gameplay&amp;game=" . $row['game_id'] . "\">" . $row['homescore'] . " - " . $row['visitorscore'] . "</a></td>";
-
-      $html .= "<td>" . utf8entities(U_($seasonName)) . ": <a href=\"?view=poolstatus&amp;pool=" . $row['pool_id'] . "\">" . utf8entities(U_($row['name'])) . "</a></td></tr>";
+      $html .= "<td><a href=\"?view=gameplay&amp;game=" . $game->getId() . "\">" . $game->getHomeScore() . " - " . $game->getVisitorScore() . "</a></td>";
+      $html .= "<td>" . U_($seasonName) . ": <a href=\"?view=poolstatus&amp;pool=" . $game->getPool() . "\">" . U_($game->getName()) . "</a></td></tr>";
     }
   }
 

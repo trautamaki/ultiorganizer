@@ -4,10 +4,12 @@ include_once 'lib/game.functions.php';
 include_once 'lib/series.functions.php';
 include_once 'lib/common.functions.php';
 
+include_once 'classes/Game.php';
+
 $LAYOUT_ID = EDITGAME;
 $backurl = utf8entities(empty($_SERVER['HTTP_REFERER']) ? "" : $_SERVER['HTTP_REFERER']);
 $gameId = $_GET["game"];
-$info = GameResult($gameId);
+$game = new Game(GetDatabase(), $gameId);
 
 if (!empty($_GET["season"]))
 	$season = $_GET["season"];
@@ -23,7 +25,7 @@ $gp = array(
 	"scheduling_name_visitor" => "",
 	"reservation" => "",
 	"time" => "",
-	"pool" => $info['pool'],
+	"pool" => $game->getPool(),
 	"valid" => 1,
 	"respteam" => 0,
 	"name" => ""
@@ -65,7 +67,7 @@ if (!empty($_POST['save'])) {
 		$gp['name'] = $_POST['name'];
 
 
-	SetGame($gameId, $gp);
+	$game->set($gp);
 
 	$userid = $_POST['userid'];
 	if (empty($userid)) {
@@ -150,13 +152,13 @@ contentStart();
 
 echo "<h2>" . _("Edit game") . "</h2>\n";
 echo "<form method='post' action='?view=admin/editgame&amp;season=$season&amp;game=$gameId'>";
-$info = GameResult($gameId);
-$pool_info = PoolInfo($info['pool']);
+$game = new Game(GetDatabase(), $gameId);
+$pool_info = PoolInfo($game->getPool());
 $seriesId = $pool_info['series'];
-$poolId = $info['pool'];
+$poolId = $game->getPool();
 
-if (GameHasStarted($info)) {
-	echo "<p>" . _("Game played") . ". " . _("Final scores") . ": " . $info['homescore'] . " - " . $info['visitorscore'] . "</p>";
+if ($game->hasStarted()) {
+	echo "<p>" . _("Game played") . ". " . _("Final scores") . ": " . $game->getHomeScore() . " - " . $game->getVisitorScore() . "</p>";
 }
 echo "<table>";
 echo "<tr><td><a href='?view=user/addresult&amp;game=" . $gameId . "'>" . _("Change game result") . "</a></td></tr>";
@@ -175,12 +177,12 @@ echo "<table cellpadding='2px'>";
 
 echo "<tr><td class='infocell'>" . _("Home team") . ":</td><td>";
 //TeamSelectionList('home', $info['hometeam'], $seriesId);
-TeamSelectionListNew('home', $info['hometeam'], $info['scheduling_name_home'], $poolId);
+TeamSelectionListNew('home', $game->getHomeTeam(), $game->getSchedulingNameHomeId(), $poolId);
 echo "</td></tr>\n";
 
 echo "<tr><td class='infocell'>" . _("Guest team") . ":</td><td>";
 //TeamSelectionList('away', $info['visitorteam'], $seriesId);
-TeamSelectionListNew('away', $info['visitorteam'], $info['scheduling_name_visitor'], $poolId);
+TeamSelectionListNew('away', $game->getVisitorTeam(), $game->getSchedulingNameVisitorId(), $poolId);
 echo "</td></tr>\n";
 
 
@@ -193,7 +195,7 @@ echo "<option class='dropdown' value='0'></option>";
 $places = SeasonReservations($season);
 
 foreach ($places as $row) {
-	if ($row['id'] == $info['reservation']) {
+	if ($row['id'] == $game->getReservation()) {
 		echo "<option class='dropdown' selected='selected' value='" . utf8entities($row['id']) . "'>";
 		echo utf8entities($row['reservationgroup']) . " " . utf8entities($row['name']) . ", " . _("Field") . " " . utf8entities($row['fieldname']) . " (" . JustDate($row['starttime']) . ")";
 		echo "</option>";
@@ -206,7 +208,7 @@ foreach ($places as $row) {
 echo "</select></td></tr>\n";
 
 echo "<tr><td class='infocell'>" . _("Starting time") . " (hh:mm):</td>
-<td><input class='input' id='time' name='time' value='" . DefHourFormat($info['time']) . "'/></td></tr>\n";
+<td><input class='input' id='time' name='time' value='" . DefHourFormat($game->getTime()) . "'/></td></tr>\n";
 
 
 echo "<tr><td class='infocell'>" . _("Division") . ":</td><td><select class='dropdown' name='pool'>\n";
@@ -214,7 +216,7 @@ echo "<option class='dropdown' value='0'></option>";
 
 $pools = SeasonPools($season);
 foreach ($pools as $row) {
-	if ($row['pool_id'] == $info['pool'])
+	if ($row['pool_id'] == $game->getPool())
 		echo "<option class='dropdown' selected='selected' value='" . utf8entities($row['pool_id']) . "'>" . utf8entities(U_($row['seriesname'])) . ", " . utf8entities(U_($row['poolname'])) . "</option>";
 	else
 		echo "<option class='dropdown' value='" . utf8entities($row['pool_id']) . "'>" . utf8entities(U_($row['seriesname'])) . ", " . utf8entities(U_($row['poolname'])) . "</option>";
@@ -223,10 +225,10 @@ echo "</select></td></tr>\n";
 
 echo "<tr><td class='infocell'>" . _("Responsible team") . ":</td><td>";
 //TeamSelectionList('respteam', $info['respteam'], $seriesId);
-TeamSelectionListNew('respteam', $info['respteam'], $info['respteam'], $poolId);
+TeamSelectionListNew('respteam', $game->getRespTeam(), $game->getRespTeam(), $poolId);
 echo "</td></tr>";
 echo "<tr><td class='infocell' style='vertical-align:text-top;'>" . _("Responsible person") . ":</td><td>";
-$users = GameAdmins($gameId);
+$users = $game->getAdmins();
 foreach ($users as $user) {
 	echo utf8entities($user['name']) . "<br/>";
 }
@@ -235,16 +237,16 @@ echo _("E-Mail") . " <input class='input' size='20' name='email'/>\n";
 echo "</td></tr>";
 
 echo "<tr><td class='infocell'>" . _("Name") . ":</td>";
-echo "<td>" . TranslatedField("name", $info['gamename']);
+echo "<td>" . TranslatedField("name", $game->getName());
 echo TranslationScript("name");
 echo "</td></tr>\n";
 
-if (intval($info['valid'])) {
+if ($game->isValid()) {
 	echo "<tr><td class='infocell'>" . _("Valid") . ":</td>
-		<td><input class='input' type='checkbox' id='valid' name='valid' checked='checked' value='" . utf8entities($info['valid']) . "'/></td></tr>";
+		<td><input class='input' type='checkbox' id='valid' name='valid' checked='checked' value='" . $game->isValid() . "'/></td></tr>";
 } else {
 	echo "<tr><td class='infocell'>" . _("Valid") . ":</td>
-		<td><input class='input' type='checkbox' id='valid' name='valid' value='" . utf8entities($info['valid']) . "'/></td></tr>";
+		<td><input class='input' type='checkbox' id='valid' name='valid' value='" . $game->isValid() . "'/></td></tr>";
 }
 
 echo "</table>";

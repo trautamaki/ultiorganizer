@@ -90,7 +90,7 @@ if ($teamId) {
 } else {
 	$seasonname = SeasonName($season);
 
-	while ($gameRow = GetDatabase()->FetchAssoc($games)) {
+	foreach ($games as $game) {
 
 		if ($filter2 == "teams") {
 			if (!$gameRow['hometeam'] || !$gameRow['visitorteam']) {

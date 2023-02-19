@@ -1,5 +1,6 @@
 <?php
 include_once 'localization.php';
+include_once 'classes/Game.php';
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns='http://www.w3.org/1999/xhtml' xml:lang='fi' lang='fi'>
@@ -154,7 +155,7 @@ include_once 'localization.php';
           $games++;
           $game = "&nbsp;";
           if (!$pseudoteams) {
-            $results = GameHomeTeamResults($team['team_id'], $pool['pool_id']);
+            $results = Game::getHomeTeamResults($team['team_id'], $pool['pool_id']);
             foreach ($results as $res) {
               $game .= $res['homescore'] . "-" . $res['visitorscore'];
             }

@@ -1,14 +1,16 @@
 <?php
+include_once 'classes/Game.php';
 
 $html = "";
 $errors = "";
 $errors = false;
 $gameId = isset($_GET['game']) ? $_GET['game'] : $_SESSION['game'];
 $_SESSION['game'] = $gameId;
+$game = new Game(GetDatabase(), $gameId);
 
-$seasoninfo = SeasonInfo(GameSeason($gameId));
-$game_result = GameResult($gameId);
-$result = GameGoals($gameId);
+$seasoninfo = SeasonInfo($game->getSeason());
+$game_result = $game->getResult();
+$result = $game->getGoals();
 $scores = array();
 while ($row = GetDatabase()->FetchAssoc($result)) {
   $scores[] = $row;
@@ -103,11 +105,11 @@ if (isset($_POST['add']) || isset($_POST['forceadd'])) {
   }
 
   if (empty($errors) || isset($_POST['forceadd'])) {
-    GameAddScoreEntry($uo_goal);
-    $result = GameResult($gameId);
+    $game->addScoreEntry($uo_goal);
+    $result = $game->getResult();
     //save as result, if result is not already set
     if (($uo_goal['homescore'] + $uo_goal['visitorscore']) > ($result['homescore'] + $result['visitorscore'])) {
-      GameUpdateResult($gameId, $uo_goal['homescore'], $uo_goal['visitorscore']);
+      $game->updateResult($uo_goal['homescore'], $uo_goal['visitorscore']);
     }
     header("location:?view=addscoresheet&game=" . $gameId);
   }
@@ -120,7 +122,7 @@ if (isset($_POST['add']) || isset($_POST['forceadd'])) {
     $home = $lastscore['homescore'];
     $away = $lastscore['visitorscore'];
   }
-  GameSetResult($gameId, $home, $away);
+  $game->setResult($home, $away);
   header("location:?view=gameplay&game=" . $gameId);
 }
 
@@ -184,9 +186,9 @@ $html .= "</div>";
 $played_players = array();
 
 if ($team == 'H') {
-  $played_players = GamePlayers($gameId, $game_result['hometeam']);
+  $played_players = $game->getPlayers($game_result['hometeam']);
 } elseif ($team == 'A') {
-  $played_players = GamePlayers($gameId, $game_result['visitorteam']);
+  $played_players = $game->getPlayers($game_result['visitorteam']);
 }
 
 $html .= "<label for='pass' class='select'>" . _("Assist") . "</label>";
@@ -290,7 +292,7 @@ echo $html;
   var homelist = <?php
                   echo "\"";
                   echo "<option value='0'>-</option>";
-                  $played_players = GamePlayers($gameId, $game_result['hometeam']);
+                  $played_players = $game->getPlayers($game_result['hometeam']);
                   foreach ($played_players as $player) {
                     echo "<option value='" . utf8entities($player['player_id']) . "'>#" . $player['num'] . " " . utf8entities($player['firstname'] . " " . $player['lastname']) . "</option>";
                   }
@@ -300,7 +302,7 @@ echo $html;
 
   var awaylist = <?php
                   echo "\"";
-                  $played_players = GamePlayers($gameId, $game_result['visitorteam']);
+                  $played_players = $game->getPlayers($game_result['visitorteam']);
                   echo "<option value='0'>-</option>";
                   foreach ($played_players as $player) {
                     echo "<option value='" . utf8entities($player['player_id']) . "'>#" . $player['num'] . " " . utf8entities($player['firstname'] . " " . $player['lastname']) . "</option>";

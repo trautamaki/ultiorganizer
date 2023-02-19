@@ -4,12 +4,15 @@ include_once $include_prefix . 'lib/game.functions.php';
 include_once $include_prefix . 'lib/team.functions.php';
 include_once $include_prefix . 'lib/player.functions.php';
 
+include_once $include_prefix . 'classes/Game.php';
+
 $LAYOUT_ID = ADDPLAYERLISTS;
 $title = _("Rosters");
 $gameId = intval($_GET["game"]);
-$game_result = GameResult($gameId);
+$game = new Game(GetDatabase(), $gameId);
+$game_result = $game->getResult();
 
-$season = GameSeason($gameId);
+$season = $game->getSeason();
 if (isset($_SERVER['HTTP_REFERER'])) {
   $backurl = utf8entities($_SERVER['HTTP_REFERER']);
 } else {
@@ -27,7 +30,7 @@ if (!empty($_POST['save'])) {
   $backurl = $_POST['backurl'];
   LogGameUpdate($gameId, "playerlist saved", "addplayerlist");
   //HOME PLAYERS
-  $played_players = GamePlayers($gameId, $game_result['hometeam']);
+  $played_players = $game->getPlayers($game_result['hometeam']);
 
   //delete unchecked players
   foreach ($played_players as $player) {
@@ -41,7 +44,7 @@ if (!empty($_POST['save'])) {
       }
     }
     if (!$found) {
-      GameRemovePlayer($gameId, $player['player_id']);
+      $game->removePlayer($player['player_id']);
     }
   }
 
@@ -52,7 +55,7 @@ if (!empty($_POST['save'])) {
       //if number
       if (is_numeric($number)) {
         //check if already in list with correct number
-        $played_players = GamePlayers($gameId, $game_result['hometeam']);
+        $played_players = $game->getPlayers($game_result['hometeam']);
         $found = false;
         foreach ($played_players as $player) {
           //$html .= "<p>".$player['player_id']."==".$playerId ."&&". $player['num']."==".$number."</p>";
@@ -64,7 +67,7 @@ if (!empty($_POST['save'])) {
           }
           //if found, but with different number
           if ($player['player_id'] == $playerId && $player['num'] != $number) {
-            GameSetPlayerNumber($gameId, $playerId, $number);
+            $game->setPlayerNumber($playerId, $number);
             $found = true;
             break;
           }
@@ -80,7 +83,7 @@ if (!empty($_POST['save'])) {
         }
 
         if (!$found) {
-          GameAddPlayer($gameId, $playerId, $number);
+          $game->addPlayer($playerId, $number);
         }
       } else {
         $playerinfo = PlayerInfo($playerId);
@@ -89,7 +92,7 @@ if (!empty($_POST['save'])) {
     }
   }
   //AWAY PLAYERS
-  $played_players = GamePlayers($gameId, $game_result['visitorteam']);
+  $played_players = $game->getPlayers($game_result['visitorteam']);
 
   //delete unchecked players
   foreach ($played_players as $player) {
@@ -103,7 +106,7 @@ if (!empty($_POST['save'])) {
       }
     }
     if (!$found) {
-      GameRemovePlayer($gameId, $player['player_id']);
+      $game->removePlayer($player['player_id']);
     }
   }
 
@@ -114,7 +117,7 @@ if (!empty($_POST['save'])) {
       //if number
       if (is_numeric($number)) {
         //check if already in list with correct number
-        $played_players = GamePlayers($gameId, $game_result['visitorteam']);
+        $played_players = $game->getPlayers($game_result['visitorteam']);
         $found = false;
         foreach ($played_players as $player) {
           //$html .= "<p>".$player['player_id']."==".$playerId ."&&". $player['num']."==".$number."</p>";
@@ -126,7 +129,7 @@ if (!empty($_POST['save'])) {
           }
           //if found, but with different number
           if ($player['player_id'] == $playerId && $player['num'] != $number) {
-            GameSetPlayerNumber($gameId, $playerId, $number);
+            $game->setPlayerNumber($playerId, $number);
             $found = true;
             break;
           }
@@ -142,7 +145,7 @@ if (!empty($_POST['save'])) {
         }
 
         if (!$found) {
-          GameAddPlayer($gameId, $playerId, $number);
+          $game->addPlayer($playerId, $number);
         }
       } else {
         $playerinfo = PlayerInfo($playerId);
@@ -212,7 +215,7 @@ $html .= utf8entities($game_result['hometeamname']) . "</b></td></tr>\n";
 $html .= "</table><div id='home'><table width='100%' cellspacing='0' cellpadding='3' border='0'>";
 $html .= "<tr><th class='home'>" . _("Name") . "</th><th class='home right' style='white-space: nowrap' >" . _("Played") . " <input type='checkbox' onclick='checkAll(\"home\");'/></th><th class='home'>" . _("Jersey#") . "</th></tr>\n";
 
-$played_players = GamePlayers($gameId, $game_result['hometeam']);
+$played_players = $game->getPlayers($game_result['hometeam']);
 
 $i = 0;
 while ($player = GetDatabase()->FetchAssoc($home_playerlist)) {
@@ -256,7 +259,7 @@ $html .= utf8entities($game_result['visitorteamname']) . "</b></td></tr>\n";
 $html .= "</table><div id='away'><table width='100%' cellspacing='0' cellpadding='3' border='0'>";
 $html .= "<tr><th class='guest'>" . _("Name") . "</th><th class='guest right' style='white-space: nowrap'>" . _("Played") . " <input type='checkbox' onclick='checkAll(\"away\");'/></th><th class='guest'>" . _("Jersey#") . "</th></tr>\n";
 
-$played_players = GamePlayers($gameId, $game_result['visitorteam']);
+$played_players = $game->getPlayers($game_result['visitorteam']);
 
 $i = 0;
 while ($player = GetDatabase()->FetchAssoc($away_playerlist)) {

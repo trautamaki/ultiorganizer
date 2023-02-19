@@ -27,7 +27,7 @@ if (!empty($_POST['add'])) {
       $reservations = $_POST["reservations"];
       foreach ($reservations as $res) {
         $games = ReservationGames($res);
-        while ($game = GetDatabase()->FetchAssoc($games)) {
+        foreach ($games as $game) {
           AddSeasonUserRole($userid, 'gameadmin:' . $game['game_id'], $seasonId);
         }
       }
@@ -146,7 +146,7 @@ foreach ($admins as $user) {
 
 $teamresp = 0;
 foreach ($seasongames as $game) {
-  if (!empty($game['respteam'])) {
+  if (!empty($game->getRespTeam())) {
     $teamresp++;
   }
 }

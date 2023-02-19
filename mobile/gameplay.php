@@ -1,12 +1,15 @@
 <?php
+include_once 'classes/Game.php';
+
 include_once 'lib/common.functions.php';
 include_once 'lib/game.functions.php';
 $html = "";
 
 $gameId = intval(iget("game"));
-$game_result = GameResult($gameId);
-$goals = GameGoals($gameId);
-$gameevents = GameEvents($gameId);
+$game = new Game(GetDatabase(), $gameId);
+$game_result = $game->getResult();
+$goals = $game->getGoals();
+$gameevents = $game->getEvents();
 
 mobilePageTop(_("Game play"));
 

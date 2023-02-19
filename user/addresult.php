@@ -8,11 +8,14 @@ include_once $include_prefix . 'lib/configuration.functions.php';
 if (version_compare(PHP_VERSION, '5.0.0', '>')) {
 	include_once 'lib/twitter.functions.php';
 }
+
+include_once 'classes/Game.php';
+
 $html = "";
 $html2 = "";
 $gameId = intval($_GET["game"]);
-$game_result = GameInfo($gameId);
-$seasoninfo = SeasonInfo($game_result['season']);
+$game = new Game(GetDatabase(), $gameId);
+$seasoninfo = SeasonInfo($game->getSeason());
 
 $LAYOUT_ID = ADDRESULT;
 $title = _("Result");
@@ -21,29 +24,26 @@ $title = _("Result");
 if (!empty($_POST['save'])) {
 	$home = intval($_POST['home']);
 	$away = intval($_POST['away']);
-	$ok = GameSetResult($gameId, $home, $away);
+	$ok = $game->setResult($home, $away);
 	if ($ok) {
 		$html2 .= "<p>" . sprintf(_("Final result saved: %s - %s."), $home, $away) . " ";
 		if ($home > $away) {
-			$html2 .=  sprintf(_("Winner is <span style='font-weight:bold'>%s</span>."), utf8entities($game_result['hometeamname']));
+			$html2 .=  sprintf(_("Winner is <span style='font-weight:bold'>%s</span>."), TeamName($game->getHomeTeam()));
 		} elseif ($away > $home) {
-			$html2 .=  sprintf(_("Winner is <span style='font-weight:bold'>%s</span>."), utf8entities($game_result['visitorteamname']));
+			$html2 .=  sprintf(_("Winner is <span style='font-weight:bold'>%s</span>."), TeamName($game->getVisitorTeam()));
 		}
 		$html2 .= "</p>";
 	}
-	$game_result = GameInfo($gameId);
 } elseif (isset($_POST['update'])) {
 	$home = intval($_POST['home']);
 	$away = intval($_POST['away']);
-	$ok = GameUpdateResult($gameId, $home, $away);
+	$ok = $game->updateResult($home, $away);
 	$html2 .= "<p>" . sprintf(_("Game ongoing. Current score: %s - %s."), $home, $away) . "</p>";
-	$game_result = GameInfo($gameId);
 } elseif (isset($_POST['clear'])) {
-	$ok = GameClearResult($gameId);
+	$ok = $game->clearResult();
 	if ($ok) {
 		$html2 .= "<p>" . _("Game reset") . ".</p>";
 	}
-	$game_result = GameInfo($gameId);
 }
 
 //common page
@@ -68,26 +68,26 @@ pageMenu($menutabs);
 
 $html .= "<form  method='post' action='?view=user/addresult&amp;game=" . $gameId . "'>
 <table cellpadding='2'>
-<tr><td><b>" . utf8entities($game_result['hometeamname']) . "</b></td><td><b> - </b></td><td><b>" . utf8entities($game_result['visitorteamname']) . "</b></td></tr>";
+<tr><td><b>" . TeamName($game->getHomeTeam()) . "</b></td><td><b> - </b></td><td><b>" . TeamName($game->getVisitorTeam()) . "</b></td></tr>";
 
 $html .= "<tr><td>";
-if ($game_result['isongoing'])
+if ($game->isOngoing())
 	$html .= _("Game is running.");
-else if ($game_result['hasstarted'])
+else if ($game->hasStarted())
 	$html .= _("Game is finished.");
 $html .= "<tr><td>";
 
 $html .= "<tr>
-<td><input class='input' name='home' value='" . utf8entities($game_result['homescore']) . "' maxlength='4' size='5'/></td>
+<td><input class='input' name='home' value='" . $game->getHomeScore() . "' maxlength='4' size='5'/></td>
 <td> - </td>
-<td><input class='input' name='away' value='" . utf8entities($game_result['visitorscore']) . "' maxlength='4' size='5'/></td></tr>
+<td><input class='input' name='away' value='" . $game->getVisitorScore() . "' maxlength='4' size='5'/></td></tr>
 </table>";
 
-if ($game_result['homevalid'] == 2) {
-	$poolInfo = PoolInfo($game_result['pool']);
+if (TeamInfo($game->getHomeTeam())['valid'] == 2) {
+	$poolInfo = PoolInfo($game->getPool());
 	$html .= "<p>" . "The home team is the BYE team. You should use the suggested result: " . $poolInfo['forfeitagainst'] . " - " . $poolInfo['forfeitscore'] . "</p>";
-} elseif ($game_result['visitorvalid'] == 2) {
-	$poolInfo = PoolInfo($game_result['pool']);
+} elseif (TeamInfo($game->getVisitorTeam())['valid'] == 2) {
+	$poolInfo = PoolInfo($game->getPool());
 	$html .= "<p>" . "The visitor team is the BYE team. You should use the suggested result: " . $poolInfo['forfeitscore'] . " - " . $poolInfo['forfeitagainst'] . "</p>";
 }
 

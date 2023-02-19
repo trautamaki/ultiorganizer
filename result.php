@@ -7,30 +7,42 @@ include_once 'lib/configuration.functions.php';
 if (version_compare(PHP_VERSION, '5.0.0', '>')) {
   include_once 'lib/twitter.functions.php';
 }
+
+include_once 'classes/Game.php';
+
+$home = intval($_POST['home']);
+$away = intval($_POST['away']);
+$game_num = intval($_POST['game']);
+$gameId = (int) substr($game, 0, -1);
+$game = new Game(GetDatabase(), $gameId);
+
 $html = "";
 
 $errors = "";
 if (!empty($_POST['save'])) {
-  $game = intval($_POST['game']);
-  $home = intval($_POST['home']);
-  $away = intval($_POST['away']);
-  $errors = CheckGameResult($game, $home, $away);
-  $gameId = (int) substr($game, 0, -1);
+	if ($gameId == 0 || !checkChkNum($game)) {
+		$errors .= "<p class='warning'>" . _("Erroneous scoresheet number:") . " " . $game . "</p>";
+  }
+
+  $errors .= $game->checkResult($home, $away);
 }
+
 if (!empty($_POST['confirm'])) {
-  $game = intval($_POST['game']);
-  $home = intval($_POST['home']);
-  $away = intval($_POST['away']);
-  $errors = CheckGameResult($game, $home, $away);
+	if ($gameId == 0 || !checkChkNum($game)) {
+		$errors .= "<p class='warning'>" . _("Erroneous scoresheet number:") . " " . $game . "</p>";
+  }
+
+  $errors .= $game->checkResult($home, $away);
   if (empty($errors)) {
-    $gameId = (int) substr($game, 0, -1);
-    GameSetResult($gameId, $home, $away, true, false);
+    $game->setResult($home, $away, true, false);
     header("location:?" . $_SERVER['QUERY_STRING']);
   }
 }
+
 if (!empty($_POST['cancel'])) {
   $html .= "<p class='warning'>" . _("Result not saved!") . "</p>";
 }
+
 PageTop(_("Add result"));
 
 $html .= $errors;
@@ -43,24 +55,23 @@ if (!empty($_POST['save']) && empty($errors)) {
   $html .= "<input class='input' type='hidden' id='game' name='game' value='$game'/> ";
   $html .= "<input class='input' type='hidden' id='home' name='home' value='$home'/> ";
   $html .= "<input class='input' type='hidden' id='away' name='away' value='$away'/> ";
-  $game_result = GameInfo($gameId);
   $html .= "<p>";
-  $html .= ShortDate($game_result['time']) . " " . DefHourFormat($game_result['time']) . " ";
-  if (!empty($game_result['fieldname'])) {
-    $html .=  _("on field") . " " . utf8entities($game_result['fieldname']);
+  $html .= ShortDate($game->getTime()) . " " . DefHourFormat($game->getTime()) . " ";
+  if (!empty($game->getFieldName())) {
+    $html .=  _("on field") . " " . utf8entities($game->getFieldName());
   }
   $html .=  "<br/>";
-  $html .=  U_($game_result['seriesname']) . ", " . U_($game_result['poolname']);
+  $html .=  U_(SeriesName($game->getSeries())) . ", " . U_(PoolName($game->getPool()));
   $html .=  "</p>";
   $html .= "<p>";
-  $html .= utf8entities($game_result['hometeamname']);
+  $html .= utf8entities(TeamName($game->getHomeTeam()));
   $html .= " - ";
-  $html .= utf8entities($game_result['visitorteamname']);
+  $html .= utf8entities(TeamName($game->getVisitorTeam()));
   $html .=  " ";
 
-  if (GameHasStarted($game_result)) {
+  if ($game->hasStarted()) {
     $html .=  "<br/>";
-    $html .= _("Game is already played. Result:") . " " . intval($game_result['homescore']) . " - " . $game_result['visitorscore'] . ".";
+    $html .= _("Game is already played. Result:") . " " . intval($game->getHomeScore()) . " - " . $game->getVisitorScore() . ".";
     $html .=  "<br/><br/>";
     $html .=  "<span style='font-weight:bold'>" . _("Change result to") . " $home - $away?" . "</span>";
   } else {
@@ -70,9 +81,9 @@ if (!empty($_POST['save']) && empty($errors)) {
   $html .=  "<br/><br/>";
   $html .=  _("Winner is") . " <span style='font-weight:bold'>";
   if ($home > $away) {
-    $html .= utf8entities($game_result['hometeamname']);
+    $html .= utf8entities(TeamName($game->getHomeTeam()));
   } else {
-    $html .= utf8entities($game_result['visitorteamname']);
+    $html .= utf8entities(TeamName($game->getVisitorTeam()));
   }
   $html .=  "?</span> ";
   $html .= "<br/><br/><input class='button' type='submit' name='confirm' value='" . _("Confirm") . "'/> ";

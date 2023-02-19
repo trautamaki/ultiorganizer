@@ -1,4 +1,5 @@
 <?php
+include_once $include_prefix . 'classes/Game.php';
 
 function DetectTiesInPreviousPool($poolId)
 {
@@ -291,9 +292,8 @@ function TeamsHavePlayed($teamid1, $teamid2, $games)
 	//	print "Checking if ".$team1['name']." has played against ".$team2['name'];
 
 	// now just look down the list and see if these teams have played
-	while ($i < count($games)) {
-		$game = GameResult($games[$i]);
-		if (($game['hometeam'] == $teamid1 && $game['visitorteam'] == $teamid2) || ($game['hometeam'] == $teamid2 && $game['visitorteam'] == $teamid1)) {
+	foreach ($games as $game) {
+		if (($game->getHomeTeam() == $teamid1 && $game->getVisitorTeam() == $teamid2) || ($game->getHomeTeam() == $teamid2 && $game->getVisitorTeam() == $teamid1)) {
 			//			print " yes <br>";
 			return (true);
 		}

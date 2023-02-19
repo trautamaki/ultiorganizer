@@ -1007,7 +1007,7 @@ function PoolIsAllMoved($topool)
  *
  * @param int $poolId
  * @param int $mvgames: 0 - all, 1 - nothing, 2 - mutual
- * @return PHP array of game ids to move
+ * @return array of game ids to move
  */
 function PoolGetGamesToMove($poolId, $mvgames)
 {
@@ -1026,7 +1026,7 @@ function PoolGetGamesToMove($poolId, $mvgames)
             }
           }
           if (!$found) {
-            $games[] = $game['game_id'];
+            $games[] = new Game(GetDatabase(), $game['game_id']);
           }
         }
       }
@@ -1045,7 +1045,7 @@ function PoolGetGamesToMove($poolId, $mvgames)
                 }
               }
               if (!$found) {
-                $games[] = $game['game_id'];
+                $games[] = new Game(GetDatabase(), $game['game_id']);
               }
             }
           }
@@ -1166,7 +1166,12 @@ function PoolMovedGames($poolId)
     (int)$poolId
   );
 
-  return GetDatabase()->DBQueryToArray($query);
+  $result = GetDatabase()->DBQueryToArray($query);
+  $games = array();
+  foreach ($result as $game) {
+      array_push($games, new Game(GetDatabase(), $game['game_id']));
+  }
+  return $games;
 }
 
 /**
@@ -1878,12 +1883,12 @@ function PoolMakeMoves($poolId)
     $poolinfo = PoolInfo($poolId);
     $mvgames = intval($poolinfo['mvgames']);
     $games = PoolGetGamesToMove($poolId, $mvgames);
-    foreach ($games as $id) {
+    foreach ($games as $game) {
       $query = sprintf(
         "INSERT IGNORE INTO uo_game_pool
                     (game, pool, timetable)
                     VALUES (%d, %d, 0)",
-        (int)$id,
+        (int)$game->getId(),
         (int)$topool
       );
 

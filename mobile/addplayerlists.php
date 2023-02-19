@@ -3,20 +3,24 @@ include_once 'lib/common.functions.php';
 include_once 'lib/game.functions.php';
 include_once 'lib/team.functions.php';
 include_once 'lib/player.functions.php';
+
+include_once 'classes/Game.php';
+
 $html = "";
 
 $gameId = intval(iget("game"));
+$game = new Game(GetDatabase(), $gameId);
 
 if (iget("team")) {
 	$teamId = intval(iget("team"));
 } else {
-	$game_result = GameResult($gameId);
+	$game_result = $game->getResult();
 	$teamId = $game_result['hometeam'];
 }
 
 if (isset($_POST['save'])) {
 
-	$played_players = GamePlayers($gameId, $teamId);
+	$played_players = $game->getPlayers($teamId);
 
 	//delete unchecked players
 	foreach ($played_players as $player) {
@@ -29,8 +33,9 @@ if (isset($_POST['save'])) {
 				}
 			}
 		}
-		if (!$found)
-			GameRemovePlayer($gameId, $player['player_id']);
+		if (!$found) {
+			$game->removePlayer($player['player_id']);
+		}
 	}
 
 	//handle checked players
@@ -40,7 +45,7 @@ if (isset($_POST['save'])) {
 			//if number
 			if (is_numeric($number)) {
 				//check if already in list with correct number
-				$played_players = GamePlayers($gameId, $teamId);
+				$played_players = $game->getPlayers($teamId);
 				$found = false;
 				foreach ($played_players as $player) {
 
@@ -51,7 +56,7 @@ if (isset($_POST['save'])) {
 					}
 					//if found, but with different number
 					if ($player['player_id'] == $playerId && $player['num'] != $number) {
-						GameSetPlayerNumber($gameId, $playerId, $number);
+						$game->setPlayerNumber($playerId, $number);
 						$found = true;
 						break;
 					}
@@ -67,7 +72,7 @@ if (isset($_POST['save'])) {
 				}
 
 				if (!$found)
-					GameAddPlayer($gameId, $playerId, $number);
+					$game->addPlayer($playerId, $number);
 			} else {
 				$playerinfo = PlayerInfo($playerId);
 				$html .= "<p  class='warning'><i>" . utf8entities($playerinfo['firstname'] . " " . $playerinfo['lastname']) . "</i> " . _("erroneous number") . " '$number'.</p>";
@@ -76,7 +81,8 @@ if (isset($_POST['save'])) {
 	}
 
 	if (empty($html)) {
-		$game_result = GameResult($gameId);
+		$game = new Game(GetDatabase(), $gameId);
+		$game_result = $game->getResult();
 		if ($teamId == $game_result['hometeam']) {
 			header("location:?view=mobile/addplayerlists&game=" . $gameId . "&team=" . $game_result['visitorteam']);
 		} elseif ($teamId == $game_result['visitorteam']) {
@@ -94,7 +100,7 @@ $html .= "<table cellpadding='2'>\n";
 $html .= "<tr><td>\n";
 $html .= "<b>" . utf8entities(TeamName($teamId)) . "</b> " . _("roster");
 
-$played_players = GamePlayers($gameId, $teamId);
+$played_players = $game->getPlayers($teamId);
 
 $i = 0;
 while ($player = GetDatabase()->FetchAssoc($playerlist)) {

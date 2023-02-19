@@ -46,18 +46,19 @@ echo "BEGIN:VCALENDAR\n";
 echo "VERSION:2.0\n";
 echo "PRODID: " . _("Ultiorganizer") . "\n\n";
 
-while ($game = GetDatabase()->FetchAssoc($games)) {
-  $location = LocationInfo($game['place_id']);
+foreach ($games  as $games) {
+  // TODO add properties
+  $location = LocationInfo($game->getPlace());
   echo "\nBEGIN:VEVENT";
-  echo "\nSUMMARY:" . TeamName($game['hometeam']) . "-" . TeamName($game['visitorteam']);
-  echo "\nDESCRIPTION:" . U_($game['seriesname']) . ": " . U_($game['poolname']);
-  echo "\nLOCATION: " . $game['placename'] . " " . $game['fieldname'];
-  if (!empty($game['timezone'])) {
-    echo "\nDTSTART;TZID=" . $game['timezone'] . ":" . TimeToIcal($game['time']);
+  echo "\nSUMMARY:" . TeamName($game->getHomeTeam()) . "-" . TeamName($game->getVisitorTeam());
+  echo "\nDESCRIPTION:" . U_(SeriesName($game->getSeries())) . ": " . U_(PoolName($game->getPool()));
+  echo "\nLOCATION: " . $game->getPlaceName() . " " . $game->getField();
+  if (!empty($game->getTimezone())) {
+    echo "\nDTSTART;TZID=" . $game->getTimezone() . ":" . TimeToIcal($game->getTime());
   } else {
-    echo "\nDTSTART:" . TimeToIcal($game['time']);
+    echo "\nDTSTART:" . TimeToIcal($game->getTime());
   }
-  echo "\nDURATION: P" . intval($game['timeslot']) . "M";
+  echo "\nDURATION: P" . intval($game->getTimeslot()) . "M";
   echo "\nGEO:" . $location['lat'] . ";" . $location['lng'];
   echo "\nEND:VEVENT\n";
 }

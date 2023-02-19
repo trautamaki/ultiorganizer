@@ -108,7 +108,7 @@ function SeriesTypes()
  * Get all teams playing in given division.
  * @param int $seriesId uo_series.series_id
  * @param boolean $orderbyseeding TRUE if order by seeding otherwise order by name.
- * @return PHP array of teams.
+ * @return array of teams.
  */
 function SeriesTeams($seriesId, $orderbyseeding = false)
 {
@@ -140,7 +140,7 @@ function SeriesTeams($seriesId, $orderbyseeding = false)
 /**
  * Get all teams in given division without pool.
  * @param int $seriesId uo_series.series_id
- * @return PHP array of teams.
+ * @return array of teams.
  */
 function SeriesTeamsWithoutPool($seriesId)
 {
@@ -451,7 +451,7 @@ function SeriesSpiritBoard($seriesId)
 /**
  * Get all games in given division.
  * @param int $seriesId uo_series.series_id
- * @return PHP array of games.
+ * @return array of games.
  */
 function SeriesAllGames($seriesId)
 {
@@ -466,7 +466,12 @@ function SeriesAllGames($seriesId)
     (int) $seriesId
   );
 
-  return GetDatabase()->DBQueryToArray($query);
+  $result = GetDatabase()->DBQueryToArray($query);
+  $games = array();
+  foreach ($result as $game) {
+      array_push($countries, new Game(GetDatabase(), $game['game_id']));
+  }
+  return $games;
 }
 
 /**

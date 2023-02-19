@@ -48,12 +48,12 @@ function ReservationGames($placeId, $seasonId = "")
 
 	$query .= " ORDER BY pp.time ASC";
 
-	$result = GetDatabase()->DBQuery($query);
-	if (!$result) {
-		die('Invalid query: ' . GetDatabase()->SQLError());
+	$result = GetDatabase()->DBQueryToArray($query);
+	$games = array();
+	foreach ($result as $game) {
+		array_push($countries, new Game(GetDatabase(), $game['game_id']));
 	}
-
-	return  $result;
+	return $games;
 }
 
 
@@ -97,12 +97,12 @@ function ReservationGamesByField($fieldname, $seasonId = "")
 
 	$query .= " ORDER BY pp.time ASC";
 
-	$result = GetDatabase()->DBQuery($query);
-	if (!$result) {
-		die('Invalid query: ' . GetDatabase()->SQLError());
+	$result = GetDatabase()->DBQueryToArray($query);
+	$games = array();
+	foreach ($result as $game) {
+		array_push($games, new Country(GetDatabase(), $game['game_id']));
 	}
-
-	return  $result;
+	return $games;
 }
 
 function ReservationFields($seasonId)
@@ -155,12 +155,12 @@ function ResponsibleReservationGames($placeId, $gameResponsibilities)
 	$query .= " AND game_id IN (" . implode(",", $gameResponsibilities) . ")
 		ORDER BY pp.time ASC";
 
-	$result = GetDatabase()->DBQuery($query);
-	if (!$result) {
-		die('Invalid query: ' . GetDatabase()->SQLError());
+	$result = GetDatabase()->DBQueryToArray($query);
+	$games = array();
+	foreach ($result as $game) {
+		array_push($games, new Country(GetDatabase(), $game['game_id']));
 	}
-
-	return $result;
+	return $games;
 }
 
 function ReservationSeasons($reservationId)
@@ -275,8 +275,8 @@ function ReservationInfoArray($reservations)
 		$nextInfo = ReservationInfo($row[1]);
 		$nextGames = array();
 		$gameResults = ReservationGames($row[1]);
-		while ($gameRow = GetDatabase()->FetchAssoc($gameResults)) {
-			$nextGames["" . $gameRow['game_id']] = $gameRow;
+		foreach ($gameResults as $game) {
+			$nextGames["" . $game->getId()] = $game;
 		}
 		$nextInfo['games'] = $nextGames;
 		$next["" . $row[1]] = $nextInfo;

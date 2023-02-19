@@ -23,6 +23,8 @@ include_once 'lib/season.functions.php';
 include_once 'lib/series.functions.php';
 include_once 'lib/standings.functions.php';
 
+include_once 'classes/Game.php';
+
 function undoPoolMoves($poolId)
 {
 	$frompools = PoolMovingsToPool($poolId);
@@ -55,29 +57,29 @@ if (isset($_POST['simulate']) && !empty($_POST['pools'])) {
 	foreach ($pools as $poolId) {
 
 		$poolinfo = PoolInfo($poolId);
-		$games = PoolGames($poolId);
+		$games = PoolGames($poolId); // TODO return game objects
 		set_time_limit(300); //game simulation takes time because so much inserts
 
-		foreach ($games as $game) {
-			$info = GameInfo($game['game_id']);
+		foreach ($games as $gameinfo) {
+			$game = new Game(GetDatabase(), $gameinfo['game_id']);
 
 			//all players in roster are playing
-			$home_playerlist = TeamPlayerList($info['hometeam']);
+			$home_playerlist = TeamPlayerList($game->getHomeTeam());
 			$hplayers = array();
 			while ($player = GetDatabase()->FetchAssoc($home_playerlist)) {
-				GameAddPlayer($game['game_id'], $player['player_id'], intval($player['num']));
+				$game->addPlayer($player['player_id'], intval($player['num']));
 				$hplayers[] = intval($player['num']);
 			}
 			$hplayers[] = 'xx'; //callahan
-			$away_playerlist = TeamPlayerList($info['visitorteam']);
+			$away_playerlist = TeamPlayerList($game->getVisitorTeam());
 			$aplayers = array();
 			while ($player = GetDatabase()->FetchAssoc($away_playerlist)) {
-				GameAddPlayer($game['game_id'], $player['player_id'], intval($player['num']));
+				$game->addPlayer($player['player_id'], intval($player['num']));
 				$aplayers[] = intval($player['num']);
 			}
 			$aplayers[] = 'xx'; //callahan
 
-			GameSetStartingTeam($game['game_id'], rand(0, 1));
+			$game->setStartingTeam(rand(0, 1));
 
 			$h = 0;
 			$a = 0;
@@ -109,10 +111,10 @@ if (isset($_POST['simulate']) && !empty($_POST['pools'])) {
 						$iscallahan = 1;
 						$pass = -1;
 					} else {
-						$pass = GamePlayerFromNumber($game['game_id'], $info['hometeam'], $pass);
+						$pass = $game->getPlayerFromNumber($game->getHomeTeam(), $pass);
 					}
 					$goal = $hplayers[rand(0, count($hplayers) - 2)]; //-2 removes callahan
-					$goal = GamePlayerFromNumber($game['game_id'], $info['hometeam'], $goal);
+					$goal = $game->getPlayerFromNumber($game->getHomeTeam(), $goal);
 				} else {
 					$a++;
 					$pass = $aplayers[rand(0, count($aplayers) - 1)];
@@ -121,15 +123,15 @@ if (isset($_POST['simulate']) && !empty($_POST['pools'])) {
 						$iscallahan = 1;
 						$pass = -1;
 					} else {
-						$pass = GamePlayerFromNumber($game['game_id'], $info['visitorteam'], $pass);
+						$pass = $game->getPlayerFromNumber($game->getVisitorTeam(), $pass);
 					}
 					$goal = $aplayers[rand(0, count($aplayers) - 1)]; //-1 removes callahan
-					$goal = GamePlayerFromNumber($game['game_id'], $info['visitorteam'], $goal);
+					$goal = $game->getPlayerFromNumber($game->getVisitorTeam(), $goal);
 				}
-				GameAddScore($game['game_id'], $pass, $goal, $time, $i + 1, $h, $a, $home, $iscallahan);
+				$game->addScore($pass, $goal, $time, $i + 1, $h, $a, $home, $iscallahan);
 				if ($h == $poolinfo['halftimescore'] || $a == $poolinfo['halftimescore']) {
 					$time = $time + $poolinfo['halftime'];
-					GameSetHalftime($game['game_id'], $time);
+					$game->setHalftime($time);
 				}
 			}
 
@@ -142,7 +144,7 @@ if (isset($_POST['simulate']) && !empty($_POST['pools'])) {
 			sort($timeoutstime, SORT_NUMERIC);
 
 			for ($i = 0; $i <= $timeouts; $i++) {
-				GameAddTimeout($game['game_id'], $i + 1, $timeoutstime[$i], 1);
+				$game->addTimeout($i + 1, $timeoutstime[$i], 1);
 			}
 
 			//away team timeouts
@@ -154,13 +156,13 @@ if (isset($_POST['simulate']) && !empty($_POST['pools'])) {
 			sort($timeoutstime, SORT_NUMERIC);
 
 			for ($i = 0; $i <= $timeouts; $i++) {
-				GameAddTimeout($game['game_id'], $i + 1, $timeoutstime[$i], 0);
+				$game->addTimeout($i + 1, $timeoutstime[$i], 0);
 			}
 
 			//game official
-			GameSetScoreSheetKeeper($game['game_id'], "Game Simulator");
+			$game->setOfficial("Game Simulator");
 
-			GameSetResult($game['game_id'], $h, $a, false);
+			$game->setResult($h, $a, false);
 		}
 		ResolvePoolStandings($poolId);
 		PoolResolvePlayed($poolId);
@@ -175,20 +177,22 @@ if (isset($_POST['simulate']) && !empty($_POST['pools'])) {
 		$games = PoolGames($poolId);
 		set_time_limit(300); //game simulation takes time because so much inserts
 
+		// TODO update loop
 		foreach ($games as $game) {
+			$game = new Game(GetDatabase(), $game['game_id']);
 
-			GameRemoveAllPlayers($game['game_id']);
+			$game->removeAllPlayers();
 
-			GameSetStartingTeam($game['game_id'], NULL);
+			$game->setStartingTeam(NULL);
 
-			GameRemoveAllScores($game['game_id']);
-			GameSetHalftime($game['game_id'], NULL);
+			$game->removeAllScores();
+			$game->setHalftime(NULL);
 
-			GameRemoveAllTimeouts($game['game_id']);
+			$game->removeAllTimeouts();
 
-			GameSetScoreSheetKeeper($game['game_id'], NULL);
+			$game->setOfficial(NULL);
 
-			GameClearResult($game['game_id'], false);
+			$game->clearResult(false);
 		}
 
 		undoPoolMoves($poolId);

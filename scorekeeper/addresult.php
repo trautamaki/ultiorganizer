@@ -1,23 +1,25 @@
 <?php
+include_once 'classes/Game.php';
 
 $html = "";
 $info = "";
 
 $gameId = isset($_GET['game']) ? $_GET['game'] : $_SESSION['game'];
 $_SESSION['game'] = $gameId;
+$game = new Game(GetDatabase(), $gameId);
 
 if (isset($_POST['save'])) {
 	$home = intval($_POST['home']);
 	$away = intval($_POST['away']);
-	$ok = GameSetResult($gameId, $home, $away);
+	$ok = $game->setResult($home, $away);
 	if ($ok) {
-		$game_result = GameResult($gameId);
+		$game_result = $game->getResult();
 		$info = "<p>" . sprintf(_("Game result %s - %s saved!"), $home, $away) . "</p>";
 	}
 } elseif (isset($_POST['update'])) {
 	$home = intval($_POST['home']);
 	$away = intval($_POST['away']);
-	$ok = GameUpdateResult($gameId, $home, $away);
+	$ok = $game->updateResult($home, $away);
 	$info = "<p>" . sprintf(_("Game result %s - %s updated!"), $home, $away) . "</p>";
 }
 
@@ -27,7 +29,7 @@ $html .= "</div><!-- /header -->\n\n";
 
 $html .= "<div data-role='content'>\n";
 
-$result = GameResult($gameId);
+$result = $game->getResult();
 
 $html .= "<form action='?view=addresult' method='post' data-ajax='false'>\n";
 

@@ -319,12 +319,12 @@ function TeamGames($teamId)
     GetDatabase()->RealEscapeString($teamId)
   );
 
-  $result = GetDatabase()->DBQuery($query);
-  if (!$result) {
-    die('Invalid query: ' . GetDatabase()->SQLError());
+  $result = GetDatabase()->DBQueryToArray($query);
+  $games = array();
+  foreach ($result as $game) {
+      array_push($countries, new Game(GetDatabase(), $game['game_id']));
   }
-
-  return $result;
+  return $games;
 }
 
 function SchedulingNameByMoveTo($topool, $torank)
@@ -677,12 +677,13 @@ function TeamPlayedGames($name, $seriestype, $sorting, $curSeason = false)
       $query .= " ORDER BY ser.season DESC, ps.name ASC, hometeamname ASC, visitorteamname ASC";
       break;
   }
-  $result = GetDatabase()->DBQuery($query);
-  if (!$result) {
-    die('Invalid query: ' . GetDatabase()->SQLError());
-  }
 
-  return $result;
+  $result = GetDatabase()->DBQueryToArray($query);
+  $games = array();
+  foreach ($result as $game) {
+      array_push($games, new Game(GetDatabase(), $game['game_id']));
+  }
+  return $games;
 }
 
 function TeamStatsByPool($poolId, $teamId)
@@ -1099,7 +1100,7 @@ function TeamScoreBoardWithDefenses($teamId, $pools, $sorting, $limit)
  * @param string $team2 second team name
  * @param string $seriestype type of series
  * @param string $sorting return value sorting: team, result, series
- * @return mysql array of players
+ * @return array of Games
  */
 function GetAllPlayedGames($team1, $team2, $seriestype, $sorting)
 {
@@ -1141,7 +1142,13 @@ function GetAllPlayedGames($team1, $team2, $seriestype, $sorting)
       $query .= " ORDER BY s.starttime DESC, ps.name ASC, hometeamname ASC, visitorteamname ASC";
       break;
   }
-  return GetDatabase()->DBQuery($query);
+  $result = GetDatabase()->DBQueryToArray($query);
+  $games = array();
+  foreach ($result as $game) {
+      array_push($games, new Game(GetDatabase(), $game['game_id']));
+  }
+  return $games;
+
 }
 
 function TeamResponsibleGames($teamId, $placeId)

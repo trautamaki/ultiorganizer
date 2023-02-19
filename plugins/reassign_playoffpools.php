@@ -89,7 +89,7 @@ if (!empty($_POST['series'])) {
 			$html .= "<p>" . _("Games to move") . ":</p>\n";
 			$mvgames = intval($poolinfo['mvgames']);
 			$games = PoolGetGamesToMove($poolId, $mvgames);
-			if (count($games) > 0) {
+			if (count($games)) {
 				die('This tool is not designed to work if games are moved as well');
 			} else {
 				$html .= "<p><i>" . _("No games to move") . ".</i></p>\n";

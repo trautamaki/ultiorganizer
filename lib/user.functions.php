@@ -8,6 +8,8 @@ include_once $include_prefix . 'lib/logging.functions.php';
 include_once $include_prefix . 'lib/common.functions.php';
 //include_once $include_prefix.'lib/configuration.functions.php';
 
+include_once $include_prefix . 'classes/Game.php';
+
 function FailRedirect($user)
 {
 	SetUserSessionData('anonymous');
@@ -666,12 +668,14 @@ function hasEditPlayersRight($team)
 		isset($_SESSION['userproperties']['userrole']['teamadmin'][$team]);
 }
 
+// TODO: simplify params
 function hasEditGamePlayersRight($game)
 {
-	$team = GameRespTeam($game);
-	$series = GameSeries($game);
+	$game = new Game(GetDatabase(), $game);
+	$team = $game->getRespTeam($game);
+	$series = $game->getSeries();
 	$season = SeriesSeasonId($series);
-	$reservation = GameReservation($game);
+	$reservation = $game->getReservation();
 	return isset($_SESSION['userproperties']['userrole']['superadmin']) ||
 		isset($_SESSION['userproperties']['userrole']['seasonadmin'][$season]) ||
 		isset($_SESSION['userproperties']['userrole']['seriesadmin'][$series]) ||
@@ -680,12 +684,14 @@ function hasEditGamePlayersRight($game)
 		isset($_SESSION['userproperties']['userrole']['gameadmin'][$game]);
 }
 
+// TODO: simplify params
 function hasEditGameEventsRight($game)
 {
-	$team = GameRespTeam($game);
-	$series = GameSeries($game);
+	$game = new Game(GetDatabase(), $game);
+	$team = $game->getRespTeam($game);
+	$series = $game->getSeries();
 	$season = SeriesSeasonId($series);
-	$reservation = GameReservation($game);
+	$reservation = $game->getReservation();
 	return isset($_SESSION['userproperties']['userrole']['superadmin']) ||
 		isset($_SESSION['userproperties']['userrole']['seasonadmin'][$season]) ||
 		isset($_SESSION['userproperties']['userrole']['seriesadmin'][$series]) ||
@@ -1514,7 +1520,8 @@ function GameResponsibilities($season)
 			$respGames = $_SESSION['userproperties']['userrole']['gameadmin'];
 			$seasonGames = array();
 			foreach ($respGames as $gameId => $propId) {
-				if (GameSeason($gameId) == $season) {
+				$game = new Game(GetDatabase(), $gameId);
+				if ($game->getSeason() == $season) {
 					$seasonGames[] = $gameId;
 				}
 			}
@@ -1605,7 +1612,7 @@ function GameResponsibilityArray($season, $series = null)
 		$gamesArray = $ret[$row['reservationgroup']][$row['res_id']];
 		$gamesArray['starttime'] = $row['starttime'];
 		$gamesArray['locationname'] = utf8entities($row['locationname']) . " " . _("Field") . " " . utf8entities($row['fieldname']);
-		$gamesArray[$row['game_id']] = $row;
+		$gamesArray[$row['game_id']] = new Game(GetDatabase(), $row['game_id']);
 		$ret[$row['reservationgroup']][$row['res_id']] = $gamesArray;
 	}
 	return  $ret;

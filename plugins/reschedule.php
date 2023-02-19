@@ -41,13 +41,13 @@ if (isset($_POST['update'])) {
 		WHERE r.reservationgroup='Day 4'
 		ORDER BY r.fieldname+0,g.time");
 	foreach ($games as $game) {
-		if (Hours($game['time']) == 8) {
+		if (Hours($game->getTime()) == 8) {
 			GetDatabase()->DBQuery("UPDATE uo_game SET time='2010-07-07 12:15:00', timeslot=105 WHERE game_id=" . $game['game_id'] . "");
-		} elseif (Hours($game['time']) == 10) {
+		} elseif (Hours($game->getTime()) == 10) {
 			GetDatabase()->DBQuery("UPDATE uo_game SET time='2010-07-07 14:00:00', timeslot=105 WHERE game_id=" . $game['game_id'] . "");
-		} elseif (Hours($game['time']) == 13) {
+		} elseif (Hours($game->getTime()) == 13) {
 			GetDatabase()->DBQuery("UPDATE uo_game SET time='2010-07-07 15:45:00', timeslot=105 WHERE game_id=" . $game['game_id'] . "");
-		} elseif (Hours($game['time']) == 15) {
+		} elseif (Hours($game->getTime()) == 15) {
 			GetDatabase()->DBQuery("UPDATE uo_game SET time='2010-07-07 17:30:00', timeslot=105 WHERE game_id=" . $game['game_id'] . "");
 		}
 	}
@@ -60,10 +60,10 @@ if (isset($_POST['update'])) {
 
 	foreach ($games as $game) {
 
-		if (Hours($game['time']) == 13) {
+		if (Hours($game->getTime()) == 13) {
 			$timestring = "2010-07-07 08:30:00";
 			$timeslot = 120;
-		} elseif (Hours($game['time']) == 15) {
+		} elseif (Hours($game->getTime()) == 15) {
 			$timestring = "2010-07-07 10:30:00";
 			$timeslot = 105;
 		} else {
@@ -71,7 +71,7 @@ if (isset($_POST['update'])) {
 		}
 
 		$newresid = GetDatabase()->DBQueryToValue("SELECT r.id FROM uo_reservation r
-						WHERE r.reservationgroup='Day 4' AND r.fieldname='" . $game['fieldname'] . "'");
+						WHERE r.reservationgroup='Day 4' AND r.fieldname='" . $game->getFieldName() . "'");
 
 		GetDatabase()->DBQuery("UPDATE uo_game SET time='$timestring', timeslot=$timeslot,
 		reservation=$newresid WHERE game_id=" . $game['game_id'] . "");

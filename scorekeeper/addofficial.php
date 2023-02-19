@@ -1,13 +1,16 @@
 <?php
+include_once 'classes/Game.php';
+
 $html = "";
 
 $gameId = isset($_GET['game']) ? $_GET['game'] : $_SESSION['game'];
 $_SESSION['game'] = $gameId;
 
-$game_result = GameResult($gameId);
+$game = new Game(GetDatabase(), $gameId);
+$game_result = $game->getResult();
 
 if (isset($_POST['save'])) {
-	GameSetScoreSheetKeeper($gameId, $_POST['official']);
+	$game->setOfficial($_POST['official']);
 	header("location:?view=addscoresheet&game=" . $gameId);
 }
 

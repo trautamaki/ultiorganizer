@@ -7,6 +7,8 @@ include_once $include_prefix . 'lib/pool.functions.php';
 include_once $include_prefix . 'lib/reservation.functions.php';
 include_once $include_prefix . 'lib/url.functions.php';
 
+include_once $include_prefix . 'classes/Game.php';
+
 $LAYOUT_ID = ADDMEDIALINK;
 $max_file_size = 5 * 1024 * 1024; //5 MB
 $max_new_links = 3;
@@ -87,7 +89,7 @@ if (isset($_POST['save'])) {
 
 			if ($owner == "game" && !empty($_POST["time$i"])) {
 				$time = TimeToSec($_POST["time$i"]);
-				AddGameMediaEvent($owner_id, $time, $url_id);
+				(new Game(GetDatabase(), $owner_id))->addMediaEvent($time, $url_id);
 			}
 		}
 
@@ -152,16 +154,17 @@ if (count($urls)) {
 	$html .= "</table>";
 }
 if ($owner == "game") {
-	$events = GameMediaEvents($owner_id);
+	$game = new Game(GetDatabase(), $owner_id);
+	$events = $game->getMediaEvents($owner_id);
 
 	//remove if url deleted
 	foreach ($events as $event) {
 		if (empty($event['url'])) {
-			RemoveGameMediaEvent($owner_id, $event['info']);
+			$game->removeMediaEvent($event['info']);
 		}
 	}
 
-	$events = GameMediaEvents($owner_id);
+	$events = $game->getMediaEvents($owner_id);
 
 	if (count($events)) {
 		$html .= "<table>";

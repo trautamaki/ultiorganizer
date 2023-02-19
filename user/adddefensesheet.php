@@ -6,6 +6,8 @@ include_once $include_prefix . 'lib/player.functions.php';
 include_once $include_prefix . 'lib/location.functions.php';
 include_once $include_prefix . 'lib/configuration.functions.php';
 
+include_once $include_prefix . 'classes/Game.php';
+
 if (version_compare(PHP_VERSION, '5.0.0', '>')) {
 	include_once 'lib/twitter.functions.php';
 }
@@ -53,7 +55,8 @@ contentStart();
 
 //echo "First line"
 $gameId = intval($_GET["game"]);
-$season = GameSeason($gameId);
+$game = new Game($gameId);
+$season = $game->getSeason();
 $seasoninfo = SeasonInfo($season);
 
 //content
@@ -68,9 +71,8 @@ if (ShowDefenseStats()) {
 }
 pageMenu($menutabs);
 
-
-
-$game_result = GameResult($gameId);
+$game = new Game(GetDatabase(), $gameId);
+$game_result = $game->getResult();
 $homecaptain = -1;
 $awaycaptain = -1;
 
@@ -80,14 +82,14 @@ $errIds = array();
 if (!empty($_POST['save'])) {
 	LogDefenseUpdate($gameId, "defensesheet saved", "adddefensesheet");
 	$time_delim = array(",", ";", ":");
-	//GameAddDefense($gameId, $player, $home, $caught, $time, $iscallahan, $number)
+	//$game->addDefense($player, $home, $caught, $time, $iscallahan, $number)
 	//set halftime
 	$htime = $_POST['halftime'];
 	$htime = str_replace($time_delim, ".", $htime);
 	$htime = TimeToSec($htime);
 
 	//remove all old defenses (if any)
-	GameRemoveAllDefenses($gameId);
+	$game->removeAllDefenses();
 
 	//insert defenses
 	$h = 0;
@@ -144,35 +146,35 @@ if (!empty($_POST['save'])) {
 		if (!empty($team) && $team == 'H') {
 			$h++;
 
-			$defense = GamePlayerFromNumber($gameId, $game_result['hometeam'], $defense);
+			$defense = $game->getPlayerFromNumber($game_result['hometeam'], $defense);
 			if ($defense == -1) {
 				echo "<p class='warning'>" . _("Defense") . " ", $i + 1, ": " . _("player's number") . " '" . $_POST['defense' . $i] . "' " . _("Not on the roster") . "!</p>";
 				$errIds[] = "defense$i";
 			}
-			GameAddDefense($gameId, $defense, 1, $iscaught, $time, $iscallahan, $i + 1);
-			//GameAddScore($gameId,$pass,$goal,$time,$i+1,$h,$a,1,$iscallahan);
+			$game->addDefense($defense, 1, $iscaught, $time, $iscallahan, $i + 1);
+			//$game->addScore(,$pass,$goal,$time,$i+1,$h,$a,1,$iscallahan);
 		} elseif (!empty($team) && $team == 'A') {
 			$a++;
-			$defense = GamePlayerFromNumber($gameId, $game_result['visitorteam'], $defense);
+			$defense = $game->getPlayerFromNumber($game_result['visitorteam'], $defense);
 			if ($defense == -1) {
 				echo "<p class='warning'>" . _("Defense") . " ", $i + 1, ": " . _("player's number") . " '" . $_POST['defense' . $i] . "' " . _("Not on the roster") . "!</p>";
 				$errIds[] = "defense$i";
 			}
 
-			GameAddDefense($gameId, $defense, 0, $iscaught, $time, $iscallahan, $i + 1);
+			$game->addDefense($defense, 0, $iscaught, $time, $iscallahan, $i + 1);
 		}
 	}
-	GameSetDefenses($gameId, $h, $a);
+	$game->setDefenses($h, $a);
 	echo "<p>" . _("Defense sheet saved") . " (" . _("Time") . ": " . DefTimestamp() . ")!</p>";
 	// The defenseplay.php needs to be created
 	//echo "<a href='?view=gameplay&amp;game=$gameId'>"._("Game play")."</a>";
 }
-$game_result = GameResult($gameId);
+$game_result = $game->getResult();
 $place = ReservationInfo($game_result['reservation']);
-$homecaptain = GameCaptain($gameId, $game_result['hometeam']);
-$awaycaptain = GameCaptain($gameId, $game_result['visitorteam']);
-$home_playerlist = GamePlayers($gameId, $game_result['hometeam']);
-$away_playerlist = GamePlayers($gameId, $game_result['visitorteam']);
+$homecaptain = $game->getCaptain($game_result['hometeam']);
+$awaycaptain = $game->getCaptain($game_result['visitorteam']);
+$home_playerlist = $game->getPlayers($game_result['hometeam']);
+$away_playerlist = $game->getPlayers($game_result['visitorteam']);
 
 if (count($home_playerlist) == 0) {
 	echo "<p class='warning'>" . utf8entities(sprintf(_("No players given for team %s."), $game_result['hometeamname'])) . "<a href='?view=user/addplayerlists&amp;game=" . $gameId . "'>" . _("Feed in the players in the game.") . "</a></p>";
@@ -205,7 +207,7 @@ echo "</table>\n";
 //starting team
 $hoffence = "";
 $voffence = "";
-$ishome = GameIsFirstOffenceHome($gameId);
+$ishome = $game->getIsFirstOffenceHome();
 if ($ishome == 1) {
 	$hoffence = "checked='checked'";
 } elseif ($ishome == 0) {
@@ -229,7 +231,7 @@ echo "<tr><th>" . _("Home") . "</th>\n";
 
 //home team used timeouts
 $i = 0;
-$timeouts = GameTimeouts($gameId);
+$timeouts = $game->getTimeouts();
 while ($timeout = GetDatabase()->FetchAssoc($timeouts)) {
 	if (intval($timeout['ishome'])) {
 		echo "<td><input class='input' onkeyup=\"validTime(this);\" type='text' size='5' maxlength='8' id='hto$i' name='hto$i' value='" . SecToMin($timeout['time']) . "' /></td>\n";
@@ -251,7 +253,7 @@ echo "<tr><th>" . _("Away") . "</th>\n";
 
 //away team used timeouts
 $i = 0;
-$timeouts = GameTimeouts($gameId);
+$timeouts = $game->getTimeouts();
 while ($timeout = GetDatabase()->FetchAssoc($timeouts)) {
 	if (!intval($timeout['ishome'])) {
 		echo "<td><input class='input' onkeyup=\"validTime(this);\" type='text' size='5' maxlength='8' id='ato$i' name='ato$i' value='" . SecToMin($timeout['time']) . "' /></td>\n";
@@ -366,7 +368,7 @@ echo "<th style='$style_mid'>" . _("Touched") . "</th><th style='$style_mid'>" .
 echo "<th style='$style_mid'>" . _("Not callahan") . "</th><th style='$style_right'>" . _("Time") . "</th>";
 //echo "<th style='$style_right'>"._("Score")."</th></tr>\n";
 
-$scores = GameDefenses($gameId);
+$scores = $game->getDefences();
 
 $i = 0;
 while ($row = GetDatabase()->FetchAssoc($scores)) {

@@ -3,10 +3,14 @@ include_once 'lib/common.functions.php';
 include_once 'lib/game.functions.php';
 include_once 'lib/team.functions.php';
 include_once 'lib/player.functions.php';
+
+include_once 'classes/Game.php';
+
 $html = "";
 
 $gameId = intval(iget("game"));
-$game_result = GameResult($gameId);
+$game = new Game(GetDatabase(), $gameId);
+$game_result = $game->getResult();
 
 if (isset($_POST['save'])) {
 	$time = "0.0";
@@ -17,7 +21,7 @@ if (isset($_POST['save'])) {
 
 	$time = str_replace($time_delim, ".", $time);
 	$htime = TimeToSec($time);
-	GameSetHalftime($gameId, $htime);
+	$game->setHalftime($htime);
 
 	header("location:?view=mobile/addscoresheet&game=" . $gameId);
 }

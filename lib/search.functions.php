@@ -833,10 +833,11 @@ function GameResults()
 		$ret = "<table><tr><th><input type='checkbox' onclick='checkAll(\"games\");'/></th>";
 		$ret .= "<th>" . _("Tournament") . "</th><th>" . _("Location") . "</th><th>" . _("Game") . "</th></tr>\n";
 		while ($row = GetDatabase()->FetchAssoc($result)) {
+			$game = new Game(GetDatabase(), $row['game_id']);
 			$ret .= "<tr><td><input type='checkbox' name='games[]' value='" . utf8entities($row['game_id']) . "'/></td>";
 			$ret .= "<td>" . utf8entities($row['reservationgroup']) . "</td>";
 			$ret .= "<td>" . utf8entities($row['locationname']) . "</td>";
-			$ret .= "<td>" . utf8entities(GameName($row)) . "</td>";
+			$ret .= "<td>" . $game->getPrettyName() . "</td>";
 			$ret .= "</tr>\n";
 		}
 		$ret .= "</table>\n";

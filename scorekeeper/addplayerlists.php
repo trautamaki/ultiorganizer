@@ -1,4 +1,6 @@
 <?php
+include_once 'classes/Game.php';
+
 $html = "";
 
 
@@ -8,12 +10,11 @@ $teamId = isset($_GET['team']) ? $_GET['team'] : $_SESSION['team'];
 $_SESSION['game'] = $gameId;
 $_SESSION['team'] = $teamId;
 
-$game_result = GameResult($gameId);
+$game = new Game(GetDatabase(), $gameId);
+$game_result = $game->getResult();
+$played_players = $game->getPlayers($teamId);
 
 if (isset($_POST['save'])) {
-
-  $played_players = GamePlayers($gameId, $teamId);
-
   //delete unchecked players
   foreach ($played_players as $player) {
     $found = false;
@@ -25,8 +26,9 @@ if (isset($_POST['save'])) {
         }
       }
     }
-    if (!$found)
-      GameRemovePlayer($gameId, $player['player_id']);
+    if (!$found) {
+      $game->removePlayer($player['player_id']);
+    }
   }
 
   //handle checked players
@@ -36,7 +38,6 @@ if (isset($_POST['save'])) {
       //if number
       if (is_numeric($number)) {
         //check if already in list with correct number
-        $played_players = GamePlayers($gameId, $teamId);
         $found = false;
         foreach ($played_players as $player) {
 
@@ -47,7 +48,7 @@ if (isset($_POST['save'])) {
           }
           //if found, but with different number
           if ($player['player_id'] == $playerId && $player['num'] != $number) {
-            GameSetPlayerNumber($gameId, $playerId, $number);
+            $game->setPlayerNumber($playerId, $number);
             $found = true;
             break;
           }
@@ -62,8 +63,9 @@ if (isset($_POST['save'])) {
           }
         }
 
-        if (!$found)
-          GameAddPlayer($gameId, $playerId, $number);
+        if (!$found) {
+          $game->addPlayer($gameId, $playerId, $number);
+        }
       } else {
         $playerinfo = PlayerInfo($playerId);
         $html .= "<p  class='warning'><i>" . utf8entities($playerinfo['firstname'] . " " . $playerinfo['lastname']) . "</i> " . _("erroneous number") . " '$number'.</p>";
@@ -90,8 +92,6 @@ $html .= "<div data-role='content'>\n";
 $playerlist = TeamPlayerList($teamId);
 
 $html .= "<form action='?view=addplayerlists' method='post' data-ajax='false'>\n";
-
-$played_players = GamePlayers($gameId, $teamId);
 
 $html .= "<div class='ui-grid-a'>";
 $html .= "<div class='ui-block-a'>\n";

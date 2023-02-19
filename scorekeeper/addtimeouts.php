@@ -1,18 +1,21 @@
 <?php
+include_once 'classes/Game.php';
+
 $html = "";
 $maxtimeouts = 4;
 
 $gameId = isset($_GET['game']) ? $_GET['game'] : $_SESSION['game'];
 $_SESSION['game'] = $gameId;
 
-$game_result = GameResult($gameId);
+$game = new Game(GetDatabase(), $gameId);
+$game_result = $game->getResult();
 
 if (isset($_POST['save'])) {
   $time = "0.0";
   $time_delim = array(",", ";", ":", "#", "*");
 
   //remove all old timeouts (if any)
-  GameRemoveAllTimeouts($gameId);
+  $game->removeAllTimeouts();
 
   //insert home timeouts
   $j = 0;
@@ -23,7 +26,7 @@ if (isset($_POST['save'])) {
 
     if (($timemm + $timess) > 0) {
       $j++;
-      GameAddTimeout($gameId, $j, TimeToSec($time), 1);
+      $game->addTimeout($j, TimeToSec($time), 1);
     }
   }
 
@@ -36,7 +39,7 @@ if (isset($_POST['save'])) {
 
     if (($timemm + $timess) > 0) {
       $j++;
-      GameAddTimeout($gameId, $j, TimeToSec($time), 0);
+      $game->addTimeout($j, TimeToSec($time), 0);
     }
   }
 
@@ -61,7 +64,7 @@ $j = 0;
 $timemm = 0;
 $timess = 0;
 
-$timeouts = GameTimeouts($gameId);
+$timeouts = $game->getTimeouts();
 
 while ($timeout = GetDatabase()->FetchAssoc($timeouts)) {
   if (intval($timeout['ishome'])) {
@@ -133,7 +136,7 @@ $html .= "<div class='ui-grid-b'>";
 //used timeouts
 $j = 0;
 
-$timeouts = GameTimeouts($gameId);
+$timeouts = $game->getTimeouts();
 
 while ($timeout = GetDatabase()->FetchAssoc($timeouts)) {
   if (!intval($timeout['ishome'])) {

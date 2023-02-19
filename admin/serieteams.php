@@ -6,6 +6,9 @@ include_once 'lib/pool.functions.php';
 include_once 'lib/team.functions.php';
 include_once 'lib/game.functions.php';
 include_once 'lib/common.functions.php';
+
+include_once 'classes/Game.php';
+
 $LAYOUT_ID = SERIETEAMS;
 $backurl = utf8entities($_SERVER['HTTP_REFERER']);
 
@@ -234,9 +237,9 @@ if ($continuation && $SwissOK == -1) {
 
   if (count($games)) {
     echo "<table cellpadding='2'>";
-    foreach ($games as $id) {
+    foreach ($games as $game) {
       echo "<tr>";
-      $result = GameResult($id);
+      $result = $game->getResult();
       echo "<td>" . DefWeekDateFormat($result['time']) . "</td>";
       echo "<td>" . utf8entities(TeamName($result['hometeam'])) . "</td>";
       echo "<td> - </td>";

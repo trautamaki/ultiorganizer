@@ -5,6 +5,8 @@ include_once $include_prefix . 'lib/season.functions.php';
 include_once $include_prefix . 'lib/series.functions.php';
 include_once $include_prefix . 'lib/timetable.functions.php';
 
+include_once $include_prefix . 'classes/Game.php';
+
 $title = _("Game responsibilities");
 $group = "all";
 $tab = 0;
@@ -60,7 +62,7 @@ if (!empty($_GET["massinput"])) {
 //process itself on submit
 $feedback = "";
 if (!empty($_POST['save'])) {
-  $feedback = GameProcessMassInput($_POST);
+  $feedback = Game::processMassInput($_POST);
 }
 
 foreach ($series as $row) {
@@ -124,7 +126,6 @@ if ($_SESSION['massinput']) {
 }
 $html .= "</td></tr></table>\n";
 
-
 $respGameArray = GameResponsibilityArray($season, $series_id);
 
 if (count($respGameArray) == 0) {
@@ -170,31 +171,31 @@ foreach ($respGameArray as $reservationgroup => $resArray) {
       if (!is_numeric($gameId)) {
         continue;
       }
-      if (($hidestarted == 1  && GameHasStarted($game)) || ($hidestarted == 0 && !GameHasStarted($game))) {
+      if (($hidestarted == 1  && $game->hasStarted()) || ($hidestarted == 0 && !$game->hasStarted())) {
         continue;
       }
 
-      $html .= "<tr><td>" . DefHourFormat($game['time']) . "</td>";
-      if ($game['hometeam'] && $game['visitorteam']) {
-        $html .= "<td style='width:20%' >" . utf8entities($game['hometeamname']) . "</td><td>-</td><td style='width:20%'>" . utf8entities($game['visitorteamname']) . "</td>";
+      $html .= "<tr><td>" . DefHourFormat($game->getTime()) . "</td>";
+      if ($game->getHomeTeam() && $game->getVisitorTeam()) {
+        $html .= "<td style='width:20%' >" . TeamName($game->getHomeTeam()) . "</td><td>-</td><td style='width:20%'>" . TeamName($game->getVisitorTeam()) . "</td>";
       } else {
-        $html .= "<td style='width:20%'>" . utf8entities($game['phometeamname']) . "</td><td>-</td><td style='width:20%'>" . utf8entities($game['pvisitorteamname']) . "</td>";
+        $html .= "<td style='width:20%'>" . $game->getHomeScheduleName() . "</td><td>-</td><td style='width:20%'>" . $game->getVisitorScheduleName() . "</td>";
       }
 
       if ($_SESSION['massinput']) {
         $html .= "<td colspan='3' style='white-space: nowrap'>
       		<input type='hidden' id='scoreId" . $gameId . "' name='scoreId[]' value='$gameId'/>
-      		<input type='text' style='width:5ex' size='2' maxlength='3' value='" . (is_null($game['homescore']) ? "" : intval($game['homescore'])) . "' id='homescore$gameId' name='homescore[]' oninput='confirmLeave(this, true, null);' tabindex='" . ++$tab . "'/> 
-      		<input type='text' style='width:5ex' size='2' maxlength='3' value='" . (is_null($game['visitorscore']) ? "" : intval($game['visitorscore'])) . "' id='visitorscore$gameId' name='visitorscore[]' oninput='confirmLeave(this, true, null);' tabindex='" . ++$tab . "'/></td>";
+      		<input type='text' style='width:5ex' size='2' maxlength='3' value='" . (is_null($game->getHomeScore()) ? "" : $game->getHomeScore()) . "' id='homescore$gameId' name='homescore[]' oninput='confirmLeave(this, true, null);' tabindex='" . ++$tab . "'/> 
+      		<input type='text' style='width:5ex' size='2' maxlength='3' value='" . (is_null($game->getVisitorScore()) ? "" : $game->getVisitorScore()) . "' id='visitorscore$gameId' name='visitorscore[]' oninput='confirmLeave(this, true, null);' tabindex='" . ++$tab . "'/></td>";
       } else {
-        $html .= "<td>" . intval($game['homescore']) . "</td><td>-</td><td>" . intval($game['visitorscore']) . "</td>";
+        $html .= "<td>" . $game->getHomeScore() . "</td><td>-</td><td>" . $game->getVisitorScore() . "</td>";
       }
-      if (intval($game['hasstarted']) > 0) {
-        $html .= "<td><a href='?view=gameplay&amp;game=" . $game['game_id'] . "'>" . _("Game play") . "</a></td>";
+      if ($game->hasStarted() > 0) {
+        $html .= "<td><a href='?view=gameplay&amp;game=" . $game->getId() . "'>" . _("Game play") . "</a></td>";
       } else {
         $html .= "<td></td>";
       }
-      if ($game['hometeam'] && $game['visitorteam']) {
+      if ($game->getHomeTeam() && $game->getVisitorTeam()) {
         $html .= "<td class='right'><a href='?view=user/addresult&amp;game=" . $gameId . "'>" . _("Result") . "</a> | ";
         $html .= "<a href='?view=user/addplayerlists&amp;game=" . $gameId . "'>" . _("Players") . "</a> | ";
         $html .= "<a href='?view=user/addscoresheet&amp;game=$gameId'>" . _("Scoresheet") . "</a>";

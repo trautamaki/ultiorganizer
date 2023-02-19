@@ -63,16 +63,17 @@ if (!empty($_POST['remove_x'])) {
   $ok = true;
 
   //run some test to for safe deletion
-  $goals = GameAllGoals($id);
+  $game = new Game(GetDatabase(), $id);
+	$goals = $game->getAllGoals();
   if (GetDatabase()->NumRows($goals)) {
     $html .= "<p class='warning'>" . _("Game has") . " " . GetDatabase()->NumRows($goals) . " " . _("goals") . ". " . _("Goals must be removed before removing the team") . ".</p>";
     $ok = false;
   }
   if ($ok) {
-    DeleteGame($id);
+    $game->remove();
   }
 } elseif (!empty($_POST['save'])) {
-  $feedback = GameProcessMassInput($_POST);
+  $feedback = Game::processMassInput($_POST);
 }
 
 //common page
@@ -163,58 +164,53 @@ foreach ($pools as $pool) {
   $html .= "<th class='right' colspan='3' ><a class='thlink' href='?view=user/pdfscoresheet&amp;season=$season&amp;pool=" . $pool['pool_id'] . "'>" . _("Print scoresheets") . "</a></th>";
   $html .= "</tr>";
 
-  while ($game = GetDatabase()->FetchAssoc($games)) {
-    $i = $game['game_id'];
+  foreach ($games as $game) {
+    $i = $game_row['game_id'];
 
-    if (GameHasStarted($game)) {
+    if ($game->hasStarted()) {
       if ($_SESSION['hide_played_games']) {
         continue;
       }
-      // $html .= "<tr class='tablelowlight'>";
     }
 
     $html .= "<tr class='admintablerow'>";
+    $html .= "<td style='width:15%'>" . ShortDate($game-getStartTime()) . " " . DefHourFormat($game->getTime()) . "<br/>";
+    $html .= utf8entities($game->getPlaceName()) . " " . $game->getFieldName() . "</td>";
 
-    $html .= "<td style='width:15%'>" . ShortDate($game['starttime']) . " " . DefHourFormat($game['time']) . "<br/>";
-    $html .= utf8entities($game['placename']) . " " . utf8entities($game['fieldname']) . "</td>";
-
-    if ($game['hometeam']) {
-      $html .= "<td  style='width:20%'>" . utf8entities(TeamName($game['hometeam'])) . "</td>";
+    if ($game->getHomeTeam()) {
+      $html .= "<td  style='width:20%'>" . TeamName($game->getHomeTeam()) . "</td>";
     } else {
-      $html .= "<td class='lowlight'  style='width:20%'>" . utf8entities(U_($game['phometeamname'])) . "</td>";
+      $html .= "<td class='lowlight'  style='width:20%'>" . U_($game->getSchedulingNameHome()) . "</td>";
     }
     $html .= "<td style='width:1%'>-</td>";
-    if ($game['visitorteam']) {
-      $html .= "<td  style='width:20%'>" . utf8entities(TeamName($game['visitorteam'])) . "</td>";
+    if ($game->getVisitorTeam()) {
+      $html .= "<td  style='width:20%'>" . TeamName($game->getVisitorTeam()) . "</td>";
     } else {
-      $html .= "<td class='lowlight'  style='width:20%'>" . utf8entities(U_($game['pvisitorteamname'])) . "</td>";
+      $html .= "<td class='lowlight'  style='width:20%'>" . U_($game->getSchedulingNameVisitor()) . "</td>";
     }
 
-    // $html .= "<td class='left' style='white-space: nowrap'>".utf8entities(U_($game['seriesname'])).", ". utf8entities(U_($game['poolname']))."</td>";
-
-    // $html .= "<td class='center'><a href='?view=admin/editgame&amp;season=$season&amp;game=".$game['game_id']."'>"._("edit")."</a></td>";
     if ($_SESSION['massinput']) {
       $html .= "<td colspan='2'><input type='hidden' id='scoreId" . $i . "' name='scoreId[]' value='$i'/>
-          <input type='text' size='3' maxlength='4' style='width:5ex' value='" . (is_null($game['homescore']) ? "" : intval($game['homescore'])) . "' id='homescore$i' name='homescore[]' oninput='confirmLeave(this, true, null);' tabindex='" . ++$tab . "'/>
-          - <input type='text' size='3' maxlength='5' style='width:5ex'value='" . (is_null($game['visitorscore']) ? "" : intval($game['visitorscore'])) . "' id='visitorscore$i' name='visitorscore[]' oninput='confirmLeave(this, true, null);' tabindex='" . ++$tab . "'/></td>";
+          <input type='text' size='3' maxlength='4' style='width:5ex' value='" . (is_null($game->getHomeScore()) ? "" : intval($game->getHomeScore())) . "' id='homescore$i' name='homescore[]' oninput='confirmLeave(this, true, null);' tabindex='" . ++$tab . "'/>
+          - <input type='text' size='3' maxlength='5' style='width:5ex'value='" . (is_null($game->getVisitorScore()) ? "" : intval($game->getVisitorScore())) . "' id='visitorscore$i' name='visitorscore[]' oninput='confirmLeave(this, true, null);' tabindex='" . ++$tab . "'/></td>";
     } else {
-      if (GameHasStarted($game)) {
-        if ($game['isongoing'])
-          $html .= "<td><em>" . intval($game['homescore']) . "</em> - <em>" . intval($game['visitorscore']) . "</em></td>";
+      if ($game->hasStarted()) {
+        if ($game->isOngoing())
+          $html .= "<td><em>" . intval($game->getHomeScore()) . "</em> - <em>" . intval($game->getVisitorScore()) . "</em></td>";
         else
-          $html .= "<td>" . intval($game['homescore']) . " - " . intval($game['visitorscore']) . "</td>";
+          $html .= "<td>" . intval($game->getHomeScore()) . " - " . intval($game->getVisitorScore()) . "</td>";
       } else {
         $html .= "<td>? - ?</td>";
       }
-      if ($game['hometeam'] && $game['visitorteam']) {
-        $html .= "<td class='right'><a href='?view=user/addresult&amp;game=" . $game['game_id'] . "'>" . _("Result") . "</a> | ";
-        $html .= "<a href='?view=user/addplayerlists&amp;game=" . $game['game_id'] . "'>" . _("Players") . "</a> | ";
-        $html .= "<a href='?view=user/addscoresheet&amp;game=" . $game['game_id'] . "'>" . _("Scoresheet") . "</a>";
+      if ($game->getHomeTeam() && $$game->getVisitorTeam()) {
+        $html .= "<td class='right'><a href='?view=user/addresult&amp;game=" . $game->getId() . "'>" . _("Result") . "</a> | ";
+        $html .= "<a href='?view=user/addplayerlists&amp;game=" . $game->getId() . "'>" . _("Players") . "</a> | ";
+        $html .= "<a href='?view=user/addscoresheet&amp;game=" . $game->getId() . "'>" . _("Scoresheet") . "</a>";
         if ($seasoninfo['spiritmode'] > 0) {
-          $html .= " | <a href='?view=user/addspirit&amp;game=" . $game['game_id'] . "'>" . _("Spirit") . "</a>";
+          $html .= " | <a href='?view=user/addspirit&amp;game=" . $game->getId() . "'>" . _("Spirit") . "</a>";
         }
         if (ShowDefenseStats()) {
-          $html .= " | <a href='?view=user/adddefensesheet&amp;game=" . $game['game_id'] . "'>" . _("Defensesheet") . "</a>";
+          $html .= " | <a href='?view=user/adddefensesheet&amp;game=" . $game->getId() . "'>" . _("Defensesheet") . "</a>";
         }
         $html .= "</td>";
       } else {
@@ -222,10 +218,10 @@ foreach ($pools as $pool) {
       }
     }
     $html .= "<td>";
-    $html .= "<a href='?view=admin/editgame&amp;season=$season&amp;game=" . $game['game_id'] . "'><img class='deletebutton' src='images/settings.png' alt='D' title='" . _("edit details") . "'/></a>";
+    $html .= "<a href='?view=admin/editgame&amp;season=$season&amp;game=" . $game->getId() . "'><img class='deletebutton' src='images/settings.png' alt='D' title='" . _("edit details") . "'/></a>";
 
-    if (CanDeleteGame($game['game_id'])) {
-      $html .= "<input class='deletebutton' type='image' src='images/remove.png' alt='X' name='remove' value='" . _("X") . "' onclick=\"setId(" . $game['game_id'] . ");\"/>";
+    if ($game->canDelete()) {
+      $html .= "<input class='deletebutton' type='image' src='images/remove.png' alt='X' name='remove' value='" . _("X") . "' onclick=\"setId(" . $game->getId() . ");\"/>";
     }
     $html .= "</td>\n";
 

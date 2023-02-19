@@ -3,27 +3,30 @@ include_once 'lib/pool.functions.php';
 include_once 'lib/game.functions.php';
 include_once 'lib/common.functions.php';
 
+include_once 'classes/Game.php';
+
 $html = "";
 
 $gameId = intval(iget("game"));
 
-$game_result = GameResult($gameId);
-$seasoninfo = SeasonInfo(GameSeason($gameId));
-$homecaptain = GameCaptain($gameId, $game_result['hometeam']);
-$awaycaptain = GameCaptain($gameId, $game_result['visitorteam']);
+$game = new Game(GetDatabase(), $gameId);
+$game_result = $game->getResult();
+$seasoninfo = SeasonInfo($game->getSeason());
+$homecaptain = $game->getCaptain($game_result['hometeam']);
+$awaycaptain = $game->getCaptain($game_result['visitorteam']);
 
 $title = _("Game play") . ": " . utf8entities($game_result['hometeamname']) . " vs. " . utf8entities($game_result['visitorteamname']);
 
-$home_team_score_board = GameTeamScoreBorad($gameId, $game_result['hometeam']);
-$guest_team_score_board = GameTeamScoreBorad($gameId, $game_result['visitorteam']);
+$home_team_score_board = $game->getTeamScoreboard($game_result['hometeam']);
+$guest_team_score_board = $game->getTeamScoreboard($game_result['visitorteam']);
 
 $poolinfo = PoolInfo($game_result['pool']);
 
-$goals = GameGoals($gameId);
-$gameevents = GameEvents($gameId);
-$mediaevents = GameMediaEvents($gameId);
+$goals = $game->getGoals();
+$gameevents = $game->getEvents();
+$mediaevents = $game->getMediaEvents();
 
-if (GameHasStarted($game_result) > 0) {
+if ($game->hasStarted() > 0) {
   $html .= "<h1>" . utf8entities($game_result['hometeamname']);
   $html .= " - ";
   $html .= utf8entities($game_result['visitorteamname']);
@@ -304,7 +307,7 @@ if (GameHasStarted($game_result) > 0) {
       //statistics
       $html .= "<h2>" . _("Game statistics") . "</h2>\n";
 
-      $allgoals = GameAllGoals($gameId);
+      $allgoals = $game->getAllGoals();
 
       $bHOffence = 0;
       $nHOffencePoint = 0;
@@ -323,13 +326,13 @@ if (GameHasStarted($game_result) > 0) {
       $nHLosesDisc = 0;
       $nVLosesDisc = 0;
 
-      $turnovers = GameTurnovers($gameId);
+      $turnovers = $game->getTurnovers();
 
       $goal = GetDatabase()->FetchAssoc($allgoals);
       $turnover = GetDatabase()->FetchAssoc($turnovers);
 
       //who start the game?
-      $ishome = GameIsFirstOffenceHome($gameId);
+      $ishome = $game->getIsFirstOffenceHome();
       if ($ishome == 1) {
         $bHStartTheGame = true;
       } elseif ($ishome == 0) {
@@ -392,7 +395,7 @@ if (GameHasStarted($game_result) > 0) {
         //If turnovers before goal
 
         if (GetDatabase()->NumRows($turnovers)) {
-          $turnovers = GameTurnovers($gameId);
+          $turnovers = $game->getTurnovers();
         }
         while ($turnover = GetDatabase()->FetchAssoc($turnovers)) {
           if ((intval($turnover['time']) > $nClockTime) &&
@@ -439,7 +442,7 @@ if (GameHasStarted($game_result) > 0) {
       }
 
       //timeouts
-      $timeouts = GameTimeouts($gameId);
+      $timeouts = $game->getTimeouts();
 
       while ($timeout = GetDatabase()->FetchAssoc($timeouts)) {
         if (intval($timeout['ishome'])) {
@@ -522,9 +525,9 @@ if (GameHasStarted($game_result) > 0) {
     if (ShowDefenseStats()) {
       $html .= "<br><br>";
       $html .= "<h3>" . _("Defensive plays") . "</h3>\n";
-      $home_team_defense_board = GameTeamDefenseBoard($gameId,  $game_result['hometeam']);
-      $guest_team_defense_board = GameTeamDefenseBoard($gameId,  $game_result['visitorteam']);
-      $defenses = GameDefenses($gameId);
+      $home_team_defense_board = $game->getTeamDefenceBoard($game_result['hometeam']);
+      $guest_team_defense_board = $game->getTeamDefenceBoard($game_result['visitorteam']);
+      $defenses = $game->getDefences();
       $html .= "<table style='width:100%'><tr><td valign='top' style='width:45%'>\n";
 
       $html .= "<table width='100%' cellspacing='0' cellpadding='0' border='0'>\n";
@@ -614,19 +617,20 @@ if (GameHasStarted($game_result) > 0) {
     }
   }
 } else {
-  $game_result = GameInfo($gameId);
+  $game = new Game(GetDatabase(), $gameId);
 
-  if ($game_result['hometeam'] && $game_result['visitorteam']) {
+  // TODO team class here
+  if ($game->getHomeTeam() && $game->getVisitorTeam()) {
     $html .= "<h1>";
-    $html .= utf8entities($game_result['hometeamname']);
+    $html .= utf8entities($game->getHomeTeam());
     $html .= " - ";
-    $html .= utf8entities($game_result['visitorteamname']);
+    $html .= utf8entities($game->getVisitorTeam());
     $html .= "&nbsp;&nbsp;&nbsp;&nbsp;";
     $html .= "? - ?";
     $html .= "</h1>\n";
   } else {
     $html .= "<h1>";
-    $html .= utf8entities(U_($game_result['gamename']));
+    $html .= utf8entities(U_($game->getScheduleName()));
     $html .= "</h1>\n";
     $html .= "<h2>";
     $html .= utf8entities(U_($game_result['phometeamname']));

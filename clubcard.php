@@ -25,7 +25,7 @@ if (!empty($club->getProfileImage())) {
 $html .= "<td style='vertical-align:top;text-align:left'><table border='0'>";
 $html .= "<tr><td></td></tr>";
 $country = $club->getCountry();
-if ($country->getId() > 0) {
+if ($country != NULL && $country->getId() > 0) {
   $html .= "<tr><td class='profileheader'>" . _("Country") . ":</td>";
   $html .= "<td style='white-space: nowrap;'><div style='float: left; clear: left;'>";
   $html .= "<a href='?view=countrycard&amp;country=" . $country->getId() . "'>" . $country->getName() . "</a>";

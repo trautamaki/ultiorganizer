@@ -5,6 +5,8 @@ include_once 'lib/pool.functions.php';
 include_once 'lib/team.functions.php';
 include_once 'lib/timetable.functions.php';
 
+include_once 'classes/Game.php';
+
 $title = _("Standings") . " ";
 $seriesScoreboard = false;
 $print = 0;
@@ -27,6 +29,7 @@ if (iget("season")) {
 } else if (iget("pool")) {
 
   $poolinfo = PoolInfo(iget("pool"));
+  // TODO class
   $games = PoolGames($poolinfo['pool_id']);
 
 
@@ -291,8 +294,7 @@ function printSwissdraw($seasoninfo, $poolinfo)
     }
   }
   $games = TimetableGames($poolinfo['pool_id'], "pool", "all", "series");
-  while ($game = GetDatabase()->FetchAssoc($games)) {
-    //function GameRow($game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
+  foreach ($games as $game) {
     $ret .= GameRow($game, false, false, false, false, false, true);
   }
   $ret .= "</table>\n";
@@ -429,8 +431,7 @@ function printRoundRobinPool($seasoninfo, $poolinfo)
     }
   }
   $games = TimetableGames($poolinfo['pool_id'], "pool", "all", "series");
-  while ($game = GetDatabase()->FetchAssoc($games)) {
-    //function GameRow($game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
+  foreach ($games as $game) {
     $ret .= GameRow($game, false, false, false, false, false, true);
   }
   $ret .= "</table>\n";
@@ -501,7 +502,7 @@ function printPlayoffTree($seasoninfo, $poolinfo)
       } else {
         $notemplate .= "<table width='100%'>\n";
         $games = TimetableGames($pool['pool_id'], "pool", "all", "series");
-        while ($game = GetDatabase()->FetchAssoc($games)) {
+        foreach ($games as $game) {
           $notemplate .= GameRow($game, false, false, false, false, false, true);
         }
         $notemplate .= "</table>\n";
@@ -572,10 +573,10 @@ function printPlayoffTree($seasoninfo, $poolinfo)
         $games++;
         $game = "";
         if ($team['team_id']) {
-          $results = GameHomeTeamResults($team['team_id'], $pool['pool_id']);
+          $results = Game::getHomeTeamResults($team['team_id'], $pool['pool_id']);
           $reverse = false;
           if (!$results) {
-            $results = GameVisitorTeamResults($team['team_id'], $pool['pool_id']);
+            $results = Game::getVisitorTeamResults($team['team_id'], $pool['pool_id']);
             $reverse = true;
           }
           foreach ($results as $res) {
@@ -587,7 +588,7 @@ function printPlayoffTree($seasoninfo, $poolinfo)
             if ($res['scoresheet'] && !$res['isongoing']) {
               $game .= "<a href='?view=gameplay&amp;game=" . $res['game_id'] . "'>";
               $game .= $res['homescore'] . "-" . $res['visitorscore'] . "</a> ";
-            } elseif (GameHasStarted($res) > 0 && !$res['isongoing']) {
+            } elseif ($res['hasstarted'] > 0 && !$res['isongoing']) {
               $game .= $res['homescore'] . "-" . $res['visitorscore'];
             } elseif (!empty($res['gamename'])) {
               $game .= "<span class='lowlight'>" . utf8entities(U_($res['gamename'])) . "</span>";
@@ -595,7 +596,7 @@ function printPlayoffTree($seasoninfo, $poolinfo)
           }
         }
         if (empty($game) && isset($sname['scheduling_id'])) {
-          $results = GameHomePseudoTeamResults($sname['scheduling_id'], $pool['pool_id']);
+          $results = Game::getHomePseudoTeamResults($sname['scheduling_id'], $pool['pool_id']);
           foreach ($results as $res) {
             if (!empty($res['gamename'])) {
               $game .= "<span class='lowlight'>" . utf8entities(U_($res['gamename'])) . "</span>";
@@ -693,7 +694,7 @@ function printCrossmatchPool($seasoninfo, $poolinfo)
   $winnerpools = array();
   $loserpools = array();
 
-  while ($game = GetDatabase()->FetchAssoc($games)) {
+  foreach ($games as $game) {
     $i++;
     $winnerspool = PoolGetMoveToPool($poolinfo['pool_id'], $pos);
     $winnerpoolstyle = "background-color:#" . $winnerspool['color'] . ";background-color:" . RGBtoRGBa($winnerspool['color'], 0.3) . ";color:#" . textColor($winnerspool['color']);
@@ -709,57 +710,57 @@ function printCrossmatchPool($seasoninfo, $poolinfo)
     $ret .= "<td style='width:10%'>" . _("Game") . " $i " . "</td>";
     $ret .= "<td></td>";
 
-    // $goals = intval($game['homescore'])+intval($game['visitorscore']);
-
-    if (GameHasStarted($game) && !intval($game['isongoing']) && $game['hometeam'] && $game['visitorteam']) {
-      if (intval($game['homescore']) > intval($game['visitorscore'])) {
-        $ret .= "<td style='" . $winnerpoolstyle . "'><a href='?view=teamcard&amp;team=" . $game['hometeam'] . "'>" . utf8entities($game['hometeamname']) . "</a></td>\n";
+    if ($game->hasStarted() && !$game->isOngoing() && $game->getHomeTeam() && $game->getVisitorTeam()) {
+      if ($game->getHomeScore() > $game->getVisitorScore()) {
+        $ret .= "<td style='" . $winnerpoolstyle . "'><a href='?view=teamcard&amp;team=" . $game->getHomeTeam() . "'>" . TeamName($game->getHomeTeam()) . "</a></td>\n";
         $ret .= "<td class='center'>-</td>\n";
-        $ret .= "<td style='" . $loserpoolstyle . "'><a href='?view=teamcard&amp;team=" . $game['visitorteam'] . "'>" . utf8entities($game['visitorteamname']) . "</a></td>\n";
-      } elseif (intval($game['homescore']) < intval($game['visitorscore'])) {
-        $ret .= "<td style='" . $loserpoolstyle . "'><a href='?view=teamcard&amp;team=" . $game['hometeam'] . "'>" . utf8entities($game['hometeamname']) . "</a></td>\n";
+        $ret .= "<td style='" . $loserpoolstyle . "'><a href='?view=teamcard&amp;team=" . $game->getVisitorTeam() . "'>" . TeamName($game->getVisitorTeam()) . "</a></td>\n";
+      } elseif ($game->getHomeScore() < $game->getVisitorScore()) {
+        $ret .= "<td style='" . $loserpoolstyle . "'><a href='?view=teamcard&amp;team=" . $game->getHomeTeam() . "'>" . TeamName($game->getHomeTeam()) . "</a></td>\n";
         $ret .= "<td class='center'>-</td>\n";
-        $ret .= "<td style='" . $winnerpoolstyle . "'><a href='?view=teamcard&amp;team=" . $game['visitorteam'] . "'>" . utf8entities($game['visitorteamname']) . "</a></td>\n";
+        $ret .= "<td style='" . $winnerpoolstyle . "'><a href='?view=teamcard&amp;team=" . $game->getVisitorTeam() . "'>" . TeamName($game->getVisitorTeam()) . "</a></td>\n";
       } else {
-        $ret .= "<td style='" . $loserpoolstyle . "'><a href='?view=teamcard&amp;team=" . $game['hometeam'] . "'>" . utf8entities($game['hometeamname']) . "</a></td>\n";
+        $ret .= "<td style='" . $loserpoolstyle . "'><a href='?view=teamcard&amp;team=" . $game->getHomeTeam() . "'>" . TeamName($game->getHomeTeam()) . "</a></td>\n";
         $ret .= "<td class='center'>-</td>\n";
-        $ret .= "<td style='" . $loserpoolstyle . "'><a href='?view=teamcard&amp;team=" . $game['visitorteam'] . "'>" . utf8entities($game['visitorteamname']) . "</a></td>\n";
+        $ret .= "<td style='" . $loserpoolstyle . "'><a href='?view=teamcard&amp;team=" . $game->getVisitorTeam() . "'>" . TeamName($game->getVisitorTeam()) . "</a></td>\n";
       }
     } else {
-      if ($game['hometeam']) {
-        $ret .= "<td><a href='?view=teamcard&amp;team=" . $game['hometeam'] . "'>" . utf8entities($game['hometeamname']) . "</a></td>\n";
+      if ($game->getHomeTeam()) {
+        $ret .= "<td><a href='?view=teamcard&amp;team=" . $game->getHomeTeam() . "'>" . TeamName($game->getHomeTeam()) . "</a></td>\n";
       } else {
-        $ret .= "<td>" . utf8entities($game['phometeamname']) . "</td>\n";
+        $ret .= "<td>" . $game->getSchedulingNameHome() . "</td>\n";
       }
       $ret .= "<td class='center'>-</td>\n";
-      if ($game['visitorteam']) {
-        $ret .= "<td><a href='?view=teamcard&amp;team=" . $game['visitorteam'] . "'>" . utf8entities($game['visitorteamname']) . "</a></td>\n";
+      if ($game->getVisitorTeam()) {
+        $ret .= "<td><a href='?view=teamcard&amp;team=" . $game->getVisitorTeam() . "'>" . TeamName($game->getVisitorTeam()) . "</a></td>\n";
       } else {
-        $ret .= "<td>" . utf8entities($game['pvisitorteamname']) . "</td>\n";
+        $ret .= "<td>" . $game->getSchedulingNameVisitor() . "</td>\n";
       }
     }
 
-    if (!GameHasStarted($game)) {
+    if (!$game->hasStarted()) {
       $ret .= "<td>?</td>\n";
       $ret .= "<td>-</td>\n";
       $ret .= "<td>?</td>\n";
     } else {
-      if ($game['isongoing'])
-        $ret .= "<td><em>" . intval($game['homescore']) . "</em></td><td>-</td><td><em>" . intval($game['visitorscore']) . "</em></td>\n";
+      if ($game->isOngoing())
+        $ret .= "<td><em>" . $game->getHomeScore() . "</em></td><td>-</td><td><em>" . $game->getVisitorScore() . "</em></td>\n";
       else
-        $ret .= "<td>" . intval($game['homescore']) . "</td><td>-</td><td>" . intval($game['visitorscore']) . "</td>\n";
+        $ret .= "<td>" . $game->getHomeScore() . "</td><td>-</td><td>" . $game->getVisitorScore() . "</td>\n";
     }
 
-    if (!intval($game['isongoing'])) {
-      if (intval($game['scoresheet'])) {
-        $ret .= "<td class='right'>&nbsp;<a href='?view=gameplay&amp;game=" . $game['game_id'] . "'>";
+    // TODO scoresheet??
+    $scoresheet = $game->getScoresheet();
+    if (!$game->isOngoing()) {
+      if ($scoresheet) {
+        $ret .= "<td class='right'>&nbsp;<a href='?view=gameplay&amp;game=" . $game->getId() . "'>";
         $ret .= _("Game play") . "</a></td>\n";
       } else {
         $ret .= "<td class='left'></td>\n";
       }
     } else {
-      if (intval($game['scoresheet'])) {
-        $ret .= "<td class='right'>&nbsp;&nbsp;<a href='?view=gameplay&amp;game=" . $game['game_id'] . "'>";
+      if ($scoresheet) {
+        $ret .= "<td class='right'>&nbsp;&nbsp;<a href='?view=gameplay&amp;game=" . $game->getId() . "'>";
         $ret .= _("Ongoing") . "</a></td>\n";
       } else {
         $ret .= "<td class='right'>&nbsp;&nbsp;" . _("Ongoing") . "</td>\n";

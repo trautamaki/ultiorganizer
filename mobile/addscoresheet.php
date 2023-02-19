@@ -7,6 +7,8 @@ include_once 'lib/standings.functions.php';
 include_once 'lib/pool.functions.php';
 include_once 'lib/configuration.functions.php';
 
+include_once 'classes/Game.php';
+
 if (version_compare(PHP_VERSION, '5.0.0', '>')) {
 	include_once 'lib/twitter.functions.php';
 }
@@ -14,9 +16,10 @@ if (version_compare(PHP_VERSION, '5.0.0', '>')) {
 $html = "";
 $errors = false;
 $gameId = intval(iget("game"));
-$seasoninfo = SeasonInfo(GameSeason($gameId));
-$game_result = GameResult($gameId);
-$result = GameGoals($gameId);
+$game = new Game(GetDatabase(), $gameId);
+$seasoninfo = $game->getSeason();
+$game_result = $game->getResult();
+$result = $game->getGoals();
 $scores = array();
 while ($row = GetDatabase()->FetchAssoc($result)) {
 	$scores[] = $row;
@@ -85,14 +88,14 @@ if (isset($_POST['add']) || isset($_POST['forceadd'])) {
 		$uo_goal['homescore']++;
 		$uo_goal['ishomegoal'] = 1;
 		if (!$uo_goal['iscallahan']) {
-			$uo_goal['assist'] = GamePlayerFromNumber($gameId, $game_result['hometeam'], $uo_goal['assist']);
+			$uo_goal['assist'] = $game->getPlayerFromNumber($game_result['hometeam'], $uo_goal['assist']);
 			if ($uo_goal['assist'] == -1) {
 				$html .= "<p class='warning'>" . _("assisting player's number") . " '" . $_POST['pass'] . "' " . _("Not on the roster") . "!</p>\n";
 			}
 		} else {
 			$uo_goal['assist'] = -1;
 		}
-		$uo_goal['scorer'] = GamePlayerFromNumber($gameId, $game_result['hometeam'], $uo_goal['scorer']);
+		$uo_goal['scorer'] = $game->getPlayerFromNumber($game_result['hometeam'], $uo_goal['scorer']);
 		if ($uo_goal['scorer'] == -1) {
 			$html .= "<p class='warning'>" . _("scorer's number") . " '" . $_POST['goal'] . "' " . _("Not on the roster") . "!</p>\n";
 		}
@@ -100,14 +103,14 @@ if (isset($_POST['add']) || isset($_POST['forceadd'])) {
 		$uo_goal['visitorscore']++;
 		$uo_goal['ishomegoal'] = 0;
 		if (!$uo_goal['iscallahan']) {
-			$uo_goal['assist'] = GamePlayerFromNumber($gameId, $game_result['visitorteam'], $uo_goal['assist']);
+			$uo_goal['assist'] = $game->getPlayerFromNumber($game_result['visitorteam'], $uo_goal['assist']);
 			if ($uo_goal['assist'] == -1) {
 				$html .= "<p class='warning'>" . _("assisting player's number") . " '" . $_POST['pass'] . "' " . _("Not on the roster") . "!</p>\n";
 			}
 		} else
 			$uo_goal['assist'] = -1;
 
-		$uo_goal['scorer'] = GamePlayerFromNumber($gameId, $game_result['visitorteam'], $uo_goal['scorer']);
+		$uo_goal['scorer'] = $game->getPlayerFromNumber($game_result['visitorteam'], $uo_goal['scorer']);
 		if ($uo_goal['scorer'] == -1) {
 			$html .= "<p class='warning'>" . _("scorer's number") . " '" . $_POST['goal'] . "' " . _("Not on the roster") . "!</p>\n";
 		}
@@ -120,11 +123,11 @@ if (isset($_POST['add']) || isset($_POST['forceadd'])) {
 	}
 
 	if (empty($html) || isset($_POST['forceadd'])) {
-		GameAddScoreEntry($uo_goal);
-		$result = GameResult($gameId);
+		$game->addScoreEntry($uo_goal);
+		$result = $game->getResult();
 		//save as result, if result is not already set
 		if (($uo_goal['homescore'] + $uo_goal['visitorscore']) > ($result['homescore'] + $result['visitorscore'])) {
-			GameUpdateResult($gameId, $uo_goal['homescore'], $uo_goal['visitorscore']);
+			$game->updateResult($uo_goal['homescore'], $uo_goal['visitorscore']);
 		}
 		header("location:?view=mobile/addscoresheet&game=" . $gameId);
 	} else {
@@ -139,7 +142,7 @@ if (isset($_POST['add']) || isset($_POST['forceadd'])) {
 		$home = $lastscore['homescore'];
 		$away = $lastscore['visitorscore'];
 	}
-	GameSetResult($gameId, $home, $away);
+	$game->setResult($home, $away);
 	header("location:?view=mobile/gameplay&game=" . $gameId);
 }
 

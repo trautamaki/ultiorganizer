@@ -8,6 +8,8 @@ include_once 'lib/team.functions.php';
 include_once 'lib/game.functions.php';
 include_once 'lib/reservation.functions.php';
 
+include_once 'classes/Game.php';
+
 $LAYOUT_ID = POOLGAMES;
 
 $poolId = $_GET["pool"];
@@ -44,22 +46,24 @@ if (!empty($_POST['remove_x'])) {
 	$ok = true;
 
 	//run some test to for safe deletion
-	$goals = GameAllGoals($id);
+	$game = new Game(GetDatabase(), $id);
+	$goals = $game->getAllGoals();
 	if (GetDatabase()->NumRows($goals)) {
 		$html .= "<p class='warning'>" . _("Game has") . " " . GetDatabase()->NumRows($goals) . " " . _("goals") . ". " . _("Goals must be removed before removing the team") . ".</p>";
 		$ok = false;
 	}
 	if ($ok)
-		DeleteGame($id);
+		$game->remove();
 } elseif (!empty($_POST['swap_x'])) {
 	$id = $_POST['hiddenDeleteId'];
-	$goals = GameAllGoals($id);
+	$game = new Game(GetDatabase(), $id);
+	$goals = $game->getAllGoals();
 	if (!GetDatabase()->NumRows($goals)) {
-		GameChangeHome($id);
+		$game->changeHome();
 	}
 } elseif (!empty($_POST['removemoved'])) {
 	$id = $_POST['hiddenDeleteId'];
-	DeleteMovedGame($id, $poolId);
+	$game->deleteMoved($poolId);
 } elseif (!empty($_POST['removeall'])) {
 	PoolDeleteAllGames($poolId);
 } elseif (!empty($_POST['fakegenerate'])) {
@@ -74,9 +78,9 @@ if (!empty($_POST['remove_x'])) {
 	if ($poolInfo['type'] == 1) {
 		foreach ($generatedgames as $game) {
 			if ($usepseudoteams) {
-				$fakegames .= "<p>" . TeamPseudoName($game['home']) . " - " . TeamPseudoName($game['away']) . "</p>";
+				$fakegames .= "<p>" . TeamPseudoName($game->getHomeTeam()) . " - " . TeamPseudoName($game->getVisitorTeam()) . "</p>";
 			} else {
-				$fakegames .= "<p>" . TeamName($game['home']) . " - " . TeamName($game['away']) . "</p>";
+				$fakegames .= "<p>" . TeamName($game->getHomeTeam()) . " - " . TeamName($game->getVisitorTeam()) . "</p>";
 			}
 		}
 	} elseif ($poolInfo['type'] == 2) {
@@ -84,9 +88,9 @@ if (!empty($_POST['remove_x'])) {
 		$fakegames .= "<p><b>" . $poolInfo['name'] . "</b></p>";
 		foreach ($generatedgames as $game) {
 			if ($usepseudoteams) {
-				$fakegames .= "<p>" . TeamPseudoName($game['home']) . " - " . TeamPseudoName($game['away']) . "</p>";
+				$fakegames .= "<p>" . TeamPseudoName($game->getHomeTeam()) . " - " . TeamPseudoName($game->getVisitorTeam()) . "</p>";
 			} else {
-				$fakegames .= "<p>" . TeamName($game['home']) . " - " . TeamName($game['away']) . "</p>";
+				$fakegames .= "<p>" . TeamName($game->getHomeTeam()) . " - " . TeamName($game->getVisitorTeam()) . "</p>";
 			}
 		}
 		foreach ($generatedpools as $gpool) {
@@ -107,9 +111,9 @@ if (!empty($_POST['remove_x'])) {
 			$fakegames .= "<p><b>" . $poolInfo['name'] . "</b></p>";
 			foreach ($generatedgames as $game) {
 				if ($usepseudoteams) {
-					$fakegames .= "<p>" . TeamPseudoName($game['home']) . " - " . TeamPseudoName($game['away']) . "</p>";
+					$fakegames .= "<p>" . TeamPseudoName($game->getHomeTeam()) . " - " . TeamPseudoName($game->getVisitorTeam()) . "</p>";
 				} else {
-					$fakegames .= "<p>" . TeamName($game['home']) . " - " . TeamName($game['away']) . "</p>";
+					$fakegames .= "<p>" . TeamName($game->getHomeTeam()) . " - " . TeamName($game->getVisitorTeam()) . "</p>";
 				}
 			}
 			if ($rounds > 2) {
@@ -123,9 +127,9 @@ if (!empty($_POST['remove_x'])) {
 	} elseif ($poolInfo['type'] == 4) {
 		foreach ($generatedgames as $game) {
 			if ($usepseudoteams) {
-				$fakegames .= "<p>" . TeamPseudoName($game['home']) . " - " . TeamPseudoName($game['away']) . "</p>";
+				$fakegames .= "<p>" . TeamPseudoName($game->getHomeTeam()) . " - " . TeamPseudoName($game->getVisitorTeam()) . "</p>";
 			} else {
-				$fakegames .= "<p>" . TeamName($game['home']) . " - " . TeamName($game['away']) . "</p>";
+				$fakegames .= "<p>" . TeamName($game->getHomeTeam()) . " - " . TeamName($game->getVisitorTeam()) . "</p>";
 			}
 		}
 	}
@@ -225,10 +229,10 @@ $mutualgames = array();
 if ($poolInfo['mvgames'] == 2) {
 	$allgames = PoolGames($poolInfo['pool_id']);
 	foreach ($allgames as $game) {
-		$gameInfo = GameInfo($game['game_id']);
-		if (!empty($gameInfo['hometeam']) && !empty($gameInfo['visitorteam'])) {
-			$homepool = PoolGetFromPoolByTeamId($poolInfo['pool_id'], $gameInfo['hometeam']);
-			$awaypool = PoolGetFromPoolByTeamId($poolInfo['pool_id'], $gameInfo['visitorteam']);
+		$game = new Game(GetDatabase(), $game['game_id']);
+		if (!empty($game->getHomeTeam()) && !empty($game->getVisitorTeam())) {
+			$homepool = PoolGetFromPoolByTeamId($poolInfo['pool_id'], $game->getHomeTeam());
+			$awaypool = PoolGetFromPoolByTeamId($poolInfo['pool_id'], $game->getVisitorTeam());
 		} else {
 			$homepool = PoolGetFromPoolBySchedulingId($gameInfo['scheduling_name_home']);
 			$awaypool = PoolGetFromPoolBySchedulingId($gameInfo['scheduling_name_visitor']);
@@ -323,16 +327,16 @@ $games = PoolMovedGames($poolId);
 if (count($games)) {
 	$html .= "<h2>" . _("Moved games") . "</h2>\n";
 	$html .= "<table border='0' cellpadding='2px' width='400px'>\n";
-	foreach ($games as $row) {
+	foreach ($games as $game) {
 		++$totalgames;
 		$html .= "<tr>";
-		$html .= "<td style='width:30%'>" . utf8entities($row['hometeamname']) . "</td>";
+		$html .= "<td style='width:30%'>" . TeamName($game->getHomeTeam()) . "</td>";
 		$html .= "<td>-</td>";
-		$html .= "<td style='width:30%'>" . utf8entities($row['visitorteamname']) . "</td>";
-		$html .= "<td style='width:5%'>" . intval($row['homescore']) . "</td><td style='width:2%'>-</td><td style='width:5%'>" . intval($row['visitorscore']) . "</td>";
-		$html .= "<td class='center'><a href='?view=admin/editgame&amp;season=$season&amp;game=" . $row['game_id'] . "'>" . _("edit") . "</a></td>";
-		$html .= "<td class='center'><input class='deletebutton' type='image' src='images/swap.png' alt='<->' name='swap' value='" . _("X") . "' onclick=\"setId(" . $row['game_id'] . ");\"/></td>";
-		$html .= "<td class='center'><input class='deletebutton' type='image' src='images/remove.png' alt='X' name='removemoved' value='" . _("X") . "' onclick=\"setId(" . $row['game_id'] . ");\"/></td>";
+		$html .= "<td style='width:30%'>" . TeamName($game->getVisitorTeam()) . "</td>";
+		$html .= "<td style='width:5%'>" . $game->getHomeScore() . "</td><td style='width:2%'>-</td><td style='width:5%'>" . $game->getVisitorScore() . "</td>";
+		$html .= "<td class='center'><a href='?view=admin/editgame&amp;season=$season&amp;game=" . $game->getId() . "'>" . _("edit") . "</a></td>";
+		$html .= "<td class='center'><input class='deletebutton' type='image' src='images/swap.png' alt='<->' name='swap' value='" . _("X") . "' onclick=\"setId(" . $game->getId() . ");\"/></td>";
+		$html .= "<td class='center'><input class='deletebutton' type='image' src='images/remove.png' alt='X' name='removemoved' value='" . _("X") . "' onclick=\"setId(" . $game->getId() . ");\"/></td>";
 		$html .= "</tr>\n";
 	}
 	$html .= "</table>";

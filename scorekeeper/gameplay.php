@@ -1,10 +1,13 @@
 <?php
+include_once 'classes/Game.php';
+
 $html = "";
 
 $gameId = intval(iget("game"));
-$game_result = GameResult($gameId);
-$goals = GameGoals($gameId);
-$gameevents = GameEvents($gameId);
+$game = new Game(GetDatabase(), $gameId);
+$game_result = $game->getResult();
+$goals = $game->getGoals();
+$gameevents = $game->getEvents();
 
 $html .= "<div data-role='header'>\n";
 $html .= "<h1>" . _("Game play") . ": " . utf8entities($game_result['hometeamname']) . " - " . utf8entities($game_result['visitorteamname']) . "</h1>\n";

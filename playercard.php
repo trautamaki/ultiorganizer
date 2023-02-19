@@ -7,6 +7,8 @@ include_once 'lib/player.functions.php';
 include_once 'lib/game.functions.php';
 include_once 'lib/statistical.functions.php';
 
+include_once 'classes/Game.php';
+
 $html = "";
 if (iget("profile")) {
   $playerId = PlayerLatestId(intval(iget("profile")));
@@ -536,14 +538,14 @@ if (count($games)) {
   $html .= "<h2>" . utf8entities(CurrentSeasonName()) . " " . _("game events") . ":</h2>\n";
 
   foreach ($games as $game) {
-
-    $result = GameResult($game['game_id']);
+    $game = new Game(GetDatabase(), $game['game_id']);
+    $result = $game->getResult();
 
     $html .= "<table border='1' style='width:75%'>";
     $html .= "<tr><th colspan='4'><b>" . ShortDate($result['time']) . "&nbsp;&nbsp;" . utf8entities($result['hometeamname']) . " - " . utf8entities($result['visitorteamname']) . "&nbsp;
 			&nbsp;" . $result['homescore'] . " - " . $result['visitorscore'] . "</b></th></tr>\n";
 
-    $events = PlayerGameEvents($playerId, $game['game_id']);
+    $events = PlayerGameEvents($playerId, $game->getId());
 
     foreach ($events as $event) {
       $html .= "<tr><td style='width:10%'>" . SecToMin($event['time']) . "</td><td style='width:10%'>" . $event['homescore'] . " - " . $event['visitorscore'] . "</td>";

@@ -20,26 +20,26 @@ include_once $include_prefix . 'lib/facebook.functions.php';
 include_once $include_prefix . 'lib/game.functions.php';
 include_once $include_prefix . 'lib/configuration.functions.php';
 
+include_once 'classes/Game.php';
+
 if (IsFacebookEnabled() && !empty($_GET['game']) && !empty($_GET['event'])) {
-	$gameInfo = GameInfo($_GET['game']);
-	if (
-		$_GET['event'] == "game" && (GameHasStarted($gameInfo))
-		&& ($gameInfo['isongoing'] == 0)
-	) {
-		if ($gameInfo['homescore'] >= $gameInfo['visitorscore']) { // FIXME handle draws
-			$wonTeamId = $gameInfo['hometeam'];
-			$wonTeamName = $gameInfo['hometeamname'];
-			$wonTeamScore = $gameInfo['homescore'];
-			$lostTeamId = $gameInfo['visitorteam'];
-			$lostTeamName = $gameInfo['visitorteamname'];
-			$lostTeamScore = $gameInfo['visitorscore'];
+	$game = new Game(GetDatabase(), $_GET['game']);
+	if ($_GET['event'] == "game" && ($game->hasStarted())
+			&& ($game->isOngoing() == 0)) {
+		if ($game->getHomeScore() >= $game->getVisitorScore()) { // FIXME handle draws
+			$wonTeamId = $game->getHomeTeam();
+			$wonTeamName = TeamName($game->getHomeTeam());
+			$wonTeamScore = $game->getHomeScore();
+			$lostTeamId = $game->getVisitorTeam();
+			$lostTeamName = TeamName($game->getVisitorTeam());
+			$lostTeamScore = $game->getVisitorScore();
 		} else {
-			$lostTeamId = $gameInfo['hometeam'];
-			$lostTeamName = $gameInfo['hometeamname'];
-			$lostTeamScore = $gameInfo['homescore'];
-			$wonTeamId = $gameInfo['visitorteam'];
-			$wonTeamName = $gameInfo['visitorteamname'];
-			$wonTeamScore = $gameInfo['visitorscore'];
+			$lostTeamId = $game->getHomeTeam();
+			$lostTeamName = TeamName($game->getHomeTeam());
+			$lostTeamScore = $game->getHomeScore();
+			$wonTeamId = $game->getVisitorTeam();;
+			$wonTeamName = TeamName($game->getVisitorTeam());
+			$wonTeamScore = $game->getVisitorScore();
 		}
 		$users = GetGameFacebookUsers($wonTeamId, "won");
 		$wonTeamPlayers = TeamPlayerAccreditationArray($wonTeamId);
@@ -53,7 +53,7 @@ if (IsFacebookEnabled() && !empty($_GET['game']) && !empty($_GET['event'])) {
 						$conf['wonmessage']
 					);
 					$params = array(
-						"link" => GetUrlBase() . "?view=gameplay&game=" . $gameInfo['game_id'],
+						"link" => GetUrlBase() . "?view=gameplay&game=" . $game->getId(),
 						"message" => $message,
 						"name" => $title
 					);
@@ -73,7 +73,7 @@ if (IsFacebookEnabled() && !empty($_GET['game']) && !empty($_GET['event'])) {
 						$conf['lostmessage']
 					);
 					$params = array(
-						"link" => GetUrlBase() . "?view=gameplay&game=" . $gameInfo['game_id'],
+						"link" => GetUrlBase() . "?view=gameplay&game=" . $game->getId(),
 						"message" => $message,
 						"name" => $title
 					);
@@ -85,7 +85,7 @@ if (IsFacebookEnabled() && !empty($_GET['game']) && !empty($_GET['event'])) {
 		global $serverConf;
 		$message = str_replace(
 			array('$pool', '$winner', '$loser', '$winnerscore', '$loserscore'),
-			array($gameInfo['poolname'], $wonTeamName, $lostTeamName, $wonTeamScore, $lostTeamScore),
+			array(PoolName($game->getPool()), $wonTeamName, $lostTeamName, $wonTeamScore, $lostTeamScore),
 			$serverConf['FacebookGameMessage']
 		);
 		if (
@@ -93,24 +93,24 @@ if (IsFacebookEnabled() && !empty($_GET['game']) && !empty($_GET['event'])) {
 			&& isset($serverConf['FacebookUpdateToken']) && (strlen($serverConf['FacebookUpdateToken']))
 		) {
 			$params = array(
-				"link" => GetUrlBase() . "?view=gameplay&game=" . $gameInfo['game_id'],
+				"link" => GetUrlBase() . "?view=gameplay&game=" . $game->getId(),
 				"message" => $message,
 				"name" => $title
 			);
 			$app_fb = array("facebooktoken" => $serverConf['FacebookUpdateToken'], "facebookuid" => $serverConf['FacebookUpdatePage']);
 			FacebookFeedPost($app_fb, $params);
 		}
-	} elseif ($_GET['event'] == "goal" && ($gameInfo['isongoing'] == 1) && isset($_GET['num'])) {
-		$goalInfo = GoalInfo($gameInfo['game_id'], $_GET['num']);
+	} elseif ($_GET['event'] == "goal" && ($game->isOngoing() == 1) && isset($_GET['num'])) {
+		$goalInfo = $game->getGoalInfo($_GET['num']);
 		if ($goalInfo) {
 			if ($goalInfo['ishomegoal'] == 1) {
-				$team = $gameInfo['hometeamname'];
-				$opponent = $gameInfo['visitorteamname'];
+				$team = TeamName($game->getHomeTeam());
+				$opponent = TeamName($game->getVisitorTeam());
 				$teamscore = $goalInfo['homescore'];
 				$opponentscore = $goalInfo['visitorscore'];
 			} else {
-				$opponent = $gameInfo['hometeamname'];
-				$team = $gameInfo['visitorteamname'];
+				$opponent = TeamName($game->getHomeTeam());
+				$team = TeamName($game->getVisitorTeam());
 				$opponentscore = $goalInfo['homescore'];
 				$teamscore = $goalInfo['visitorscore'];
 			}
@@ -128,7 +128,7 @@ if (IsFacebookEnabled() && !empty($_GET['game']) && !empty($_GET['event'])) {
 				$fb_props['facebookplayer'][$passer]['passedmessage']
 			);
 			$params = array(
-				"link" => GetUrlBase() . "?view=gameplay&game=" . $gameInfo['game_id'],
+				"link" => GetUrlBase() . "?view=gameplay&game=" . $game->getId(),
 				"message" => $message,
 				"name" => $title
 			);
@@ -142,7 +142,7 @@ if (IsFacebookEnabled() && !empty($_GET['game']) && !empty($_GET['event'])) {
 				$fb_props['facebookplayer'][$scorer]['scoredmessage']
 			);
 			$params = array(
-				"link" => GetUrlBase() . "?view=gameplay&game=" . $gameInfo['game_id'],
+				"link" => GetUrlBase() . "?view=gameplay&game=" . $game->getId(),
 				"message" => $message,
 				"name" => $title
 			);

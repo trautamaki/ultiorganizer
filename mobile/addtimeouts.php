@@ -3,18 +3,22 @@ include_once 'lib/common.functions.php';
 include_once 'lib/game.functions.php';
 include_once 'lib/team.functions.php';
 include_once 'lib/player.functions.php';
+
+include_once 'classes/Game.php';
+
 $html = "";
 $maxtimeouts = 6;
 
 $gameId = intval(iget("game"));
-$game_result = GameResult($gameId);
+$game = new Game(GetDatabase(), $gameId);
+$game_result = $game->getResult();
 
 if (isset($_POST['save'])) {
 	$time = "0.0";
 	$time_delim = array(",", ";", ":", "#", "*");
 
 	//remove all old timeouts (if any)
-	GameRemoveAllTimeouts($gameId);
+	$game->removeAllTimeouts();
 
 	//insert home timeouts
 	$j = 0;
@@ -24,7 +28,7 @@ if (isset($_POST['save'])) {
 
 		if (!empty($time)) {
 			$j++;
-			GameAddTimeout($gameId, $j, TimeToSec($time), 1);
+			$game->addTimeout($j, TimeToSec($time), 1);
 		}
 	}
 
@@ -36,7 +40,7 @@ if (isset($_POST['save'])) {
 
 		if (!empty($time)) {
 			$j++;
-			GameAddTimeout($gameId, $j, TimeToSec($time), 0);
+			$game->addTimeout($j, TimeToSec($time), 0);
 		}
 	}
 
@@ -52,7 +56,7 @@ $html .= "<b>" . utf8entities($game_result['hometeamname']) . "</b> " . _("time 
 $html .= "</td></tr><tr><td>\n";
 //used timeouts
 $i = 0;
-$timeouts = GameTimeouts($gameId);
+$timeouts = $game->getTimeouts();
 while ($timeout = GetDatabase()->FetchAssoc($timeouts)) {
 	if (intval($timeout['ishome'])) {
 		$html .= "<input class='input' type='text' size='5' maxlength='8' id='hto$i' name='hto$i' value='" . SecToMin($timeout['time']) . "' /> ";
@@ -74,7 +78,7 @@ $html .= "</td></tr><tr><td>\n";
 
 //used timeouts
 $i = 0;
-$timeouts = GameTimeouts($gameId);
+$timeouts = $game->getTimeouts();
 while ($timeout = GetDatabase()->FetchAssoc($timeouts)) {
 	if (intval(!$timeout['ishome'])) {
 		$html .= "<input class='input' type='text' size='5' maxlength='8' id='ato$i' name='ato$i' value='" . SecToMin($timeout['time']) . "' /> ";

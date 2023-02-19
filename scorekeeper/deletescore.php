@@ -1,11 +1,14 @@
 <?php
+include_once 'classes/Game.php';
+
 $html = "";
 
 $gameId = isset($_GET['game']) ? $_GET['game'] : $_SESSION['game'];
 $_SESSION['game'] = $gameId;
 
-$result = GameGoals($gameId);
-$game_result = GameResult($gameId);
+$game = new Game(GetDatabase(), $gameId);
+$result = $game->getGoals();
+$game_result = $game->getResult();
 
 $scores = array();
 while ($row = GetDatabase()->FetchAssoc($result)) {
@@ -15,7 +18,7 @@ while ($row = GetDatabase()->FetchAssoc($result)) {
 if (isset($_POST['delete'])) {
 	if (count($scores) > 0) {
 		$lastscore = $scores[count($scores) - 1];
-		GameRemoveScore($gameId, $lastscore['num']);
+		$game->removeScore($lastscore['num']);
 		header("location:?view=addscoresheet&game=" . $gameId);
 	}
 }

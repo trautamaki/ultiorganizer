@@ -12,6 +12,8 @@ include_once '../lib/series.functions.php';
 include_once '../lib/common.functions.php';
 include_once '../lib/game.functions.php';
 
+include_once 'classes/Game.php';
+
 $type = RSS2;
 $max_items = 25;
 
@@ -56,25 +58,29 @@ switch ($feedtype) {
     }
     $i = 0;
 
-    while (($game = GetDatabase()->FetchAssoc($games)) && $i < $max_items) {
+    // TODO use game objects
+    foreach ($games as $game) {
+      if ($i >= $max_items) {
+        break;
+      }
 
-      if (GameHasStarted($game)) {
+      if ($game->hasStarted()) {
         $newItem = $feed->createNewItem();
-        $newItem->setGuid($game['game_id']);
-        $title = TeamName($game['hometeam']);
+        $newItem->setGuid($game->getId());
+        $title = TeamName($game->getHomeTeam());
         $title .= " - ";
-        $title .= TeamName($game['visitorteam']);
+        $title .= TeamName($game->getVisitorTeam());
         $title .= " ";
-        $title .= intval($game['homescore']);
+        $title .= $game->getHomeScore();
         $title .= " - ";
-        $title .= intval($game['visitorscore']);
+        $title .= $game->getVisitorScore();
 
         $newItem->setTitle($title);
-        $newItem->setLink($baseurl . "/?view=gameplay&game=" . $game['game_id']);
+        $newItem->setLink($baseurl . "/?view=gameplay&game=" . $game->getId());
 
-        $desc = U_($game['seriesname']);
+        $desc = U_(SeriesName($game->getSeries()));
         $desc .= " ";
-        $desc .= $game['poolname'];
+        $desc .= PoolName($game->getPool());
         $newItem->setDescription($desc);
 
         //Now add the feed item
@@ -88,14 +94,14 @@ switch ($feedtype) {
     //$cutpos = strrpos($baseurl, "/");
     //$path = substr($baseurl,0,$cutpos); //remove ext
 
-    $game = GameInfo($id1);
-    $goals = GameGoals($id1);
-    $gameevents = GameEvents($id1);
-    $mediaevents = GameMediaEvents($id1);
+    $game = new Game(GetDatabase(), $id1); //GameInfo($id1);
+    $goals = $game->getGoals();
+    $gameevents = $game->getEvents();
+    $mediaevents = $game->getMediaEvents();
 
-    $feed->setTitle(_("Ultimate game") . ": " . $game['hometeamname'] . " - " . $game['visitorteamname']);
+    $feed->setTitle(_("Ultimate game") . ": " . TeamName($game->getHomeTeam()) . " - " . TeamName($game->getVisitorTeam()));
     $feed->setLink($baseurl . "/?view=gameplay&game=$id1");
-    $feed->setDescription($game['seriesname'] . ", " . $game['poolname']);
+    $feed->setDescription(SeriesName($game->getSeries()) . ", " . PoolName($game->getPool()));
 
     $prevgoal = 0;
     $items = array();
@@ -104,9 +110,9 @@ switch ($feedtype) {
       $newItem = $feed->createNewItem();
       $newItem->setGuid($goal['time']);
 
-      $title = $game['hometeamname'];
+      $title = TeamName($game->getHomeTeam());
       $title .= " - ";
-      $title .= $game['visitorteamname'];
+      $title .= TeamName($game->getVisitorTeam());
       $title .= " ";
       $title .= intval($goal['homescore']);
       $title .= " - ";
@@ -140,9 +146,9 @@ switch ($feedtype) {
           $desc .= "<br/>[" . SecToMin($event['time']) . "] ";
 
           if (intval($event['ishome']) > 0)
-            $desc .=  $gameevent . " " . $game['hometeamname'];
+            $desc .=  $gameevent . " " . TeamName($game->getHomeTeam());
           else
-            $desc .= $gameevent . " " . $game['visitorteamname'];
+            $desc .= $gameevent . " " . TeamName($game->getVisitorTeam());
         }
       }
 
@@ -174,9 +180,9 @@ switch ($feedtype) {
         $desc .= "[" . SecToMin($event['time']) . "] ";
 
         if (intval($event['ishome']) > 0)
-          $desc .=  $gameevent . " " . $game['hometeamname'];
+          $desc .=  $gameevent . " " . TeamName($game->getHomeTeam());
         else
-          $desc .= $gameevent . " " . $game['visitorteamname'];
+          $desc .= $gameevent . " " . TeamName($game->getVisitorTeam());
       }
     }
     if (!empty($desc)) {
@@ -201,33 +207,34 @@ switch ($feedtype) {
     $feed->setTitle(_("Ultimate results"));
     $feed->setLink($baseurl . "/?view=played");
     $feed->setDescription(_("Ultimate results"));
-    $games = GameAll(20);
+    $games = Game::getAll(20);
 
-    while (($game = GetDatabase()->FetchAssoc($games))) {
-
-      if (GameHasStarted($game)) {
+    // TODO use objects
+    while (($game_row = GetDatabase()->FetchAssoc($games))) {
+      $game = new Game(GetDatabase(), $game_row['game_id']);
+      if ($game->hasStarted()) {
         $newItem = $feed->createNewItem();
-        $newItem->setGuid($game['game_id']);
-        $title = TeamName($game['hometeam']);
+        $newItem->setGuid($game->getId());
+        $title = TeamName($game->getHomeTeam());
         $title .= " - ";
-        $title .= TeamName($game['visitorteam']);
+        $title .= TeamName($game->getVisitorTeam());
         $title .= " ";
-        $title .= intval($game['homescore']);
+        $title .= $game->getHomeScore();
         $title .= " - ";
-        $title .= intval($game['visitorscore']);
+        $title .= $game->getVisitorScore();
 
         $newItem->setTitle($title);
-        $newItem->setLink($baseurl . "/?view=gameplay&game=" . $game['game_id']);
+        $newItem->setLink($baseurl . "/?view=gameplay&game=" . $game->getId());
 
-        $desc = U_($game['seasonname']);
+        $desc = U_(SeasonName($game->getSeason()));
         $desc .= ": ";
-        $desc .= U_($game['seriesname']);
-        if (!empty($game['gamename'])) {
+        $desc .= U_(SeriesName($game->getSeries()));
+        if (!empty($game->getName())) {
           $desc .= " - ";
-          $desc .= U_($game['gamename']);
+          $desc .= U_($game->getName());
         } else {
           $desc .= " - ";
-          $desc .= U_($game['poolname']);
+          $desc .= U_(PoolName($game->getPool()));
         }
         $newItem->setDescription($desc);
 

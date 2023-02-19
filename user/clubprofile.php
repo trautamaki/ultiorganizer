@@ -95,8 +95,8 @@ if ($club) {
 	$op['profile_image'] = $club->getProfileImage();
 	$op['club_id'] = $club->getId();
 	$op['founded'] = $club->getFounded();
-	$op['valid'] = $club->getValid();
-	$op['country'] = $club->getCountry();
+	$op['valid'] = $club->isValid();
+	$op['country'] = $club->getCountry()->getId();
 	$op['city'] = $club->getCity();
 	$op['contacts'] = $club->getContacts();
 	$op['story'] = $club->getStory();
@@ -114,13 +114,13 @@ $html .= pageMenu($menutabs, "", false);
 $html .= "<form method='post' enctype='multipart/form-data' action='?view=user/clubprofile&amp;team=$teamId&amp;club=$clubId'>\n";
 if (isSuperAdmin() || hasEditTeamsRight($teaminfo['series'])) {
 
-	if (intval($club->getValid()))
+	if (intval($club->isValid()))
 		$html .= "<p><input class='input' type='checkbox' id='valid' name='valid' checked='checked'/>";
 	else
 		$html .= "<p><input class='input' type='checkbox' id='valid' name='valid'/>";
 	$html .= " " . _("Show on club list") . "</p>\n";
-} elseif (intval($club->getValid())) {
-	$html .= "<div><input type='hidden' id='valid' name='valid' value='" . utf8entities($club->getValid()) . "'/></div>";
+} elseif (intval($club->isValid())) {
+	$html .= "<div><input type='hidden' id='valid' name='valid' value='" . utf8entities($club->isValid()) . "'/></div>";
 }
 $html .= "<h1>" . utf8entities($club->getName()) . "</h1>";
 

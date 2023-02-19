@@ -94,10 +94,11 @@ if ($view == "acclog") {
   while ($row = GetDatabase()->FetchAssoc($unAccredited)) {
     if (hasAccredidationRight($row['team'])) {
       if (!$row['acknowledged']) {
+        $game = new Game(GetDatabase(), $row['game_id']);
         echo "<tr>";
         echo "<td>" . utf8entities($row['firstname']) . " " . utf8entities($row['lastname']) . "</td>";
         echo "<td>" . utf8entities($row['teamname']) . "</td>";
-        echo "<td>" . utf8entities(GameName($row)) . "</td>";
+        echo "<td>" . $game->getPrettyName() . "</td>";
         echo "<td style='text-align:center'><input type='checkbox' name='acknowledged[]' ";
         echo "value='" . utf8entities($row['player_id']) . "_" . $row['game_id'] . "'/></td></tr>\n";
       } else {
@@ -112,10 +113,11 @@ if ($view == "acclog") {
   echo "<table class='infotable'><tr><th>" . _("Player") . "</th><th>" . _("Team") . "</th><th>" . _("Game") . "</th><th>" . _("Acknowledged") . "</th></tr>\n";
   foreach ($acknowledged as $row) {
     if (hasAccredidationRight($row['team'])) {
+      $game = new Game(GetDatabase(), $row['game_id']);
       echo "<tr>";
       echo "<td>" . utf8entities($row['firstname']) . " " . utf8entities($row['lastname']) . "</td>";
       echo "<td>" . utf8entities($row['teamname']) . "</td>";
-      echo "<td>" . utf8entities(GameName($row)) . "</td>";
+      echo "<td>" . $game->getPrettyName() . "</td>";
       echo "<td style='text-align:center'><input class='deletebutton' type='image' src='images/remove.png' name='remacknowledge' ";
       echo "value='X' alt='X' onclick='setId(\"" . $row['player_id'] . "_" . $row['game_id'] . "\", \"deleteAckId\");'/>";
       echo "</td></tr>\n";
@@ -148,7 +150,8 @@ if ($view == "accevents") {
       echo "<td>" . utf8entities($row['firstname']) . " " . utf8entities($row['lastname']) . "</td>";
       echo "<td>" . utf8entities($row['teamname']) . "</td>";
       if (!empty($row['game'])) {
-        echo "<td>" . utf8entities(GameName($row)) . "</td>";
+        $game = new Game(GetDatabase(), $row['game_id']);
+        echo "<td>" . $game->getPrettyName() . "</td>";
       } else {
         echo  "<td>&nbsp;</td>";
       }

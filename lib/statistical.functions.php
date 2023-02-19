@@ -4,6 +4,9 @@ include_once $include_prefix . 'lib/standings.functions.php';
 include_once $include_prefix . 'lib/player.functions.php';
 include_once $include_prefix . 'lib/series.functions.php';
 
+include_once $include_prefix . 'classes/Game.php';
+
+
 function IsSeasonStatsCalculated($season)
 {
 	$query = sprintf(
@@ -269,18 +272,18 @@ function CalcSeasonStats($season)
 			}
 		}
 
-		foreach ($allgames as $game_info) {
-			$goals_total += $game_info['homescore'] + $game_info['visitorscore'];
-			if ($game_info['homescore'] > $game_info['visitorscore']) {
+		foreach ($allgames as $game) {
+			$goals_total += $game->getHomeScore() + $game->getVisitorScore();
+			if ($game->getHomeScore() > $game->getVisitorScore()) {
 				$home_wins++;
-			} elseif ($game_info['homescore'] == $game_info['visitorscore']) {
+			} elseif ($game->getHomeScore() == $game->getVisitorScore()) {
 				$home_draws++;
-			} elseif ($game_info['homescore'] < $game_info['visitorscore']) {
+			} elseif ($game->getHomeScore() < $game->getVisitorScore()) {
 				$home_losses++;
 			}
 
 			if (ShowDefenseStats()) {
-				$defenses_total += $game_info['homedefenses'] + $game_info['visitordefenses'];
+				$defenses_total += $game->getHomeDefences() + $game->GetVisitorDefences();
 			}
 		}
 		//save season stats
@@ -334,13 +337,12 @@ function CalcSeriesStats($season)
 			}
 
 			foreach ($allgames as $game) {
-				$game_info = GameResult($game['game']);
-				$goals_total += $game_info['homescore'] + $game_info['visitorscore'];
-				if ($game_info['homescore'] > $game_info['visitorscore']) {
+				$goals_total += $game->getHomeScore() + $game->getVisitorScore();
+				if ($game->getHomeScore() > $game->getVisitorScore()) {
 					$home_wins++;
 				}
 				if (ShowDefenseStats()) {
-					$defenses_total += $game_info['homedefenses'] + $game_info['visitordefenses'];
+					$defenses_total += $game->getHomeDefences() + $game->getVisitorDefences();
 				}
 			}
 			//save season stats
@@ -445,31 +447,31 @@ function CalcTeamStats($season)
 				$standing = TeamSeriesStanding($team['team_id']);
 				$allgames = TeamGames($team['team_id']);
 
-				while ($game = GetDatabase()->FetchAssoc($allgames)) {
-					if (!is_null($game['homescore']) && !is_null($game['visitorscore'])) {
+				foreach ($allgames as $game) {
+					if (!is_null($game->getHomeScore()) && !is_null($game->getVisitorScore())) {
 
-						if ($team['team_id'] == $game['hometeam']) {
-							$goals_made += intval($game['homescore']);
-							$goals_against += intval($game['visitorscore']);
+						if ($team['team_id'] == $game->getHomeTeam()) {
+							$goals_made += $game->getHomeScore();
+							$goals_against += $game->getVisitorScore();
 
-							if (intval($game['homescore']) > intval($game['visitorscore'])) {
+							if ($game->getHomeScore() > $game->getVisitorScore()) {
 								$wins++;
 							} else {
 								$losses++;
 							}
 							if (ShowDefenseStats()) {
-								$defenses_total += $game['homedefenses'];
+								$defenses_total += $game->getHomeDefences();
 							}
 						} else {
-							$goals_made += intval($game['visitorscore']);
-							$goals_against += intval($game['homescore']);
-							if (intval($game['homescore']) < intval($game['visitorscore'])) {
+							$goals_made += $game->getVisitorScore();
+							$goals_against += $game->getHomeScore();
+							if ($game->getHomeScore() < $game->getVisitorScore()) {
 								$wins++;
-							} elseif (intval($game['homescore']) > intval($game['visitorscore'])) {
+							} elseif ($game->getHomeScore() > $game->getVisitorScore()) {
 								$losses++;
 							}
 							if (ShowDefenseStats()) {
-								$defenses_total += $game['visitordefenses'];
+								$defenses_total += $game->getVisitorDefences();
 							}
 						}
 					}

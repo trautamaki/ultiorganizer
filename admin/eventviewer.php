@@ -6,6 +6,7 @@ include_once 'lib/pool.functions.php';
 include_once 'lib/reservation.functions.php';
 
 include_once 'classes/Club.php';
+include_once 'classes/Game.php';
 
 $LAYOUT_ID = EVENTVIEWER;
 $title = _("Event log");
@@ -96,11 +97,12 @@ if (count($categoryfilter) > 0) {
 		$html .= "<td>" . $event['type'] . "&nbsp;</td>";
 		$html .= "<td>" . $event['source'] . "&nbsp;</td>";
 		if ($resolve) {
+			$game = new Game(GetDatabase(), $event['id1']);
 			if ($event['category'] == 'player') {
 				$html .= "<td>" . utf8entities(PlayerName($event['id1'])) . "&nbsp;</td>";
 				$html .= "<td>" . utf8entities(TeamName($event['id2'])) . "&nbsp;</td>";
 			} elseif ($event['category'] == 'game') {
-				$html .= "<td>" . utf8entities(GameNameFromId($event['id1'])) . "&nbsp;</td>";
+				$html .= "<td>" . $game->getName() . "&nbsp;</td>";
 				$html .= "<td>" . $event['id2'] . "&nbsp;</td>";
 			} elseif ($event['category'] == 'club') {
 				$club = new Club(GetDatabase(), $event['id1']);

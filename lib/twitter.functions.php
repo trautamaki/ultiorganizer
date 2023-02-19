@@ -4,6 +4,8 @@ include_once $include_prefix . 'lib/twitteroauth/twitteroauth.php';
 include_once $include_prefix . 'lib/game.functions.php';
 include_once $include_prefix . 'lib/player.functions.php';
 
+include_once $include_prefix . 'classes/Game.php';
+
 function TweetGameResult($gameId)
 {
 
@@ -18,15 +20,15 @@ function TweetGameResult($gameId)
 		$_SESSION['TwitterOAuthCallback'] = $twitterconf['TwitterOAuthCallback'];
 	}
 
-	$gameinfo = GameInfo($gameId);
+	$game = new Game(GetDatabase(), $gameId);
 
-	$text = $gameinfo['seriesname'] . ", " . $gameinfo['poolname'] . ": ";
-	$text .= $gameinfo['hometeamname'] . " - " . $gameinfo['visitorteamname'];
-	$text .= " " . intval($gameinfo['homescore']) . " - " . intval($gameinfo['visitorscore']);
+	$text = SeriesName($game->getSeries()) . ", " . PoolName($game->getPool()) . ": ";
+	$text .= TeamName($game->getHomeTeam()) . " - " . TeamName($game->getVisitorTeam());
+	$text .= " " . intval($game->getHomeScore()) . " - " . intval($game->getVisitorScore());
 	$text = TweetTextCheck($text);
 
 	$purpose = "season results";
-	$key = GetTwitterKey($gameinfo['season'], $purpose);
+	$key = GetTwitterKey($game->getSeason(), $purpose);
 
 	if ($key) {
 		$twitter = new TwitterOAuth($_SESSION['TwitterConsumerKey'], $_SESSION['TwitterConsumerSecret'], $key['keystring'], $key['secrets']);
@@ -37,7 +39,7 @@ function TweetGameResult($gameId)
 	}
 
 	$purpose = "series results";
-	$key = GetTwitterKey($gameinfo['series'], $purpose);
+	$key = GetTwitterKey($game->getSeries(), $purpose);
 	if ($key) {
 		$twitter = new TwitterOAuth($_SESSION['TwitterConsumerKey'], $_SESSION['TwitterConsumerSecret'], $key['keystring'], $key['secrets']);
 		$twitter->post('statuses/update', array('status' => $text, 'in_reply_to_status_id' => $gameId));
@@ -58,12 +60,12 @@ function TweetText($gameId, $text)
 		$_SESSION['TwitterOAuthCallback'] = $twitterconf['TwitterOAuthCallback'];
 	}
 
-	$gameinfo = GameInfo($gameId);
+	$game = new Game(GetDatabase(), $gameId);
 
 	$text = TweetTextCheck($text);
 
 	$purpose = "series results";
-	$key = GetTwitterKey($gameinfo['series'], $purpose);
+	$key = GetTwitterKey($game->getSeries(), $purpose);
 	if ($key) {
 		$twitter = new TwitterOAuth($_SESSION['TwitterConsumerKey'], $_SESSION['TwitterConsumerSecret'], $key['keystring'], $key['secrets']);
 		$twitter->post('statuses/update', array('status' => $text, 'in_reply_to_status_id' => $gameId));
@@ -72,10 +74,11 @@ function TweetText($gameId, $text)
 
 function TweetGameScores($gameId)
 {
-
 	if (!IsTwitterEnabled()) {
 		return;
 	}
+
+	$game = new Game(GetDatabase(), $gameId);
 
 	if (!isset($_SESSION['TwitterConsumerKey'])) {
 		$twitterconf = GetTwitterConf();
@@ -84,10 +87,10 @@ function TweetGameScores($gameId)
 		$_SESSION['TwitterOAuthCallback'] = $twitterconf['TwitterOAuthCallback'];
 	}
 
-	$gameinfo = GameInfo($gameId);
-	$lastscore = GameLastGoal($gameId);
-	$text = $gameinfo['seriesname'] . ", " . $gameinfo['poolname'] . ": ";
-	$text .= $gameinfo['hometeamname'] . " - " . $gameinfo['visitorteamname'];
+	$game = new Game(GetDatabase(), $gameId);
+	$lastscore = $game->getLastGoal();
+	$text = SeriesName($game->getSeries()) . ", " . PoolName($game->getPool()) . ": ";
+	$text .= TeamName($game->getHomeTeam()) . " - " . TeamName($game->getVisitorTeam());
 	$text .= ". " . _("Last score") . ": ";
 
 	if (!empty($lastscore['time'])) {
@@ -107,7 +110,7 @@ function TweetGameScores($gameId)
 	$text = TweetTextCheck($text);
 
 	$purpose = "series results";
-	$key = GetTwitterKey($gameinfo['series'], $purpose);
+	$key = GetTwitterKey($game->getSeries(), $purpose);
 	if ($key) {
 		$twitter = new TwitterOAuth($_SESSION['TwitterConsumerKey'], $_SESSION['TwitterConsumerSecret'], $key['keystring'], $key['secrets']);
 		$twitter->post('statuses/update', array('status' => $text, 'in_reply_to_status_id' => $gameId));

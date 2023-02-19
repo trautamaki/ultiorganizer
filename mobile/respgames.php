@@ -50,7 +50,7 @@ if (!empty($_GET["massinput"])) {
 //process itself on submit
 $feedback = "";
 if (!empty($_POST['save'])) {
-	$feedback = GameProcessMassInput($_POST);
+	$feedback = Game::processMassInput($_POST);
 }
 
 
@@ -73,51 +73,52 @@ if (count($respGameArray) == 0) {
 
 	foreach ($respGameArray as $tournament => $resArray) {
 		foreach ($resArray as $resId => $gameArray) {
+			// TODO update loop
 			foreach ($gameArray as $gameId => $game) {
 				if (!is_numeric($gameId)) {
 					continue;
 				}
 
 				if ($showall) {
-					if (!empty($prevdate) && $prevdate != JustDate($game['time'])) {
+					if (!empty($prevdate) && $prevdate != JustDate($game->getTime())) {
 						$html .= "</td></tr><tr><td>\n";
 						$html .= "<hr/>\n";
 						$html .= "</td></tr><tr><td>\n";
 					}
-					$html .= gamerow($gameId, $game, $mass);
-					$prevdate = JustDate($game['time']);
+					$html .= gamerow($gameId, new Game(GetDatabase(), $gameId), $mass);
+					$prevdate = JustDate($game->getTime());
 					continue;
 				}
 
-				if ($prevrg != $game['reservationgroup']) {
+				if ($prevrg != $game->getReservationGroup()) {
 					$html .= "</td></tr><tr><td>\n";
-					if ($reservationgroup == $game['reservationgroup']) {
-						$html .= "<b>" . utf8entities($game['reservationgroup']) . "</b>";
+					if ($reservationgroup == $game->getReservationGroup()) {
+						$html .= "<b>" . utf8entities($game->getReservationGroup()) . "</b>";
 					} else {
-						$html .= "+ <a href='?view=mobile/respgames&amp;rg=" . urlencode($game['reservationgroup']) . "$massPar'>" . utf8entities($game['reservationgroup']) . "</a>";
+						$html .= "+ <a href='?view=mobile/respgames&amp;rg=" . urlencode($game->getReservationGroup()) . "$massPar'>" . utf8entities($game->getReservationGroup()) . "</a>";
 					}
 					$html .= "</td></tr><tr><td>\n";
-					$prevrg = $game['reservationgroup'];
+					$prevrg = $game->getReservationGroup();
 				}
 
-				if ($reservationgroup == $game['reservationgroup']) {
+				if ($reservationgroup == $game->getReservationGroup()) {
 
-					$gameloc = $game['location'] . "#" . $game['fieldname'];
+					$gameloc = $game->getLocation() . "#" . $game->getFieldName();
 
 					if ($prevloc != $gameloc) {
 						$html .= "</td></tr><tr><td>\n";
-						if ($location == $gameloc && $day == JustDate($game['starttime'])) {
-							$html .= "&nbsp;&nbsp;<b>" . utf8entities($game['locationname']) . " " . _("Field") . " " . utf8entities($game['fieldname']) . "</b>";
+						if ($location == $gameloc && $day == JustDate($game->getStartTime())) {
+							$html .= "&nbsp;&nbsp;<b>" . $game->getLocation()->getName() . " " . _("Field") . " " . $game->getFieldName() . "</b>";
 						} else {
-							$html .= "&nbsp;+<a href='?view=mobile/respgames&amp;rg=" . urlencode($game['reservationgroup']) . "&amp;loc=" . urlencode($gameloc) . "&amp;day=" . urlencode(JustDate($game['starttime'])) . "$massPar'>";
-							$html .= utf8entities($game['locationname']) . " " . _("Field") . " " . utf8entities($game['fieldname']) . "</a>";
+							$html .= "&nbsp;+<a href='?view=mobile/respgames&amp;rg=" . urlencode($game->getReservationGroup()) . "&amp;loc=" . urlencode($gameloc) . "&amp;day=" . urlencode(JustDate($game->getStartTime())) . "$massPar'>";
+							$html .= utf8entities($game->getLocation()->getName()) . " " . _("Field") . " " . $game->getFieldName() . "</a>";
 						}
 
 						$html .= "</td></tr><tr><td>\n";
 						$prevloc = $gameloc;
 					}
 
-					if ($location == $gameloc && $day == JustDate($game['starttime'])) {
+					if ($location == $gameloc && $day == JustDate($game->getStartTime())) {
 						$html .= gamerow($gameId, $game, $mass);
 					}
 				}
@@ -148,28 +149,28 @@ pageEnd();
 function gamerow($gameId, $game, $mass)
 {
 	$ret = "&nbsp;&nbsp;&nbsp;&nbsp;";
-	$ret .= DefTimeFormat($game['time']) . " ";
-	if ($game['hometeam'] && $game['visitorteam']) {
-		$ret .= utf8entities($game['hometeamname']) . " - " . utf8entities($game['visitorteamname']) . " ";
+	$ret .= DefTimeFormat($game->getTime()) . " ";
+	if ($game->getHomeTeam() && $game->getHomeTeam()) {
+		$ret .= TeamName($game->getHomeTeam()) . " - " . TeamName($game->getVisitorTeam()) . " ";
 
 		if ($mass == "1") {
 			$ret .= "<input type='hidden' id='scoreId" . $gameId . "' name='scoreId[]' value='$gameId'/>
-			<input type='text' size='3' maxlength='3' style='width:4ex' value='" . (is_null($game['homescore']) ? "" : intval($game['homescore'])) . "' id='homescore$gameId' name='homescore[]' oninput='confirmLeave(this, true, null);' /> -
-			<input type='text' size='3' maxlength='3' style='width:4ex' value='" . (is_null($game['visitorscore']) ? "" : intval($game['visitorscore'])) . "' id='visitorscore$gameId' name='visitorscore[]' oninput='confirmLeave(this, true, null);' />";
+			<input type='text' size='3' maxlength='3' style='width:4ex' value='" . (is_null($game->getHomeScore()) ? "" : $game->getHomeScore()) . "' id='homescore$gameId' name='homescore[]' oninput='confirmLeave(this, true, null);' /> -
+			<input type='text' size='3' maxlength='3' style='width:4ex' value='" . (is_null($game->getVisitorScore()) ? "" : $game->getVisitorScore()) . "' id='visitorscore$gameId' name='visitorscore[]' oninput='confirmLeave(this, true, null);' />";
 			// $ret .= "<input class='button' name='saveOne' type='submit' value='" . _("Save") . "' onPress='setSaved(".$gameID.")'/></td></tr><tr><td>\n";
-		} elseif (GameHasStarted($game)) {
-			$ret .=  "<a style='white-space: nowrap' href='?view=mobile/gameplay&amp;game=" . $gameId . "'>" . intval($game['homescore']) . " - " . intval($game['visitorscore']) . "</a>";
+		} elseif ($game->hasStarted()) {
+			$ret .=  "<a style='white-space: nowrap' href='?view=mobile/gameplay&amp;game=" . $gameId . "'>" . $game->getHomeScore() . " - " . $game->getVisitorScore() . "</a>";
 		} else {
-			$ret .= intval($game['homescore']) . " - " . intval($game['visitorscore']);
+			$ret .= $game->getHomeScore() . " - " . $game->getVisitorScore();
 		}
 		$ret .= "</td></tr><tr><td>\n";
 		$ret .= "&nbsp;&nbsp;&nbsp;&nbsp;";
 		$ret .=  "<a style='white-space: nowrap' href='?view=mobile/addresult&amp;game=" . $gameId . "'>" . _("Result") . "</a> | ";
-		$ret .=  "<a style='white-space: nowrap' href='?view=mobile/addplayerlists&amp;game=" . $gameId . "&amp;team=" . $game['hometeam'] . "'>" . _("Players") . "</a> | ";
+		$ret .=  "<a style='white-space: nowrap' href='?view=mobile/addplayerlists&amp;game=" . $gameId . "&amp;team=" . $game->getHomeTeam() . "'>" . _("Players") . "</a> | ";
 		$ret .=  "<a style='white-space: nowrap' href='?view=mobile/addscoresheet&amp;game=$gameId'>" . _("Scoresheet") . "</a>";
 		$ret .= "</td></tr><tr><td>\n";
 	} else {
-		$ret .= utf8entities($game['phometeamname']) . " - " . utf8entities($game['pvisitorteamname']) . " ";
+		$ret .= $game->getHomeScheduleName() . " - " . $game->getVisitorScheduleName() . " ";
 		$ret .= "</td></tr><tr><td>\n";
 	}
 	return $ret;

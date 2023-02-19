@@ -4,6 +4,7 @@ include_once $include_prefix . 'lib/game.functions.php';
 include_once $include_prefix . 'lib/statistical.functions.php';
 
 include_once $include_prefix . 'classes/Country.php';
+include_once $include_prefix . 'classes/Game.php';
 
 if (is_file('cust/' . CUSTOMIZATIONS . '/head.php')) {
   include_once 'cust/' . CUSTOMIZATIONS . '/head.php';
@@ -775,7 +776,8 @@ function getEditSeasonLinks()
     }
     if (isset($_SESSION['userproperties']['userrole']['gameadmin'])) {
       foreach ($_SESSION['userproperties']['userrole']['gameadmin'] as $game => $param) {
-        $gameseason = GameSeason($game);
+        $game = new Game(GetDatabase(), $game);
+        $gameseason = $game->getSeason();
         if (isset($ret[$gameseason])) {
           $respgamesset[$gameseason] = "set";
         }

@@ -257,6 +257,7 @@ echo "<table><tr><td class='scheduling_column'>";
 
 //$teams = UnscheduledTeams();
 //$unscheduledTeams = array_flip(UnscheduledTeams());
+// TODO check gameData
 if ($poolId) {
   $gameData = UnscheduledPoolGameInfo($poolId);
 } elseif ($seriesId) {

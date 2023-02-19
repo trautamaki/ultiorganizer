@@ -6,6 +6,8 @@ include_once 'lib/series.functions.php';
 include_once 'lib/player.functions.php';
 include_once 'lib/game.functions.php';
 
+include_once 'classes/Game.php';
+
 $html = "";
 
 $teamId1 = 0;
@@ -44,39 +46,39 @@ $t2 = preg_replace('/\s*/m', '', $team2['name']);
 
 $games = GetAllPlayedGames($t1, $t2, $team1['type'], $sorting);
 
-while ($game = GetDatabase()->FetchAssoc($games)) {
-  if (GameHasStarted($game)) {
+foreach ($games as $game) {
+  if ($game->hasStarted()) {
     //ignore spaces from team name
     $t1 = preg_replace('/\s*/m', '', $team1['name']);
-    $t2 = preg_replace('/\s*/m', '', $game['hometeamname']);
+    $t2 = preg_replace('/\s*/m', '', TeamName($game->getHomeTeam()));
 
     if (strcasecmp($t1, $t2) == 0) {
-      if (intval($game['homescore']) > intval($game['visitorscore'])) {
+      if ($game->getHomeScore() > $game->getVisitorScore()) {
         $nT1Wins++;
         $nT2Loses++;
-      } elseif (intval($game['homescore']) < intval($game['visitorscore'])) {
+      } elseif ($game->getHomeScore() < $game->getVisitorScore()) {
         $nT2Wins++;
         $nT1Loses++;
       }
-      $nT1GoalsMade += intval($game['homescore']);
-      $nT2GoalsAgainst += intval($game['homescore']);
+      $nT1GoalsMade += $game->getHomeScore();
+      $nT2GoalsAgainst += $game->getHomeScore();
 
-      $nT2GoalsMade += intval($game['visitorscore']);
-      $nT1GoalsAgainst += intval($game['visitorscore']);
+      $nT2GoalsMade += $game->getVisitorScore();
+      $nT1GoalsAgainst += $game->getVisitorScore();
     } else {
-      if (intval($game['homescore']) < intval($game['visitorscore'])) {
+      if ($game->getHomeScore() < $game->getVisitorScore()) {
         $nT1Wins++;
         $nT2Loses++;
-      } elseif (intval($game['homescore']) > intval($game['visitorscore'])) {
+      } elseif ($game->getHomeScore() > $game->getVisitorScore()) {
         $nT2Wins++;
         $nT1Loses++;
       }
 
-      $nT1GoalsMade += intval($game['visitorscore']);
-      $nT2GoalsAgainst += intval($game['visitorscore']);
+      $nT1GoalsMade += $game->getVisitorScore();
+      $nT2GoalsAgainst += $game->getVisitorScore();
 
-      $nT2GoalsMade += intval($game['homescore']);
-      $nT1GoalsAgainst += intval($game['homescore']);
+      $nT2GoalsMade += $game->getHomeScore();
+      $nT1GoalsAgainst += $game->getHomeScore();
     }
 
     $nGames++;
@@ -127,29 +129,28 @@ if ($nGames) {
   $html .= "<th><a class='thsort' href='" . $viewUrl . "sort=series'>" . _("Division") . "</a></th></tr>";
 
   $points = array(array());
-  GetDatabase()->DataSeek($games, 0);
 
-  while ($game = GetDatabase()->FetchAssoc($games)) {
-    if (GameHasStarted($game)) {
-      $arrayYear = strtok($game['season_id'], ".");
+  foreach ($games as $game) {
+    if ($game->hasStarted()) {
+      $arrayYear = strtok($game->getSeason(), ".");
       $arraySeason = strtok(".");
 
-      if (intval($game['homescore']) > intval($game['visitorscore'])) {
-        $html .= "<tr><td><b>" . utf8entities($game['hometeamname']) . "</b>";
+      if ($game->getHomeScore() > $game->getVisitorScore()) {
+        $html .= "<tr><td><b>" . TeamName($game->getHomeTeam()) . "</b>";
       } else {
-        $html .= "<tr><td>" . utf8entities($game['hometeamname']);
+        $html .= "<tr><td>" . TeamName($game->getHomeTeam());
       }
 
-      if (intval($game['homescore']) < intval($game['visitorscore'])) {
-        $html .= " - <b>" . utf8entities($game['visitorteamname']) . "</b></td>";
+      if ($game->getHomeScore() < $game->getVisitorScore()) {
+        $html .= " - <b>" . TeamName($game->getVisitorTeam()) . "</b></td>";
       } else {
-        $html .= " - " . utf8entities($game['visitorteamname']) . "</td>";
+        $html .= " - " . TeamName($game->getVisitorTeam()) . "</td>";
       }
-      $html .= "<td><a href='?view=gameplay&amp;game=" . $game['game_id'] . "'>" . $game['homescore'] . " - " . $game['visitorscore'] . "</a></td>";
+      $html .= "<td><a href='?view=gameplay&amp;game=" . $game->getId() . "'>" . $game->getHomeScore() . " - " . $game->getVisitorScore() . "</a></td>";
 
-      $html .= "<td>" . utf8entities(U_($game['seasonname'])) . ": <a href='?view=poolstatus&amp;pool=" . $game['pool_id'] . "'>" . utf8entities($game['name']) . "</a></td></tr>";
+      $html .= "<td>" . SeasonName(U_($game->getSeason())) . ": <a href='?view=poolstatus&amp;pool=" . $game->getPool() . "'>" . $game->getName() . "</a></td></tr>";
 
-      $scores = GameScoreBoard($game['game_id']);
+      $scores = $game->getScoreboard();
       $i = 0;
 
       while ($row = GetDatabase()->FetchAssoc($scores)) {

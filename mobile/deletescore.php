@@ -2,9 +2,12 @@
 include_once 'lib/common.functions.php';
 include_once 'lib/game.functions.php';
 
+include_once 'classes/Game.php';
+
 $html = "";
 $gameId = intval(iget("game"));
-$result = GameGoals($gameId);
+$game = new Game(GetDatabase(), $gameId);
+$result = $game->getGoals();
 $scores = array();
 while ($row = GetDatabase()->FetchAssoc($result)) {
 	$scores[] = $row;
@@ -13,7 +16,7 @@ while ($row = GetDatabase()->FetchAssoc($result)) {
 if (isset($_POST['delete'])) {
 	if (count($scores) > 0) {
 		$lastscore = $scores[count($scores) - 1];
-		GameRemoveScore($gameId, $lastscore['num']);
+		$game->removeScore($lastscore['num']);
 		header("location:?view=mobile/addscoresheet&game=" . $gameId);
 	}
 }

@@ -12,6 +12,8 @@ if (version_compare(PHP_VERSION, '5.0.0', '>')) {
 include_once $include_prefix . 'lib/database.php';
 include_once $include_prefix . 'lib/logging.functions.php';
 
+include_once $include_prefix . 'classes/Game.php';
+
 header("Content-type: text/plain; charset=\"UTF-8\"");
 header("Cache-Control: no-cache, must-revalidate");
 header("Expires: -1");
@@ -56,13 +58,14 @@ if (!is_numeric($gameId)) {
 }
 
 $sender = $_GET['sender'];
-$result = GameResult($gameId);
+$game = new Game(GetDatabase(), $gameId);
+$result = $game->getResult();
 if (!$result) {
 	echo _("Unknown game number") . ": " . $_GET['game'];
 } else {
 	if ($action == "P" || $action == "G" || $action == "R") {
 		LogGameUpdate($gameId, "result:" . $result['homescore'] . "-" . $result['visitorscore'] . ">" . $home . "-" . $away, "SMS" . $sender);
-		$updresult = GameSetResult($gameId, $home, $away);
+		$updresult = $game->setResult($home, $away);
 
 		header("x-uo-oldscore: " . $result['homescore'] . "-" . $result['visitorscore']);
 		header("x-uo-su-status: OK");
@@ -82,7 +85,7 @@ if (!$result) {
 				$oldResultSplit = explode(":", $splitted[0]);
 				$oldresult = $oldResultSplit[1];
 				$oldResultSplit = explode("-", $oldresult);
-				GameSetResult($gameId, $oldResultSplit[0], $oldResultSplit[1]);
+				$game->setResult($oldResultSplit[0], $oldResultSplit[1]);
 				header("x-uo-oldscore: " . $result['homescore'] . "-" . $result['visitorscore']);
 				header("x-uo-su-status: OK");
 				echo $result['hometeamname'] . "-" . $result['visitorteamname'] . "\n";

@@ -1,4 +1,6 @@
 <?php
+include_once 'classes/Game.php';
+
 include_once 'lib/common.functions.php';
 include_once 'lib/pool.functions.php';
 include_once 'lib/team.functions.php';
@@ -7,8 +9,9 @@ $html = "";
 
 $gameId = intval(iget("game"));
 $teamId = intval(iget("team"));
-$game_result = GameResult($gameId);
-$team_score_board = GameTeamScoreBorad($gameId, $teamId);
+$game = new Game(GetDatabase(), $gameId);
+$game_result = $game->getResult();
+$team_score_board = $game->getTeamScoreboard($teamId);
 
 mobilePageTop(_("Players of the game"));
 

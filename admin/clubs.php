@@ -67,7 +67,7 @@ foreach ($clubs as $club) {
 	$html .=  "<td><a href='?view=user/clubprofile&amp;club=" . $club->getId() . "'>" . $club->getName() . "</a></td>";
 
 	$html .= "<td class='center'>" . $club->numOfTeams() . "</td>";
-	if (intval($club->getValid())) {
+	if (intval($club->isValid())) {
 		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . $club->getId() . "' checked='checked'/></td>";
 	} else {
 		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . $club->getId() . "'/></td>";
@@ -104,7 +104,7 @@ foreach ($countries as $row) {
 	$html .=  "<td class='center'>" . $row->getAbbreviation() . "</td>";
 
 	$html .= "<td class='center'>" . $row->getNumOfTeams() . "</td>";
-	if (intval($row->getValid())) {
+	if (intval($row->isValid())) {
 		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . $row->getId() . "' checked='checked'/></td>";
 	} else {
 		$html .= "<td class='center'><input class='input' type='checkbox' name='valid[]' value='" . $row->getId() . "'/></td>";

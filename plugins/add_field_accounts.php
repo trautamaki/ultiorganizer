@@ -47,10 +47,10 @@ if (!empty($_POST['create'])) {
 		}
 
 		$games = ReservationGamesByField($field['fieldname'], $season);
-		while ($game = GetDatabase()->FetchAssoc($games)) {
-			$exist = GetDatabase()->DBQueryToValue("SELECT COUNT(*) FROM uo_userproperties WHERE userid='$name' AND value='gameadmin:" . $game['game_id'] . "'");
+		foreach ($games as $game) {
+			$exist = GetDatabase()->DBQueryToValue("SELECT COUNT(*) FROM uo_userproperties WHERE userid='$name' AND value='gameadmin:" . $game->getId() . "'");
 			if ($user < 1) {
-				GetDatabase()->DBQuery("INSERT INTO uo_userproperties(userid, name, value) VALUES ('$name', 'userrole', 'gameadmin:" . $game['game_id'] . "')");
+				GetDatabase()->DBQuery("INSERT INTO uo_userproperties(userid, name, value) VALUES ('$name', 'userrole', 'gameadmin:" . $game->getId() . "')");
 			}
 		}
 	}

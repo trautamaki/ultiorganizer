@@ -391,7 +391,7 @@ function SeasonGamesNotScheduled($seasonId)
  * Returns all games played on given season.
  *
  * @param string $seasonId uo_season.season_id
- * @return php array of games
+ * @return array of games
  */
 function SeasonAllGames($season)
 {
@@ -406,7 +406,12 @@ function SeasonAllGames($season)
     GetDatabase()->RealEscapeString($season)
   );
 
-  return GetDatabase()->DBQueryToArray($query);
+  $result = GetDatabase()->DBQueryToArray($query);
+  $games = array();
+  foreach ($result as $game) {
+      array_push($countries, new Game(GetDatabase(), $game['game_id']));
+  }
+  return $games;
 }
 
 /**

@@ -5,6 +5,8 @@ include_once 'lib/standings.functions.php';
 include_once 'lib/pool.functions.php';
 include_once 'lib/configuration.functions.php';
 
+include_once 'classes/Game.php';
+
 if (version_compare(PHP_VERSION, '5.0.0', '>')) {
 	include_once 'lib/twitter.functions.php';
 }
@@ -12,24 +14,25 @@ if (version_compare(PHP_VERSION, '5.0.0', '>')) {
 $html = "";
 
 $gameId = intval(iget("game"));
+$game = new Game(GetDatabase(), $gameId);
 
 if (isset($_POST['save'])) {
 	$home = intval($_POST['home']);
 	$away = intval($_POST['away']);
-	$ok = GameSetResult($gameId, $home, $away);
+	$ok = $game->setResult($home, $away);
 	if ($ok) {
-		$game_result = GameResult($gameId);
+		$game_result = $game->getResult();
 		header("location:?view=mobile/addplayerlists&game=" . $gameId . "&team=" . $game_result['hometeam']);
 	}
 } elseif (isset($_POST['update'])) {
 	$home = intval($_POST['home']);
 	$away = intval($_POST['away']);
-	$ok = GameUpdateResult($gameId, $home, $away);
+	$ok = $game->updateResult($home, $away);
 }
 
 mobilePageTop(_("Game result"));
 
-$result = GameResult($gameId);
+$result = $game->getResult();
 
 $html .= "<form action='?" . utf8entities($_SERVER['QUERY_STRING']) . "' method='post'>\n";
 $html .= "<table cellpadding='2'>\n";

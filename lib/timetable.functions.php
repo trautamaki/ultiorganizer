@@ -2,6 +2,8 @@
 include_once $include_prefix . 'lib/configuration.functions.php';
 include_once $include_prefix . 'lib/game.functions.php';
 
+include_once $include_prefix . 'classes/Game.php';
+
 function TournamentView($games, $grouping = true)
 {
 
@@ -16,11 +18,12 @@ function TournamentView($games, $grouping = true)
   $isTableOpen = false;
   $rss = IsGameRSSEnabled();
 
-  while ($game = GetDatabase()->FetchAssoc($games)) {
-    $ret .= "\n<!-- res:" . $game['reservationgroup'] . " pool:" . $game['pool'] . " date:" . JustDate($game['starttime']) . "-->\n";
+  while ($game_row = GetDatabase()->FetchAssoc($games)) {
+    $game = new Game(GetDatabase(), $game_row['game_id']);
+    $ret .= "\n<!-- res:" . $game_row['reservationgroup'] . " pool:" . $game->getPool() . " date:" . JustDate($game_row['starttime']) . "-->\n";
     if (
-      $game['reservationgroup'] != $prevTournament
-      || (empty($game['reservationgroup']) && !$isTableOpen)
+      $game_row['reservationgroup'] != $prevTournament
+      || (empty($game_row['reservationgroup']) && !$isTableOpen)
     ) {
       if ($isTableOpen) {
         $ret .= "</table>\n";
@@ -28,27 +31,27 @@ function TournamentView($games, $grouping = true)
         $isTableOpen = false;
       }
       if ($grouping) {
-        $ret .= "<h1>" . utf8entities(U_($game['reservationgroup'])) . "</h1>\n";
+        $ret .= "<h1>" . utf8entities(U_($game_row['reservationgroup'])) . "</h1>\n";
       }
       $prevPlace = "";
     }
 
-    if (JustDate($game['starttime']) != $prevDate || $game['place_id'] != $prevPlace) {
+    if (JustDate($game_row['starttime']) != $prevDate || $game_row['place_id'] != $prevPlace) {
       if ($isTableOpen) {
         $ret .= "</table>\n";
         $isTableOpen = false;
       }
       $ret .= "<h3>";
-      $ret .= DefWeekDateFormat($game['starttime']);
+      $ret .= DefWeekDateFormat($game_row['starttime']);
       $ret .= " ";
-      $ret .= "<a href='?view=reservationinfo&amp;reservation=" . $game['reservation_id'] . "'>";
-      $ret .= utf8entities(U_($game['placename']));
+      $ret .= "<a href='?view=reservationinfo&amp;reservation=" . $game->getReservation() . "'>";
+      $ret .= utf8entities(U_($game_row['placename']));
       $ret .= "</a>";
       $ret .= "</h3>\n";
       $prevPool = "";
     }
 
-    if ($game['pool'] != $prevPool) {
+    if ($game->getPool() != $prevPool) {
       if ($isTableOpen) {
         $ret .= "</table>\n";
         $isTableOpen = false;
@@ -63,12 +66,12 @@ function TournamentView($games, $grouping = true)
       $ret .= GameRow($game, false, true, true, false, false, true, $rss);
     }
 
-    $prevTournament = $game['reservationgroup'];
-    $prevPlace = $game['place_id'];
-    $prevSeries = $game['series_id'];
-    $prevPool = $game['pool'];
-    $prevDate = JustDate($game['starttime']);
-    $prevTimezone = $game['timezone'];
+    $prevTournament = $game_row['reservationgroup'];
+    $prevPlace = $game_row['place_id'];
+    $prevSeries = $game->getSeries();
+    $prevPool = $game->getPool();
+    $prevDate = JustDate($game_row['starttime']);
+    $prevTimezone = $game->getTimezone();
   }
 
   if ($isTableOpen) {
@@ -91,20 +94,22 @@ function SeriesView($games, $date = true, $time = false)
   $isTableOpen = false;
   $rss = IsGameRSSEnabled();
 
-  while ($game = GetDatabase()->FetchAssoc($games)) {
+  // TODO update loop
+  while ($game_row = GetDatabase()->FetchAssoc($games)) {
+    $game = new Game(GetDatabase(), $game_row['game_id']);
     if (
-      $game['series_id'] != $prevSeries
-      || (empty($game['series_id']) && !$isTableOpen)
+      $game->getSeries() != $prevSeries
+      || (empty($game->getSeries()) && !$isTableOpen)
     ) {
       if ($isTableOpen) {
         $ret .= "</table>\n";
         $ret .= "<hr/>\n";
         $isTableOpen = false;
       }
-      $ret .= "<h1>" . utf8entities(U_($game['seriesname'])) . "</h1>\n";
+      $ret .= "<h1>" . SeriesName(U_($game->getSeries())) . "</h1>\n";
     }
 
-    if ($game['pool'] != $prevPool) {
+    if ($game->getPool() != $prevPool) {
       if ($isTableOpen) {
         $ret .= "</table>\n";
         $isTableOpen = false;
@@ -117,12 +122,12 @@ function SeriesView($games, $date = true, $time = false)
     //function GameRow($game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
     $ret .= GameRow($game, true, true, true, false, false, true, $rss);
 
-    $prevTournament = $game['reservationgroup'];
-    $prevPlace = $game['place_id'];
-    $prevSeries = $game['series_id'];
-    $prevPool = $game['pool'];
-    $prevDate = JustDate($game['time']);
-    $prevTimezone = $game['timezone'];
+    $prevTournament = $game_row['reservationgroup'];
+    $prevPlace = $game_row['place_id'];
+    $prevSeries = $game->getSeries();
+    $prevPool = $game->getPool();
+    $prevDate = JustDate($game->getTime());
+    $prevTimezone = $game->getTimezone();
   }
 
   if ($isTableOpen) {
@@ -146,10 +151,11 @@ function PlaceView($games, $grouping = true)
   $isTableOpen = false;
   $rss = IsGameRSSEnabled();
 
-  while ($game = GetDatabase()->FetchAssoc($games)) {
+  while ($game_row = GetDatabase()->FetchAssoc($games)) {
+    $game = new Game(GetDatabase(), $game_row['game_id']);
     if (
-      $game['reservationgroup'] != $prevTournament
-      || (empty($game['reservationgroup']) && !$isTableOpen)
+      $game_row['reservationgroup'] != $prevTournament
+      || (empty($game_row['reservationgroup']) && !$isTableOpen)
     ) {
       if ($isTableOpen) {
         $ret .= "</table>\n";
@@ -157,22 +163,22 @@ function PlaceView($games, $grouping = true)
         $isTableOpen = false;
       }
       if ($grouping) {
-        $ret .= "<h1>" . utf8entities(U_($game['reservationgroup'])) . "</h1>\n";
+        $ret .= "<h1>" . utf8entities(U_($game_row['reservationgroup'])) . "</h1>\n";
       }
       $prevDate = "";
     }
 
-    if (JustDate($game['starttime']) != $prevDate) {
+    if (JustDate($game_row['starttime']) != $prevDate) {
       if ($isTableOpen) {
         $ret .= "</table>\n";
         $isTableOpen = false;
       }
       $ret .= "<h3>";
-      $ret .= DefWeekDateFormat($game['starttime']);
+      $ret .= DefWeekDateFormat($game_row['starttime']);
       $ret .= "</h3>\n";
     }
 
-    if ($game['place_id'] != $prevPlace || $game['fieldname'] != $prevField || JustDate($game['starttime']) != $prevDate) {
+    if ($game_row['place_id'] != $prevPlace || $game->getFieldname() != $prevField || JustDate($game_row['starttime']) != $prevDate) {
       if ($isTableOpen) {
         $ret .= "</table>\n";
         $isTableOpen = false;
@@ -187,13 +193,13 @@ function PlaceView($games, $grouping = true)
       $ret .= GameRow($game, false, true, false, true, true, true, $rss);
     }
 
-    $prevTournament = $game['reservationgroup'];
-    $prevPlace = $game['place_id'];
-    $prevField = $game['fieldname'];
-    $prevSeries = $game['series_id'];
-    $prevPool = $game['pool'];
-    $prevDate = JustDate($game['starttime']);
-    $prevTimezone = $game['timezone'];
+    $prevTournament = $game_row['reservationgroup'];
+    $prevPlace = $game_row['place_id'];
+    $prevField = $game->getFieldname();
+    $prevSeries = $game->getSeries();
+    $prevPool = $game->getPool();
+    $prevDate = JustDate($game_row['starttime']);
+    $prevTimezone = $game->getTimezone();
   }
 
   if ($isTableOpen) {
@@ -212,13 +218,13 @@ function TimeView($games, $grouping = true)
   $rss = IsGameRSSEnabled();
 
   while ($game = GetDatabase()->FetchAssoc($games)) {
-    if ($game['time'] != $prevTime) {
+    if ($game->getTime() != $prevTime) {
       if ($isTableOpen) {
         $ret .= "</table>\n";
         //$ret .= "<hr/>\n";
         $isTableOpen = false;
       }
-      $ret .= "<h3>" . DefWeekDateFormat($game['time']) . " " . DefHourFormat($game['time']) . "</h3>\n";
+      $ret .= "<h3>" . DefWeekDateFormat($game->getTime()) . " " . DefHourFormat($game->getTime()) . "</h3>\n";
       $ret .= "<table cellpadding='2' border='0' cellspacing='0'>\n";
       $isTableOpen = true;
     }
@@ -228,8 +234,8 @@ function TimeView($games, $grouping = true)
       $ret .= GameRow($game, false, false, true, true, true, true, $rss);
     }
 
-    $prevTime = $game['time'];
-    $prevTimezone = $game['timezone'];
+    $prevTime = $game->getTime();
+    $prevTimezone = $game->getTimezone();
   }
 
   if ($isTableOpen) {
@@ -253,64 +259,66 @@ function ExtTournamentView($games)
   $isTableOpen = false;
   $ret .= "<table width='95%'>";
 
-  while ($game = GetDatabase()->FetchAssoc($games)) {
+  // TODO update to classes
+  while ($game_row = GetDatabase()->FetchAssoc($games)) {
+    $game = new Game(GetDatabase(), $game_row['game_id']);
     if (
-      $game['reservationgroup'] != $prevTournament
-      || (empty($game['reservationgroup']) && !$isTableOpen)
+      $game_row['reservationgroup'] != $prevTournament
+      || (empty($game_row['reservationgroup']) && !$isTableOpen)
     ) {
       if ($isTableOpen) {
         $ret .= "</table></td></tr>\n";
         $isTableOpen = false;
       }
-      $ret .= "<tr><td><h1 class='pk_h1'>" . utf8entities(U_($game['reservationgroup'])) . "</h1></td></tr>\n";
+      $ret .= "<tr><td><h1 class='pk_h1'>" . utf8entities(U_($game_row['reservationgroup'])) . "</h1></td></tr>\n";
     }
 
-    if ($game['place_id'] != $prevPlace || $game['fieldname'] != $prevField || JustDate($game['starttime']) != $prevDate) {
+    if ($game_row['place_id'] != $prevPlace || $game->getFieldName() != $prevField || JustDate($game_row['starttime']) != $prevDate) {
       if ($isTableOpen) {
         $ret .= "</table></td></tr>\n";
         $isTableOpen = false;
       }
       $ret .= "<tr><td style='width:100%'><table width='100%' class='pk_table'><tr><td class='pk_tournament_td1'>";
-      $ret .= utf8entities(U_($game['placename'])) . " " . _("Field") . " " . utf8entities($game['fieldname']) . "</td></tr></table></td></tr>\n";
+      $ret .= utf8entities(U_($game_row['placename'])) . " " . _("Field") . " " . utf8entities($game->getFieldName()) . "</td></tr></table></td></tr>\n";
       $ret .= "<tr><td><table width='100%' class='pk_table'>\n";
       $isTableOpen = true;
     }
 
-    $ret .= "<tr><td style='width:10px' class='pk_tournament_td2'>" . DefHourFormat($game['time']) . "</td>";
-    if ($game['hometeam'] && $game['visitorteam']) {
-      $ret .= "<td style='width:100px' class='pk_tournament_td2'>" . utf8entities($game['hometeamname']) . "</td>
+    $ret .= "<tr><td style='width:10px' class='pk_tournament_td2'>" . DefHourFormat($game->getTime()) . "</td>";
+    if (TeamName($game->getHomeTeam()) && TeamName($game->getVisitorTeam())) {
+      $ret .= "<td style='width:100px' class='pk_tournament_td2'>" . TeamName($game->getHomeTeam()) . "</td>
 			<td style='width:5px' class='pk_tournament_td2'>-</td>
-			<td style='width:100px' class='pk_tournament_td2'>" . utf8entities($game['visitorteamname']) . "</td>";
+			<td style='width:100px' class='pk_tournament_td2'>" . TeamName($game->getVisitorTeam()) . "</td>";
 
-      if (GameHasStarted($game))
+      if ($game->hasStarted())
         $ret .= "<td style='text-align: center;width:8px' class='pk_tournament_td2'>?</td>
 					<td style='text-align: center;width:5px' class='pk_tournament_td2'>-</td>
 					<td style='text-align: center;width:8px' class='pk_tournament_td2'>?</td>";
       else
-        $ret .= "<td style='text-align: center;width:8px' class='pk_tournament_td2'>" . intval($game['homescore']) . "</td>
+        $ret .= "<td style='text-align: center;width:8px' class='pk_tournament_td2'>" . $game->getHomeScore() . "</td>
 					<td style='text-align: center;width:5px' class='pk_tournament_td2'>-</td>
-					<td style='text-align: center;width:8px' class='pk_tournament_td2'>" . intval($game['visitorscore']) . "</td>";
+					<td style='text-align: center;width:8px' class='pk_tournament_td2'>" . $game->getVisitorScore() . "</td>";
     } else {
-      $ret .= "<td style='width:100px' class='pk_tournament_td2'>" . utf8entities($game['phometeamname']) . "</td>
+      $ret .= "<td style='width:100px' class='pk_tournament_td2'>" . $game->getSchedulingNameHome() . "</td>
 			<td style='width:5px' class='pk_tournament_td2'>-</td>
-			<td style='width:100px' class='pk_tournament_td2'>" . utf8entities($game['pvisitorteamname']) . "</td>";
+			<td style='width:100px' class='pk_tournament_td2'>" . $game->getSchedulingNameVisitor() . "</td>";
       $ret .= "<td style='text-align: center;width:8px' class='pk_tournament_td2'>?</td>
 					<td style='text-align: center;width:5px' class='pk_tournament_td2'>-</td>
 					<td style='text-align: center;width:8px' class='pk_tournament_td2'>?</td>";
     }
     $ret .= "<td style='width:5px' class='pk_tournament_td2'></td>";
-    $ret .= "<td style='width:50px' class='pk_tournament_td2'>" . utf8entities($game['seriesname']) . "</td>";
-    $ret .= "<td style='width:100px' class='pk_tournament_td2'>" . utf8entities($game['poolname']) . "</td>";
+    $ret .= "<td style='width:50px' class='pk_tournament_td2'>" . SeriesName($game->getSeries()) . "</td>";
+    $ret .= "<td style='width:100px' class='pk_tournament_td2'>" . PoolName($game->getPool()) . "</td>";
     $ret .= "</tr>\n";
 
 
-    $prevTournament = $game['reservationgroup'];
-    $prevPlace = $game['place_id'];
-    $prevField = $game['fieldname'];
-    $prevSeries = $game['series_id'];
-    $prevPool = $game['pool'];
-    $prevDate = JustDate($game['starttime']);
-    $prevTimezone = $game['timezone'];
+    $prevTournament = $game_row['reservationgroup'];
+    $prevPlace = $game_row['place_id'];
+    $prevField = $game->getFieldName();
+    $prevSeries = $game->getSeries();
+    $prevPool = $game->getPool();
+    $prevDate = JustDate($game_row['starttime']);
+    $prevTimezone = $game_row['timezone'];
   }
 
   if ($isTableOpen) {
@@ -335,59 +343,61 @@ function ExtGameView($games)
   $isTableOpen = false;
   $ret .= "<table style='white-space: nowrap' width='95%'>";
 
-  while ($game = GetDatabase()->FetchAssoc($games)) {
+  // TODO update loop to use classes
+  while ($game_row = GetDatabase()->FetchAssoc($games)) {
+    $game = new Game(GetDatabase(), $game_row['game_id']);
     if (
-      $game['reservationgroup'] != $prevTournament
-      || (empty($game['reservationgroup']) && !$isTableOpen)
+      $game_row['reservationgroup'] != $prevTournament
+      || (empty($game_row['reservationgroup']) && !$isTableOpen)
     ) {
       if ($isTableOpen) {
         $ret .= "</table></td></tr>\n";
         $isTableOpen = false;
       }
-      $ret .= "<tr><td><h1 class='pk_h1'>" . utf8entities(U_($game['reservationgroup'])) . "</h1></td></tr>\n";
+      $ret .= "<tr><td><h1 class='pk_h1'>" . utf8entities(U_($game_row['reservationgroup'])) . "</h1></td></tr>\n";
     }
 
-    if ($game['place_id'] != $prevPlace || $game['fieldname'] != $prevField || JustDate($game['starttime']) != $prevDate) {
+    if ($game_row['place_id'] != $prevPlace || $game->getFieldname() != $prevField || JustDate($game_row['starttime']) != $prevDate) {
       if ($isTableOpen) {
         $ret .= "</table></td></tr>\n";
         $isTableOpen = false;
       }
       $ret .= "<tr><td><table width='100%' class='pk_table'>";
       $ret .= "<tr><th class='pk_teamgames_th' colspan='12'>";
-      $ret .= DefWeekDateFormat($game['starttime']) . " " . utf8entities(U_($game['placename'])) . " " . _("Field") . " " . utf8entities($game['fieldname']);
+      $ret .= DefWeekDateFormat($game_row['starttime']) . " " . utf8entities(U_($game_row['placename'])) . " " . _("Field") . " " . utf8entities($game->getFieldname());
       $ret .= "</th></tr>\n";
       $isTableOpen = true;
     }
 
-    $ret .= "<tr><td style='width:15%' class='pk_teamgames_td'>" . DefHourFormat($game['time']) . "</td>";
-    if ($game['hometeam'] && $game['visitorteam']) {
-      $ret .= "<td style='width:36%' class='pk_teamgames_td'>" . utf8entities($game['hometeamname']) . "</td>
+    $ret .= "<tr><td style='width:15%' class='pk_teamgames_td'>" . DefHourFormat($game->getTime()) . "</td>";
+    if ($game->getHomeTeam() && $game->getVisitorTeam()) {
+      $ret .= "<td style='width:36%' class='pk_teamgames_td'>" . TeamName($game->getHomeTeam()) . "</td>
 			<td style='width:3%' class='pk_teamgames_td'>-</td>
-			<td style='width:36%' class='pk_teamgames_td'>" . utf8entities($game['visitorteamname']) . "</td>";
-      if (GameHasStarted($game)) {
+			<td style='width:36%' class='pk_teamgames_td'>" . TeamName($game->getVisitorTeam()) . "</td>";
+      if ($game->hasStarted()) {
         $ret .= "<td style='text-align: center;width:4%' class='pk_teamgames_td'>?</td>
 					<td style='text-align: center;width:2%' class='pk_teamgames_td'>-</td>
 					<td style='text-align: center;width:4%' class='pk_teamgames_td'>?</td>";
       } else {
-        $ret .= "<td style='text-align: center;width:4%' class='pk_teamgames_td'>" . intval($game['homescore']) . "</td>
+        $ret .= "<td style='text-align: center;width:4%' class='pk_teamgames_td'>" . intval($game->getHomeScore()) . "</td>
 					<td style='text-align: center;width:2%' class='pk_teamgames_td'>-</td>
-					<td style='text-align: center;width:4%' class='pk_teamgames_td'>" . intval($game['visitorscore']) . "</td>";
+					<td style='text-align: center;width:4%' class='pk_teamgames_td'>" . intval($game->getVisitorScore()) . "</td>";
       }
     } else {
-      $ret .= "<td style='width:36%' class='pk_teamgames_td'>" . utf8entities($game['phometeamname']) . "</td>
+      $ret .= "<td style='width:36%' class='pk_teamgames_td'>" . $game->getHomeScheduleName() . "</td>
 			<td style='width:3%' class='pk_teamgames_td'>-</td>
-			<td style='width:36%' class='pk_teamgames_td'>" . utf8entities($game['pvisitorteamname']) . "</td>";
+			<td style='width:36%' class='pk_teamgames_td'>" . $game->getVisitorScheduleName() . "</td>";
     }
     $ret .= "</tr>\n";
 
 
-    $prevTournament = $game['reservationgroup'];
-    $prevPlace = $game['place_id'];
-    $prevSeries = $game['series_id'];
-    $prevField = $game['fieldname'];
-    $prevPool = $game['pool'];
-    $prevDate = JustDate($game['starttime']);
-    $prevTimezone = $game['timezone'];
+    $prevTournament = $game_row['reservationgroup'];
+    $prevPlace = $game_row['place_id'];
+    $prevSeries = $game->getSeries();
+    $prevField = $game->getFieldname();
+    $prevPool = $game->getPool();
+    $prevDate = JustDate($game_row['starttime']);
+    $prevTimezone = $game->getTimezone();
   }
 
   if ($isTableOpen) {
@@ -454,68 +464,68 @@ function GameRow($game, $date = false, $time = true, $field = true, $series = fa
   $ret = "<tr style='width:100%'>\n";
 
   if ($date) {
-    $ret .= "<td style='$datew'><span>" . ShortDate($game['time']) . "</span></td>\n";
+    $ret .= "<td style='$datew'><span>" . ShortDate($game->getTime()) . "</span></td>\n";
   }
 
   if ($time) {
-    $ret .= "<td style='$timew'><span>" . DefHourFormat($game['time']) . "</span></td>\n";
+    $ret .= "<td style='$timew'><span>" . DefHourFormat($game->getTime()) . "</span></td>\n";
   }
 
   if ($field) {
-    if (!empty($game['fieldname']))
-      $ret .= "<td style='$fieldw'><span>" . _("Field") . " " . utf8entities($game['fieldname']) . "</span></td>\n";
+    if (!empty($game->getFieldname()))
+      $ret .= "<td style='$fieldw'><span>" . _("Field") . " " . $game->getFieldname() . "</span></td>\n";
     else
       $ret .= "<td style='$fieldw'></td>\n";
   }
 
-  if ($game['hometeam']) {
-    $ret .= "<td style='$teamw'><span>" . utf8entities($game['hometeamname']) . "</span></td>\n";
+  if ($game->getHomeTeam()) {
+    $ret .= "<td style='$teamw'><span>" . TeamName($game->getHomeTeam()) . "</span></td>\n";
   } else {
-    $ret .= "<td style='$teamw'><span class='schedulingname'>" . utf8entities(U_($game['phometeamname'])) . "</span></td>\n";
+    $ret .= "<td style='$teamw'><span class='schedulingname'>" . U_($game->getHomeScheduleName()) . "</span></td>\n";
   }
 
   $ret .= "<td style='$againstmarkw'>-</td>\n";
 
-  if ($game['visitorteam']) {
-    $ret .= "<td style='$teamw'><span>" . utf8entities($game['visitorteamname']) . "</span></td>\n";
+  if ($game->getVisitorTeam()) {
+    $ret .= "<td style='$teamw'><span>" . TeamName($game->getVisitorTeam()) . "</span></td>\n";
   } else {
-    $ret .= "<td style='$teamw'><span class='schedulingname'>" . utf8entities(U_($game['pvisitorteamname'])) . "</span></td>\n";
+    $ret .= "<td style='$teamw'><span class='schedulingname'>" . U_($game->getVisitorScheduleName()) . "</span></td>\n";
   }
 
   if ($series) {
-    $ret .= "<td style='$seriesw'><span>" . utf8entities(U_($game['seriesname'])) . "</span></td>\n";
+    $ret .= "<td style='$seriesw'><span>" . SeriesName(U_($game->getSeries())) . "</span></td>\n";
   }
 
   if ($pool) {
-    $ret .= "<td style='$poolw'><span>" . utf8entities(U_($game['poolname'])) . "</span></td>\n";
+    $ret .= "<td style='$poolw'><span>" . PoolName(U_($game->getPool())) . "</span></td>\n";
   }
 
-  if (!GameHasStarted($game)) {
+  if (!$game->hasStarted()) {
     $ret .= "<td style='$scoresw'><span>?</span></td>\n";
     $ret .= "<td style='$againstmarkw'><span>-</span></td>\n";
     $ret .= "<td style='$scoresw'><span>?</span></td>\n";
   } else {
-    if ($game['isongoing']) {
-      $ret .= "<td style='$scoresw'><span><em>" . intval($game['homescore']) . "</em></span></td>\n";
+    if ($game->isOngoing()) {
+      $ret .= "<td style='$scoresw'><span><em>" . $game->getHomeScore() . "</em></span></td>\n";
       $ret .= "<td style='$againstmarkw'><span>-</span></td>\n";
-      $ret .= "<td style='$scoresw'><span><em>" . intval($game['visitorscore']) . "</em></span></td>\n";
+      $ret .= "<td style='$scoresw'><span><em>" . $game->getVisitorScore() . "</em></span></td>\n";
     } else {
-      $ret .= "<td style='$scoresw'><span>" . intval($game['homescore']) . "</span></td>\n";
+      $ret .= "<td style='$scoresw'><span>" . $game->getHomeScore() . "</span></td>\n";
       $ret .= "<td style='$againstmarkw'><span>-</span></td>\n";
-      $ret .= "<td style='$scoresw'><span>" . intval($game['visitorscore']) . "</span></td>\n";
+      $ret .= "<td style='$scoresw'><span>" . $game->getVisitorScore() . "</span></td>\n";
     }
   }
 
-  if ($game['gamename']) {
-    $ret .= "<td style='$gamenamew'><span>" . utf8entities(U_($game['gamename'])) . "</span></td>\n";
+  if ($game->getScheduleName()) {
+    $ret .= "<td style='$gamenamew'><span>" . U_($game->getScheduleName()) . "</span></td>\n";
   } else {
     $ret .= "<td style='$gamenamew'></td>\n";
   }
 
   if ($media) {
-    $urls = GetMediaUrlList("game", $game['game_id'], "live");
+    $urls = GetMediaUrlList("game", $game->getId(), "live");
     $ret .= "<td style='$mediaw;white-space: nowrap;'>";
-    if (count($urls) && (intval($game['isongoing']) || !GameHasStarted($game))) {
+    if (count($urls) && ($game->isOngoing() || !$game->hasStarted())) {
       foreach ($urls as $url) {
         $title = $url['name'];
         if (empty($title)) {
@@ -528,15 +538,15 @@ function GameRow($game, $date = false, $time = true, $field = true, $series = fa
   }
 
   if ($info) {
-    if (!GameHasStarted($game)) {
-      if ($game['hometeam'] && $game['visitorteam']) {
-        $t1 = preg_replace('/\s*/m', '', $game['hometeamname']);
-        $t2 = preg_replace('/\s*/m', '', $game['visitorteamname']);
+    if (!$game->hasStarted()) {
+      if ($game->getHomeTeam() && $game->getVisitorTeam()) {
+        $t1 = preg_replace('/\s*/m', '', TeamName($game->getHomeTeam()));
+        $t2 = preg_replace('/\s*/m', '', TeamName($game->getVisitorTeam()));
 
-        $xgames = GetAllPlayedGames($t1, $t2, $game['type'], "");
-        if (GetDatabase()->NumRows($xgames) > 0) {
+        $xgames = GetAllPlayedGames($t1, $t2, $game->getType(), "");
+        if (count($xgames)) {
           $ret .= "<td class='right' style='$infow'><span style='white-space: nowrap'>";
-          $ret .= "<a href='?view=gamecard&amp;team1=" . utf8entities($game['hometeam']) . "&amp;team2=" . utf8entities($game['visitorteam']) . "'>";
+          $ret .= "<a href='?view=gamecard&amp;team1=" . $game->getHomeTeam() . "&amp;team2=" . $game->getVisitorTeam() . "'>";
           $ret .=  _("Game history") . "</a></span></td>\n";
         } else {
           $ret .= "<td class='left' style='$infow'></td>\n";
@@ -545,16 +555,17 @@ function GameRow($game, $date = false, $time = true, $field = true, $series = fa
         $ret .= "<td class='left' style='$infow'></td>\n";
       }
     } else {
-      if (!intval($game['isongoing'])) {
-        if (intval($game['scoresheet'])) {
-          $ret .= "<td class='right' style='$infow'><span>&nbsp;<a href='?view=gameplay&amp;game=" . $game['game_id'] . "'>";
+      $scoresheet = $game->getScoresheet();
+      if (!$game->isOngoing()) {
+        if ($scoresheet) {
+          $ret .= "<td class='right' style='$infow'><span>&nbsp;<a href='?view=gameplay&amp;game=" . $game->getId() . "'>";
           $ret .= _("Game play") . "</a></span></td>\n";
         } else {
           $ret .= "<td class='left' style='$infow'></td>\n";
         }
       } else {
-        if (intval($game['scoresheet'])) {
-          $ret .= "<td class='right' style='$infow'><span>&nbsp;&nbsp;<a href='?view=gameplay&amp;game=" . $game['game_id'] . "'>";
+        if ($scoresheet) {
+          $ret .= "<td class='right' style='$infow'><span>&nbsp;&nbsp;<a href='?view=gameplay&amp;game=" . $game->getId() . "'>";
           $ret .= _("Ongoing") . "</a></span></td>\n";
         } else {
           $ret .= "<td class='right' style='$infow'>&nbsp;&nbsp;" . _("Ongoing") . "</td>\n";
@@ -562,7 +573,7 @@ function GameRow($game, $date = false, $time = true, $field = true, $series = fa
       }
     }
     if ($rss) {
-      $ret .= "<td class='feed-list'><a style='color: #ffffff;' href='ext/rss.php?feed=game&amp;id1=" . $game['game_id'] . "'>";
+      $ret .= "<td class='feed-list'><a style='color: #ffffff;' href='ext/rss.php?feed=game&amp;id1=" . $game->getId() . "'>";
       $ret .= "<img src='images/feed-icon-14x14.png' width='10' height='10' alt='RSS'/></a></td>";
     }
   }
@@ -581,11 +592,12 @@ function PrintTimeZone($timezone)
   return $ret;
 }
 
+// TODO test
 function NextGameDay($id, $gamefilter, $order)
 {
   $games = TimetableGames($id, $gamefilter, "coming", "time");
-  $game = GetDatabase()->FetchAssoc($games);
-  $next = ShortEnDate($game['time']);
+  $game = $games[0];
+  $next = ShortEnDate($game->getTime());
   $games = TimetableGames($id, $gamefilter, $next, $order);
   return $games;
 }
@@ -593,8 +605,8 @@ function NextGameDay($id, $gamefilter, $order)
 function PrevGameDay($id, $gamefilter, $order)
 {
   $games = TimetableGames($id, $gamefilter, "past", "timedesc");
-  $game = GetDatabase()->FetchAssoc($games);
-  $prev = ShortEnDate($game['time']);
+  $game = $games[0];
+  $prev = ShortEnDate($game->getTime());
   $games = TimetableGames($id, $gamefilter, $prev, $order);
   return $games;
 }
@@ -744,12 +756,13 @@ function TimetableGames($id, $gamefilter, $timefilter, $order, $groupfilter = ""
       break;
   }
 
-  $result = GetDatabase()->DBQuery($query);
-  if (!$result) {
-    die('Invalid query: ' . GetDatabase()->SQLError());
+  $result = GetDatabase()->DBQueryToArray($query);
+  $games = array();
+  foreach ($result as $game) {
+      $tmp = new Game(GetDatabase(), $game['game_id']);
+      array_push($games, $tmp);
   }
-
-  return $result;
+  return $games;
 }
 
 function TimetableGrouping($id, $gamefilter, $timefilter)
@@ -975,7 +988,7 @@ function IsGamesScheduled($id, $gamefilter, $timefilter)
 {
   $result = TimetableGames($id, $gamefilter, $timefilter, "");
 
-  return (GetDatabase()->NumRows($result) > 0);
+  return (count($result) > 0);
 }
 
 function TimetableToCsv($season, $separator)

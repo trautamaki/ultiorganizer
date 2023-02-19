@@ -1,19 +1,18 @@
 <?php
+include_once 'classes/Game.php';
+
 $html = "";
 
 $gameId = isset($_GET['game']) ? $_GET['game'] : $_SESSION['game'];
 $_SESSION['game'] = $gameId;
 
-$game_result = GameResult($gameId);
+$game = new Game(GetDatabase(), $gameId);
+$game_result = $game->getResult();
 
 if (isset($_POST['save'])) {
 	if (!empty($_POST['team'])) {
 		$starting = $_POST['team'];
-		if ($starting == "H") {
-			GameSetStartingTeam($gameId, 1);
-		} elseif ($starting == "V") {
-			GameSetStartingTeam($gameId, 0);
-		}
+		$game->setStartingTeam($starting == "H");
 	}
 	header("location:?view=addscoresheet&game=" . $gameId);
 }
@@ -21,7 +20,7 @@ if (isset($_POST['save'])) {
 //starting team
 $hoffence = "";
 $voffence = "";
-$ishome = GameIsFirstOffenceHome($gameId);
+$ishome = $game->getIsFirstOffenceHome();
 if ($ishome == 1) {
 	$hoffence = "checked='checked'";
 } elseif ($ishome == 0) {

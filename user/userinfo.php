@@ -495,8 +495,8 @@ if (hasEditUsersRight() || $_SESSION['uid'] == $userid) {
         foreach ($param as $akey => $prop_id) {
           $html .= "<tr><td>";
           $html .= _("Game input responsibility");
-          $gameInfo = GameInfo($akey);
-          $gameName = GameName($gameInfo);
+          $game = new Game(GetDatabase(), $akey);
+          $gameName = $game->getPrettyName();
           $html .= " (" . utf8entities($gameName) . ")";
           $html .= "</td><td><input class='deletebutton' type='image' src='images/remove.png' name='remuserrole' value='X' alt='X' onclick='setId(" . $prop_id . ", \"deleteRoleId\");'/></td></tr>\n";
         }

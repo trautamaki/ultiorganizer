@@ -68,7 +68,7 @@ foreach ($respGameArray as $tournament => $resArray) {
         continue;
       }
 
-      if ($prevrg != $game['reservationgroup']) {
+      if ($prevrg != $game->getReservationGroup()) {
 
         if (!empty($prevloc)) {
           $html .= "<li><a href='#' data-role='button' data-rel='back'>" . _("Back") . "</a></li>";
@@ -81,14 +81,14 @@ foreach ($respGameArray as $tournament => $resArray) {
           $html .= "</ul></li>\n";
         }
         $html .= "<li>\n";
-        $html .= "<div>" . utf8entities($game['reservationgroup']) . "</div>";
+        $html .= "<div>" . $game->getReservationGroup() . "</div>";
         $html .= "<ul>\n";
-        $prevrg = $game['reservationgroup'];
+        $prevrg = $game->getReservationGroup();
       }
 
-      if ($prevrg == $game['reservationgroup']) {
+      if ($prevrg == $game->getReservationGroup()) {
 
-        $gameloc = JustDate($game['starttime']) . " " . $game['location'] . "#" . $game['fieldname'];
+        $gameloc = JustDate($game->getStartTime()) . " " . $game->getLocation() . "#" . $game->getFieldName();
 
         if ($prevloc != $gameloc) {
 
@@ -98,7 +98,7 @@ foreach ($respGameArray as $tournament => $resArray) {
           }
 
           $html .= "<li>\n";
-          $html .= "<div>" . JustDate($game['starttime']) . " " . utf8entities($game['locationname']) . " " . _("Field") . " " . utf8entities($game['fieldname']) . "</div>";
+          $html .= "<div>" . JustDate($game->getStartTime()) . " " . utf8entities($game->getLocation()->getName()) . " " . _("Field") . " " . utf8entities($game->getFieldName()) . "</div>";
           $html .= "<ul>\n";
           $prevloc = $gameloc;
         }
@@ -108,29 +108,29 @@ foreach ($respGameArray as $tournament => $resArray) {
           $html .= "<li>";
 
 
-          if ($game['hometeam'] && $game['visitorteam']) {
+          if ($game->getHomeTeam() && $game->getVisitorTeam()) {
             $html .= "<div>";
             $html .= "<table>";
             $html .= "<tbody>";
             $html .= "<tr>";
             $html .= "<td style='padding-left:10px'>";
-            $html .= DefHourFormat($game['time']);
+            $html .= DefHourFormat($game->getTime());
             $html .= "</td>";
             $html .= "<td style='padding-left:10px'>";
-            $html .= utf8entities($game['hometeamname']) . " - " . utf8entities($game['visitorteamname']);
+            $html .= TeamName($game->getHomeTeam()) . " - " . TeamName($game->getVisitorTeam());
             $html .= "</td>";
             $html .= "<td style='padding-left:10px; white-space:nowrap;'>";
-            if (GameHasStarted($game)) {
-              $html .= intval($game['homescore']) . " - " . intval($game['visitorscore']);
+            if ($game->hasStarted()) {
+              $html .= $game->getHomeScore() . " - " . $game->getVisitorScore();
             } else {
               $html .= "? - ?";
             }
             $html .= "</td>";
             $html .= "<td style='padding-left:10px'>";
-            if (GameHasStarted($game)) {
-              if ($game['isongoing']) {
+            if ($game->hasStarted()) {
+              if ($game->isOnGoing()) {
                 $html .=  "<a href='?view=gameplay&amp;game=" . $gameId . "'>" . _("Ongoing") . "</a>";
-              } elseif (GameHasStarted($game)) {
+              } elseif ($game->hasStarted()) {
                 $html .=  "<a href='?view=gameplay&amp;game=" . $gameId . "'>" . _("Game play") . "</a>";
               }
             }
@@ -141,15 +141,15 @@ foreach ($respGameArray as $tournament => $resArray) {
 
             $html .= "<div data-role='controlgroup' data-type='horizontal'>\n";
             $html .= "<a href='?view=addresult&amp;game=" . $gameId . "' data-role='button' data-ajax='false'>" . _("Result") . "</a>";
-            $html .= "<a href='?view=addplayerlists&amp;game=" . $gameId . "&amp;team=" . $game['hometeam'] . "' data-role='button' data-ajax='false'>" . _("Players") . "</a>";
+            $html .= "<a href='?view=addplayerlists&amp;game=" . $gameId . "&amp;team=" . $game->getHomeTeam() . "' data-role='button' data-ajax='false'>" . _("Players") . "</a>";
             $html .= "<a href='?view=addscoresheet&amp;game=$gameId' data-role='button' data-ajax='false'>" . _("Scoresheet") . "</a>";
             if (intval($seasoninfo['spiritmode'] > 0) && isSeasonAdmin($seasoninfo['season_id'])) {
-              $html .= "<a href='?view=addspiritpoints&amp;game=$gameId&amp;team=" . $game['hometeam'] . "' data-role='button' data-ajax='false'>" . _("Spirit") . "</a>";
+              $html .= "<a href='?view=addspiritpoints&amp;game=$gameId&amp;team=" . $game->getHomeTeam() . "' data-role='button' data-ajax='false'>" . _("Spirit") . "</a>";
             }
             $html .= "</div>\n";
             $html .= "</div>\n";
           } else {
-            $html .= utf8entities($game['phometeamname']) . " - " . utf8entities($game['pvisitorteamname']) . " ";
+            $html .= TeamName($game->getHomeTeam()) . " - " . TeamName($game->getVisitorTeam()) . " ";
           }
           $html .= "</li>\n";
         }
