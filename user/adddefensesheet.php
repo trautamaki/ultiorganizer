@@ -3,10 +3,10 @@ include_once $include_prefix . 'lib/common.functions.php';
 include_once $include_prefix . 'lib/game.functions.php';
 include_once $include_prefix . 'lib/team.functions.php';
 include_once $include_prefix . 'lib/player.functions.php';
-include_once $include_prefix . 'lib/location.functions.php';
 include_once $include_prefix . 'lib/configuration.functions.php';
 
 include_once $include_prefix . 'classes/Game.php';
+include_once 'classes/Location.php';
 
 if (version_compare(PHP_VERSION, '5.0.0', '>')) {
 	include_once 'lib/twitter.functions.php';
@@ -170,7 +170,7 @@ if (!empty($_POST['save'])) {
 	//echo "<a href='?view=gameplay&amp;game=$gameId'>"._("Game play")."</a>";
 }
 $game_result = $game->getResult();
-$place = ReservationInfo($game_result['reservation']);
+$place = new Reservation(GetDatabase(), $game_result['reservation']);
 $homecaptain = $game->getCaptain($game_result['hometeam']);
 $awaycaptain = $game->getCaptain($game_result['visitorteam']);
 $home_playerlist = $game->getPlayers($game_result['hometeam']);
@@ -197,7 +197,7 @@ echo "<tr><td>" . utf8entities($game_result['hometeamname']) . "</td></tr>";
 echo "<tr><th>" . _("Away team") . "</th></tr>";
 echo "<tr><td>" . utf8entities($game_result['visitorteamname']) . "</td></tr>";
 echo "<tr><th>" . _("Field") . "</th></tr>";
-echo "<tr><td>" . utf8entities($place['name']) . " " . _("field") . " " . utf8entities($place['fieldname']) . "</td></tr>";
+echo "<tr><td>" . $place->getLocation()->getName() . " " . _("field") . " " . $place->getFieldName() . "</td></tr>";
 echo "<tr><th>" . _("Scheduled start date and time") . "</th></tr>";
 echo "<tr><td>" . ShortDate($game_result['time']) . " " . DefHourFormat($game_result['time']) . "</td></tr>";
 echo "<tr><th>" . _("Game official(s)") . "</th></tr>";

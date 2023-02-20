@@ -477,8 +477,8 @@ if (hasEditUsersRight() || $_SESSION['uid'] == $userid) {
         foreach ($param as $akey => $prop_id) {
           $html .= "<tr><td>";
           $html .= _("Scheduling right");
-          $reservationInfo = ReservationInfo($akey);
-          $resName = ReservationName($reservationInfo);
+          $reservationInfo = new Reservation(GetDatabase(), $akey);
+          $resName = $reservationInfo->getPrettyName();
           $html .= " (" . $resName . ")";
           $html .= "</td><td><input class='deletebutton' type='image' src='images/remove.png' name='remuserrole' value='X' alt='X' onclick='setId(" . $prop_id . ", \"deleteRoleId\");'/></td></tr>\n";
         }
@@ -486,8 +486,8 @@ if (hasEditUsersRight() || $_SESSION['uid'] == $userid) {
         foreach ($param as $akey => $prop_id) {
           $html .= "<tr><td>";
           $html .= _("Reservation game input responsible");
-          $reservationInfo = ReservationInfo($akey);
-          $resName = ReservationName($reservationInfo);
+          $reservationInfo = new Reservation(GetDatabase(), $akey);
+          $resName = $reservationInfo->getPrettyName();
           $html .= " (" . $resName . ")";
           $html .= "</td><td><input class='deletebutton' type='image' src='images/remove.png' name='remuserrole' value='X' alt='X' onclick='setId(" . $prop_id . ", \"deleteRoleId\");'/></td></tr>\n";
         }

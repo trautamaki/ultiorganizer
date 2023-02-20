@@ -2,12 +2,13 @@
 include_once 'lib/database.php';
 include_once 'lib/season.functions.php';
 include_once 'lib/reservation.functions.php';
-include_once 'lib/location.functions.php';
 include_once 'lib/common.functions.php';
 include_once 'lib/team.functions.php';
 include_once 'lib/game.functions.php';
 include_once 'lib/timetable.functions.php';
 include_once 'lib/yui.functions.php';
+
+include_once 'classes/Location.php';
 
 $LAYOUT_ID = SEASONGAMES;
 
@@ -173,9 +174,15 @@ foreach ($pools as $pool) {
       }
     }
 
+    $reservation = $game->getReservation();
+    $starttime = $placename = "";
+    if ($reservation != NULL) {
+      $starttime = $reservation->getStartTime();
+      $placename = $reservation->getPlaceName();
+    }
     $html .= "<tr class='admintablerow'>";
-    $html .= "<td style='width:15%'>" . ShortDate($game-getStartTime()) . " " . DefHourFormat($game->getTime()) . "<br/>";
-    $html .= utf8entities($game->getPlaceName()) . " " . $game->getFieldName() . "</td>";
+    $html .= "<td style='width:15%'>" . ShortDate($starttime) . " " . DefHourFormat($game->getTime()) . "<br/>";
+    $html .= $placename . " " . $game->getFieldName() . "</td>";
 
     if ($game->getHomeTeam()) {
       $html .= "<td  style='width:20%'>" . TeamName($game->getHomeTeam()) . "</td>";
@@ -202,7 +209,7 @@ foreach ($pools as $pool) {
       } else {
         $html .= "<td>? - ?</td>";
       }
-      if ($game->getHomeTeam() && $$game->getVisitorTeam()) {
+      if ($game->getHomeTeam() && $game->getVisitorTeam()) {
         $html .= "<td class='right'><a href='?view=user/addresult&amp;game=" . $game->getId() . "'>" . _("Result") . "</a> | ";
         $html .= "<a href='?view=user/addplayerlists&amp;game=" . $game->getId() . "'>" . _("Players") . "</a> | ";
         $html .= "<a href='?view=user/addscoresheet&amp;game=" . $game->getId() . "'>" . _("Scoresheet") . "</a>";

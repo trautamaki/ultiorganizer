@@ -32,12 +32,12 @@ $season = "";
 if (!empty($_POST['create'])) {
 	$season = $_POST['season'];
 	$maxfields = 0;
-	$fields = ReservationFields($season);
-	while ($field = GetDatabase()->FetchAssoc($fields)) {
-		if (is_numeric($field['fieldname'])) {
-			$name = "field" . intval($field['fieldname']);
+	$fields = Reservation::fields($season);
+	foreach ($fields as $field) {
+		if (is_numeric($field->getFieldName())) {
+			$name = "field" . $field->getFieldName();
 		} else {
-			$name = $field['fieldname'];
+			$name = $field->getFieldName();
 		}
 		$user = GetDatabase()->DBQueryToValue("SELECT COUNT(*) FROM uo_users WHERE userid='$name'");
 		if ($user < 1) {
@@ -46,7 +46,7 @@ if (!empty($_POST['create'])) {
 			GetDatabase()->DBQuery("INSERT INTO uo_userproperties(userid, name, value) VALUES ('$name', 'editseason', '$season')");
 		}
 
-		$games = ReservationGamesByField($field['fieldname'], $season);
+		$games = Reservation::gamesByField($field->getFieldName(), $season);
 		foreach ($games as $game) {
 			$exist = GetDatabase()->DBQueryToValue("SELECT COUNT(*) FROM uo_userproperties WHERE userid='$name' AND value='gameadmin:" . $game->getId() . "'");
 			if ($user < 1) {

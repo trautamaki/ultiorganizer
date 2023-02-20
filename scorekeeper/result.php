@@ -55,7 +55,7 @@ if (!empty($_POST['save']) && empty($errors)) {
   $html .= "<p>";
   $html .= ShortDate($game->getTime()) . " " . DefHourFormat($game->getTime()) . " ";
   if (!empty($game->getFieldName())) {
-    $html .=  _("on field") . " " . utf8entities($game->getFieldName());
+    $html .=  _("on field") . " " . $game->getFieldName();
   }
   $html .=  "<br/>";
   $html .=  U_(SeriesName($game->getSeries())) . ", " . U_(PoolName($game->getPool()));

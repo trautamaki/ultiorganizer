@@ -44,14 +44,10 @@ if (!empty($_POST['save'])) {
 	}
 	$gp['reservation'] = $_POST['place'];
 
-	$res = ReservationInfo($gp['reservation']);
+	$res = new Reservation(GetDatabase(), $gp['reservation']);
 	if (!empty($_POST['time'])) {
-		$gp['time'] = ToInternalTimeFormat((ShortDate($res['starttime']) . " " . $_POST['time']));
-	} else {
-		// Chris: I don't see why we want to do that		
-		//		$gp['time'] = ToInternalTimeFormat($res['starttime']);
+		$gp['time'] = ToInternalTimeFormat((ShortDate($res->getStartTime()) . " " . $_POST['time']));
 	}
-
 
 	$gp['pool'] = $_POST['pool'];
 
@@ -195,7 +191,12 @@ echo "<option class='dropdown' value='0'></option>";
 $places = SeasonReservations($season);
 
 foreach ($places as $row) {
-	if ($row['id'] == $game->getReservation()) {
+	$reservationId = "";
+	$reservation = $game->getReservation();
+	if ($reservation != NULL) {
+		$reservationId = $reservation->getId();
+	}
+	if ($row['id'] == $reservationId) {
 		echo "<option class='dropdown' selected='selected' value='" . utf8entities($row['id']) . "'>";
 		echo utf8entities($row['reservationgroup']) . " " . utf8entities($row['name']) . ", " . _("Field") . " " . utf8entities($row['fieldname']) . " (" . JustDate($row['starttime']) . ")";
 		echo "</option>";

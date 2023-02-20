@@ -676,27 +676,31 @@ function hasEditGamePlayersRight($game)
 	$series = $game->getSeries();
 	$season = SeriesSeasonId($series);
 	$reservation = $game->getReservation();
+	$reservationId = ($reservation == NULL) ? "" : $reservation->getId();
 	return isset($_SESSION['userproperties']['userrole']['superadmin']) ||
 		isset($_SESSION['userproperties']['userrole']['seasonadmin'][$season]) ||
 		isset($_SESSION['userproperties']['userrole']['seriesadmin'][$series]) ||
 		isset($_SESSION['userproperties']['userrole']['teamadmin'][$team]) ||
-		isset($_SESSION['userproperties']['userrole']['resgameadmin'][$reservation]) ||
+		isset($_SESSION['userproperties']['userrole']['resgameadmin'][$reservationId]) ||
 		isset($_SESSION['userproperties']['userrole']['gameadmin'][$game]);
 }
 
 // TODO: simplify params
 function hasEditGameEventsRight($game)
 {
-	$game = new Game(GetDatabase(), $game);
 	$team = $game->getRespTeam($game);
 	$series = $game->getSeries();
 	$season = SeriesSeasonId($series);
 	$reservation = $game->getReservation();
+	$reservationid = "";
+	if ($reservation != NULL) {
+		$reservationid = $reservation->getId();
+	}
 	return isset($_SESSION['userproperties']['userrole']['superadmin']) ||
 		isset($_SESSION['userproperties']['userrole']['seasonadmin'][$season]) ||
 		isset($_SESSION['userproperties']['userrole']['seriesadmin'][$series]) ||
 		isset($_SESSION['userproperties']['userrole']['teamadmin'][$team]) ||
-		isset($_SESSION['userproperties']['userrole']['resgameadmin'][$reservation]) ||
+		isset($_SESSION['userproperties']['userrole']['resgameadmin'][$reservationid]) ||
 		isset($_SESSION['userproperties']['userrole']['gameadmin'][$game]);
 }
 function hasAccredidationRight($team)

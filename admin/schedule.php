@@ -14,7 +14,7 @@ if (isset($_GET['reservations'])) {
 } else {
   $reservations = array_flip($_SESSION['userproperties']['userrole']['resadmin']);
 }
-$reservationData = ReservationInfoArray($reservations);
+$reservationData = Reservation::infoArray($reservations);
 $numOfreservations = count($reservations);
 
 define("MIN_HEIGHT", 1.0);

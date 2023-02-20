@@ -622,9 +622,9 @@ if ($game->hasStarted() > 0) {
   // TODO team class here
   if ($game->getHomeTeam() && $game->getVisitorTeam()) {
     $html .= "<h1>";
-    $html .= utf8entities($game->getHomeTeam());
+    $html .= $game->getHomeTeam();
     $html .= " - ";
-    $html .= utf8entities($game->getVisitorTeam());
+    $html .= $game->getVisitorTeam();
     $html .= "&nbsp;&nbsp;&nbsp;&nbsp;";
     $html .= "? - ?";
     $html .= "</h1>\n";

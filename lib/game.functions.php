@@ -132,10 +132,10 @@ function UnscheduledSeasonGameInfo($seasonId)
 }
 
 
-function ClearReservation($reservationId)
+function ClearReservation($reservation)
 {
-	$result = ReservationGames($reservationId);
-	foreach ($result as $game) {
+	$games = $reservation->getGames();
+	foreach ($games as $game) {
 		if (hasEditGamesRight($game->getSeries())) {
 			$game->removeSchedule();
 		} // else ignore games not managed by user

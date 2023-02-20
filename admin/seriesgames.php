@@ -2,11 +2,12 @@
 include_once 'lib/database.php';
 include_once 'lib/pool.functions.php';
 include_once 'lib/reservation.functions.php';
-include_once 'lib/location.functions.php';
 include_once 'lib/common.functions.php';
 include_once 'lib/team.functions.php';
 include_once 'lib/game.functions.php';
 include_once 'lib/reservation.functions.php';
+
+include_once 'classes/Location.php';
 
 $LAYOUT_ID = POOLGAMES;
 

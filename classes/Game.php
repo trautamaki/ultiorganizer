@@ -1,6 +1,9 @@
 <?php
 
+include_once 'lib/accreditation.functions.php';
+
 include_once 'classes/BaseObject.php';
+include_once 'classes/Reservation.php';
 
 class Game extends BaseObject
 {
@@ -82,7 +85,10 @@ class Game extends BaseObject
 
     function getReservation()
     {
-        return $this->reservationId;
+        if ($this->reservationId == NULL) {
+            return NULL;
+        }
+        return new Reservation($this->database, $this->reservationId);
     }
 
     function getTime()
@@ -186,7 +192,6 @@ class Game extends BaseObject
         return utf8entities($this->database->DBQueryToValue($query));
     }
 
-    // TODO convert to object?
     function getFieldName()
     {
         $query = sprintf(
@@ -613,7 +618,7 @@ class Game extends BaseObject
 
     function updateResult($home, $away)
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         $query = sprintf(
             "UPDATE uo_game SET homescore=%d, visitorscore=%d, isongoing='1', hasstarted='1'
             WHERE game_id=%d",
@@ -629,7 +634,7 @@ class Game extends BaseObject
 
     function setResult($home, $away, $updatePools = true, $checkRights = true)
     {
-        if ($checkRights && !hasEditGameEventsRight($this->id)) {
+        if ($checkRights && !hasEditGameEventsRight($this)) {
             die('Insufficient rights to edit game');
         }
         LogGameUpdate($this->id, "result: $home - $away");
@@ -657,6 +662,9 @@ class Game extends BaseObject
         if (IsFacebookEnabled()) {
             TriggerFacebookEvent($this->id, "game", 0);
         }
+
+        $this->homeScore = $home;
+        $this->visitorScore = $away;
 
         return $result;
     }
@@ -686,7 +694,7 @@ class Game extends BaseObject
 
     function clearResult($updatepools = true)
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         LogGameUpdate($this->id, "result cleared");
         $query = sprintf(
             "UPDATE uo_game SET homescore=NULL, visitorscore=NULL, isongoing='0', hasstarted='0'
@@ -716,7 +724,7 @@ class Game extends BaseObject
 
     function setDefenses($home, $visitor)
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         $query = sprintf(
             "UPDATE uo_game SET homedefenses=%d, visitordefenses=%d WHERE game_id=%d",
             (int) $home,
@@ -808,7 +816,7 @@ class Game extends BaseObject
 
     function removeAllScores()
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         $query = sprintf(
             "DELETE FROM uo_goal WHERE game=%d",
             $this->id
@@ -821,7 +829,7 @@ class Game extends BaseObject
 
     function removeAllDefenses()
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         $query = sprintf("DELETE FROM uo_defense WHERE game=%d", $this->id);
 
         $result = $this->database->DBQuery($query);
@@ -831,7 +839,7 @@ class Game extends BaseObject
 
     function removeScore($num)
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         $query = sprintf("DELETE FROM uo_goal WHERE game=%d AND num=%d", $this->id, $num);
 
         $result = $this->database->DBQuery($query);
@@ -849,7 +857,7 @@ class Game extends BaseObject
      */
     function addScore($pass, $goal, $time, $number, $hscores, $ascores, $home, $iscallahan)
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         $query = sprintf(
             "INSERT INTO uo_goal 
             (game, num, assist, scorer, time, homescore, visitorscore, ishomegoal, iscallahan) 
@@ -883,7 +891,7 @@ class Game extends BaseObject
 
     function addScoreEntry($uo_goal)
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         $query = sprintf(
             "INSERT INTO uo_goal 
             (game, num, assist, scorer, time, homescore, visitorscore, ishomegoal, iscallahan) 
@@ -910,7 +918,7 @@ class Game extends BaseObject
 
     function removeAllTimeouts()
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         $query = sprintf("DELETE FROM uo_timeout WHERE game=%d", $this->id);
         $result = $this->database->DBQuery($query);
         if (!$result) die('Invalid query: ' . $this->database->SQLError());
@@ -919,7 +927,7 @@ class Game extends BaseObject
 
     function addTimeout($number, $time, $home)
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         $query = sprintf(
             "INSERT INTO uo_timeout (game, num, time, ishome) VALUES (%d, %d, '%s', %d)",
             $this->id,
@@ -951,7 +959,7 @@ class Game extends BaseObject
 
     function setSpiritPoints($teamId, $home, $points, $categories)
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         $query = sprintf(
             "DELETE FROM uo_spirit_score WHERE game_id=%d AND team_id=%d",
             $this->id,
@@ -977,7 +985,7 @@ class Game extends BaseObject
 
     function addDefense($player, $home, $caught, $time, $iscallahan, $number)
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         $query = sprintf(
             "INSERT INTO uo_defense (game, num, author, time, iscallahan, iscaught, ishomedefense)
             VALUES (%d, %d, %d, '%s', %d, %d, %d) ON DUPLICATE KEY UPDATE
@@ -1003,7 +1011,7 @@ class Game extends BaseObject
 
     function setOfficial($name)
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         if (isset($name)) {
             $query = sprintf(
                 "UPDATE uo_game SET official='%s' WHERE game_id=%d",
@@ -1022,7 +1030,7 @@ class Game extends BaseObject
 
     function setHalftime($time)
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         if (isset($time)) {
             $query = sprintf(
                 "UPDATE uo_game SET halftime='%s' WHERE game_id=%d",
@@ -1041,7 +1049,7 @@ class Game extends BaseObject
 
     function setCaptain($teamId, $playerId)
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         $captain = $this->getCaptain($teamId);
         if ($captain != $playerId) {
             $query = sprintf(
@@ -1062,7 +1070,7 @@ class Game extends BaseObject
 
     function setStartingTeam($home)
     {
-        if (!hasEditGameEventsRight($this->id)) die('Insufficient rights to edit game');
+        if (!hasEditGameEventsRight($this)) die('Insufficient rights to edit game');
         $query = "";
         if ($home == NULL) {
             $query = sprintf(
@@ -1170,12 +1178,12 @@ class Game extends BaseObject
             $this->database->DBQuery($query);
         }
 
-        [$this->visitorTeamId, $this->homeTeamId] = 
-                [$this->visitorTeamId, $this->homeTeamId];
+        [$this->visitorTeamId, $this->homeTeamId] =
+            [$this->visitorTeamId, $this->homeTeamId];
         [$this->visitorScore, $this->homeScore] =
-                [$this->visitorScore, $this->homeScore];
+            [$this->visitorScore, $this->homeScore];
         [$this->schedulingNameVisitorId, $this->schedulingNameHomeId] =
-                [$this->schedulingNameVisitorId, $this->schedulingNameHomeId];
+            [$this->schedulingNameVisitorId, $this->schedulingNameHomeId];
     }
 
     function remove()
@@ -1287,6 +1295,34 @@ class Game extends BaseObject
         return (intval($row[0]) + intval($row[1])) == 0;
     }
 
+    function getTimeZone()
+    {
+        $query = sprintf(
+            "SELECT s.timezone FROM uo_game pp LEFT JOIN uo_pool pool
+            ON (pool.pool_id=pp.pool) LEFT JOIN uo_series ps
+            ON (pool.series=ps.series_id) LEFT JOIN uo_season s
+            ON (s.season_id=ps.season) WHERE pp.game_id=%d",
+            $this->id,
+        );
+
+        $result = $this->database->DBQueryToValue($query);
+        if (!$result) die('Invalid query: ' . $this->database->SQLError());
+        return $result;
+    }
+
+    function getEndTime()
+    {
+        $query = sprintf(
+            "SELECT pr.endtime FROM uo_game pp LEFT JOIN uo_reservation pr
+            ON (pp.reservation=pr.id) WHERE pp.game_id=%d",
+            $this->id,
+        );
+
+        $result = $this->database->DBQueryToValue($query);
+        if (!$result) die('Invalid query: ' . $this->database->SQLError());
+        return $result;
+    }
+
     static function processMassInput($post)
     {
         $html = "";
@@ -1309,11 +1345,15 @@ class Game extends BaseObject
         foreach ($scores as $score) {
             $gameId = $score['gameid'];
             $game = new Game(GetDatabase(), $gameId);
-            if ($game->getHomeScore() !== $score['home'] ||
-                    $game->getVisitorScore() !== $score['visitor']) {
-                if ($score['home'] === "" && $score['visitor'] === "" &&
-                        (!is_null($game->getHomeScore()) ||
-                        !is_null($game->getVisitorScore()))) {
+            if (
+                $game->getHomeScore() !== $score['home'] ||
+                $game->getVisitorScore() !== $score['visitor']
+            ) {
+                if (
+                    $score['home'] === "" && $score['visitor'] === "" &&
+                    (!is_null($game->getHomeScore()) ||
+                        !is_null($game->getVisitorScore()))
+                ) {
                     $ok = $game->clearResult(false);
                     if ($ok) {
                         $ok_clear++;

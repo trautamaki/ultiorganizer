@@ -1,7 +1,8 @@
 <?php
 include_once 'menufunctions.php';
-include_once 'lib/location.functions.php';
 include_once 'lib/configuration.functions.php';
+
+include_once 'classes/Location.php';
 
 if (!empty($_GET["season"])) {
   $season = $_GET["season"];
@@ -26,7 +27,7 @@ if (isset($_POST['save']) && isset($_POST['id'])) {
   if (isset($_POST['indoor'])) $indoor = "1";
   if (isset($_POST['lat'])) $lat = $_POST['lat'];
   if (isset($_POST['lng'])) $lng = $_POST['lng'];
-  SetLocation($id, $name, $address, $info, $fields, $indoor, $lat, $lng, $season);
+  (new Location(GetDatabase(), $id))->set($name, $address, $info, $fields, $indoor, $lat, $lng, $season);
 }
 
 if (isset($_POST['add'])) {
@@ -47,7 +48,7 @@ if (isset($_POST['add'])) {
   if (isset($_POST['indoor'])) $indoor = "1";
   if (isset($_POST['lat'])) $lat = $_POST['lat'];
   if (isset($_POST['lng'])) $lng = $_POST['lng'];
-  $newId = AddLocation($name, $address, $info, $fields, $indoor, $lat, $lng, $season);
+  $newId = Location::add($name, $address, $info, $fields, $indoor, $lat, $lng, $season)->getId();
   header('location: ?view=admin/locations&Location=' . $newId . "&amp;season=" . $season);
   exit();
 }

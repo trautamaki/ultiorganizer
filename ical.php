@@ -1,7 +1,6 @@
 <?php
 include_once 'lib/common.functions.php';
 include_once 'lib/team.functions.php';
-include_once 'lib/location.functions.php';
 include_once 'lib/timetable.functions.php';
 
 header("Content-Type: text/Calendar; charset=utf-8");
@@ -47,19 +46,23 @@ echo "VERSION:2.0\n";
 echo "PRODID: " . _("Ultiorganizer") . "\n\n";
 
 foreach ($games  as $games) {
-  // TODO add properties
-  $location = LocationInfo($game->getPlace());
+  $reservation = $game->getReservation();
+  $location = $placename = "";
+  if ($reservation != NULL) {
+    $location = $reservation->getLocation();
+    $placename = $reservation->getPlaceName();
+  }
   echo "\nBEGIN:VEVENT";
   echo "\nSUMMARY:" . TeamName($game->getHomeTeam()) . "-" . TeamName($game->getVisitorTeam());
   echo "\nDESCRIPTION:" . U_(SeriesName($game->getSeries())) . ": " . U_(PoolName($game->getPool()));
-  echo "\nLOCATION: " . $game->getPlaceName() . " " . $game->getField();
+  echo "\nLOCATION: " . $placename . " " . $game->getField();
   if (!empty($game->getTimezone())) {
     echo "\nDTSTART;TZID=" . $game->getTimezone() . ":" . TimeToIcal($game->getTime());
   } else {
     echo "\nDTSTART:" . TimeToIcal($game->getTime());
   }
   echo "\nDURATION: P" . intval($game->getTimeslot()) . "M";
-  echo "\nGEO:" . $location['lat'] . ";" . $location['lng'];
+  echo "\nGEO:" . $location->getLat() . ";" . $location->getLng();
   echo "\nEND:VEVENT\n";
 }
 echo "\nEND:VCALENDAR\n";

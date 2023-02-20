@@ -2,13 +2,13 @@
 include_once 'lib/database.php';
 include_once 'lib/pool.functions.php';
 include_once 'lib/reservation.functions.php';
-include_once 'lib/location.functions.php';
 include_once 'lib/common.functions.php';
 include_once 'lib/team.functions.php';
 include_once 'lib/game.functions.php';
 include_once 'lib/reservation.functions.php';
 
 include_once 'classes/Game.php';
+include_once 'classes/Location.php';
 
 $LAYOUT_ID = POOLGAMES;
 
@@ -248,14 +248,14 @@ $tour = "";
 $totalgames = 0;
 foreach ($reservations as $res) {
 	$games = PoolGames($poolId, $res['id']);
-	$location = LocationInfo($res['location']);
+	$location = new Location(GetDatabase(), $res['location']);
 	if (count($games)) {
 		if ($tour != $res['reservationgroup']) {
 			$html .= "<h2>" . utf8entities($res['reservationgroup']) . "</h2>";
 			$tour = $res['reservationgroup'];
 		}
 		$html .= "<table border='0' cellpadding='4px' width='400px'>\n";
-		$html .= "<tr><th colspan='4'>" . utf8entities($location['name']) . " ";
+		$html .= "<tr><th colspan='4'>" . $location->getName() . " ";
 		$html .= " " . DefWeekDateFormat($res['starttime']) . " " . DefHourFormat($res['starttime']) . "-";
 		$html .= DefHourFormat($res['endtime']) . "</th>";
 		$html .= "<th colspan='6' class='right'><a class='thlink' href='?view=admin/schedule&amp;season=$season&amp;series=" . $poolInfo['series'] . "&amp;pool=$poolId&amp;reservations=" . $res['id'] . "'>" . _("Add games") . "</a></th>";

@@ -1,6 +1,7 @@
 <?php
 include_once 'lib/reservation.functions.php';
-include_once 'lib/location.functions.php';
+
+include_once 'classes/Location.php';
 
 $LAYOUT_ID = ADDRESERVATION;
 $addmore = false;
@@ -43,7 +44,7 @@ if (isset($_POST['save']) || isset($_POST['add'])) {
   $res['season'] = isset($_POST['resseason']) ? $_POST['resseason'] : $season;
 
   if ($res['id'] > 0) {
-    SetReservation($res['id'], $res);
+    (new Reservation(GetDatabase(), $res['id']))->set($res);
   } else {
     //check if adding more than 1 field
     $fields = array();
@@ -64,18 +65,18 @@ if (isset($_POST['save']) || isset($_POST['add'])) {
     $i = 0;
     $html .= "<p>" . _("Reservations added") . ":</p>";
     $html .= "<ul>";
-    $locinfo = LocationInfo($res['location']);
+    $location = new Location(GetDatabase(), $res['location']);
     $allfields = $res['fieldname'];
     foreach ($fields as $field) {
       $res['fieldname'] = $field;
-      $reservationId = AddReservation($res);
+      $reservationId = Reservation::add($res);
       $html .= "<li>" . $res['reservationgroup'] . ": " . DefWeekDateFormat($res['date']) . " ";
       if (!empty($res['timeslots'])) {
         $html .= $res['timeslots'] . " ";
       } else {
         $html .=  DefHourFormat($res['starttime']) . "-" . DefHourFormat($res['endtime']) . " ";
       }
-      $html .=  $locinfo['name'] . " " . _("field") . " " . $field;
+      $html .=  $location->getName() . " " . _("field") . " " . $field;
       $html .= "</li>";
     }
     $html .= "</ul><hr/>";
@@ -150,16 +151,21 @@ pageTopHeadClose($title, false, $setFocus);
 leftMenu($LAYOUT_ID);
 contentStart();
 if ($reservationId > 0) {
-  $reservationInfo = ReservationInfo($reservationId);
+  $reservation = new Reservation(GetDatabase(), $reservationId);
+  $locationId = "";
+  $location = $reservationInfo->getLocation();
+  if ($location != NULL) {
+    $location = $location->getId();
+  }
   $res['id'] = $reservationId;
-  $res['location'] = $reservationInfo['location'];
-  $res['fieldname'] = $reservationInfo['fieldname'];
-  $res['reservationgroup'] = $reservationInfo['reservationgroup'];
-  $res['date'] = ShortDate($reservationInfo['date']);
-  $res['starttime'] = DefHourFormat($reservationInfo['starttime']);
-  $res['endtime'] = DefHourFormat($reservationInfo['endtime']);
-  $res['season'] = $reservationInfo['season'];
-  $res['timeslots'] = $reservationInfo['timeslots'];
+  $res['location'] = $location;
+  $res['fieldname'] = $reservation->getFieldName();
+  $res['reservationgroup'] = $reservation->getReservationGroup();
+  $res['date'] = ShortDate($reservation->getDate());
+  $res['starttime'] = DefHourFormat($reservation->getStartTime());
+  $res['endtime'] = DefHourFormat($reservation->getEndTime());
+  $res['season'] = $reservation->getSeason();
+  $res['timeslots'] = $reservation->getTimeSlots();
   if (!empty($allfields)) {
     $res['fieldname'] = $allfields;
   }
@@ -204,8 +210,8 @@ $html .= "</td></tr>\n";
 $html .= "<tr><td>&nbsp;</td><td><div id='locationAutocomplete' class='yui-skin-sam'>";
 $html .= "<input class='input' id='locationName' size='30' type='text' style='width:200px' name='locationName' value='";
 if ($res['location'] > 0) {
-  $location_info = LocationInfo($res['location']);
-  $html .= utf8entities($location_info['name']);
+  $location = new Location(GetDatabase(), $res['location']);
+  $html .= utf8entities($location_info->getName());
 }
 $html .= "'/><div style='width:400px' id='locationContainer'></div></div>\n";
 $html .= "</td></tr>\n";

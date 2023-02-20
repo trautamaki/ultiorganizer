@@ -89,36 +89,47 @@ if (count($respGameArray) == 0) {
 					$prevdate = JustDate($game->getTime());
 					continue;
 				}
-
-				if ($prevrg != $game->getReservationGroup()) {
-					$html .= "</td></tr><tr><td>\n";
-					if ($reservationgroup == $game->getReservationGroup()) {
-						$html .= "<b>" . utf8entities($game->getReservationGroup()) . "</b>";
-					} else {
-						$html .= "+ <a href='?view=mobile/respgames&amp;rg=" . urlencode($game->getReservationGroup()) . "$massPar'>" . utf8entities($game->getReservationGroup()) . "</a>";
-					}
-					$html .= "</td></tr><tr><td>\n";
-					$prevrg = $game->getReservationGroup();
+				
+				$game_reservationgroup = $game_locationname = $game_starttime = "";
+				$game_reservation = $game->getReservation();
+				if ($game_reservation != NULL) {
+				  $game_reservationgroup = $game_reservation->getReservationGroup();
+				  $game_location = $reservation->getLocation();
+				  $game_starttime = $game->getStarTime();
+				  if ($game_location != NULL) {
+					$game_locationname = $game_location->getId();
+				  }
 				}
 
-				if ($reservationgroup == $game->getReservationGroup()) {
+				if ($prevrg != $game_reservationgroup) {
+					$html .= "</td></tr><tr><td>\n";
+					if ($reservationgroup == $game_reservationgroup) {
+						$html .= "<b>" . $game_reservationgroup . "</b>";
+					} else {
+						$html .= "+ <a href='?view=mobile/respgames&amp;rg=" . urlencode($game_reservationgroup) . "$massPar'>" . $game_reservationgroup . "</a>";
+					}
+					$html .= "</td></tr><tr><td>\n";
+					$prevrg = $game_reservationgroup;
+				}
 
-					$gameloc = $game->getLocation() . "#" . $game->getFieldName();
+				if ($reservationgroup == $game_reservationgroup) {
+					$locationName = $game_locationname;
+					$gameloc = $locationName . "#" . $game->getFieldName();
 
 					if ($prevloc != $gameloc) {
 						$html .= "</td></tr><tr><td>\n";
-						if ($location == $gameloc && $day == JustDate($game->getStartTime())) {
-							$html .= "&nbsp;&nbsp;<b>" . $game->getLocation()->getName() . " " . _("Field") . " " . $game->getFieldName() . "</b>";
+						if ($location == $gameloc && $day == JustDate($game_starttime)) {
+							$html .= "&nbsp;&nbsp;<b>" . $locationName . " " . _("Field") . " " . $game->getFieldName() . "</b>";
 						} else {
-							$html .= "&nbsp;+<a href='?view=mobile/respgames&amp;rg=" . urlencode($game->getReservationGroup()) . "&amp;loc=" . urlencode($gameloc) . "&amp;day=" . urlencode(JustDate($game->getStartTime())) . "$massPar'>";
-							$html .= utf8entities($game->getLocation()->getName()) . " " . _("Field") . " " . $game->getFieldName() . "</a>";
+							$html .= "&nbsp;+<a href='?view=mobile/respgames&amp;rg=" . urlencode($game_reservationgroup) . "&amp;loc=" . urlencode($gameloc) . "&amp;day=" . urlencode(JustDate($game_starttime)) . "$massPar'>";
+							$html .= $locationName . " " . _("Field") . " " . $game->getFieldName() . "</a>";
 						}
 
 						$html .= "</td></tr><tr><td>\n";
 						$prevloc = $gameloc;
 					}
 
-					if ($location == $gameloc && $day == JustDate($game->getStartTime())) {
+					if ($location == $gameloc && $day == JustDate($game_starttime)) {
 						$html .= gamerow($gameId, $game, $mass);
 					}
 				}

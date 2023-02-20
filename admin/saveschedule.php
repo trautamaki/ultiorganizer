@@ -17,11 +17,10 @@ $places = explode("|", $body);
 foreach ($places as $placeGameStr) {
   $games = explode(":", $placeGameStr);
   if (intval($games[0]) != 0) {
-
-    ClearReservation($games[0]);
-    $resInfo = ReservationInfo($games[0]);
-    $firstStart = strtotime($resInfo['starttime']);
-    $resEnd = strtotime($resInfo['endtime']);
+    $reservation = new Reservation(GetDatabase(), $games[0]);
+    ClearReservation($reservation);
+    $firstStart = strtotime($reservation->getStartTime());
+    $resEnd = strtotime($reservation->getEndTime());
     for ($i = 1; $i < count($games); $i++) {
       $gameArr = explode("/", $games[$i]);
       $game = new Game(GetDatabase(), $gameArr[0]);
@@ -33,7 +32,7 @@ foreach ($places as $placeGameStr) {
         $gameEnd = $time + ($game->getTimeslot() * 60);
       }
       if ($gameEnd > $resEnd) {
-        $response .= "<p>" . sprintf(_("Game %s exceeds reserved time %s."), $game->getPrettyName(), ShortTimeFormat($resInfo['endtime'])) . "</p>";
+        $response .= "<p>" . sprintf(_("Game %s exceeds reserved time %s."), $game->getPrettyName(), ShortTimeFormat($resInfo->getEndTime())) . "</p>";
       }
       $game->setSchedule($time, $games[0]);
     }

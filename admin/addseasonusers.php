@@ -26,7 +26,8 @@ if (!empty($_POST['add'])) {
     } elseif ($_GET["access"] == "gameadmin") {
       $reservations = $_POST["reservations"];
       foreach ($reservations as $res) {
-        $games = ReservationGames($res);
+        $reservation = new Reservation(GetDatabase(), $res);
+        $games = $reservation->getGames();
         foreach ($games as $game) {
           AddSeasonUserRole($userid, 'gameadmin:' . $game['game_id'], $seasonId);
         }

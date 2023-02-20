@@ -409,7 +409,7 @@ function SeasonAllGames($season)
   $result = GetDatabase()->DBQueryToArray($query);
   $games = array();
   foreach ($result as $game) {
-      array_push($countries, new Game(GetDatabase(), $game['game_id']));
+      array_push($games, new Game(GetDatabase(), $game['game_id']));
   }
   return $games;
 }

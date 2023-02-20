@@ -1,12 +1,13 @@
 <?php
 
 include_once 'localization.php';
-include_once '../lib/location.functions.php';
+
+include_once 'classes/Location.php';
 
 header("Content-type: text/xml");
 header("Cache-Control: no-cache, must-revalidate");
 header("Expires: -1");
-$result = GetSearchLocations();
+$result = Location::searchLocations();
 
 // for php 5 onwards
 if (version_compare(PHP_VERSION, '5.0.0', '>')) {

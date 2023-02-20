@@ -45,12 +45,12 @@ if ($season['spiritmode'] > 0) {
 
   $html .= "<form  method='post' action='?view=user/addspirit&amp;game=" . $gameId . "'>";
 
-  $html .= "<h3>" . sprintf(_("Spirit points given for %s"), utf8entities($game_result['hometeamname'])) . "</h3>\n";
+  $html .= "<h3>" . sprintf(_("Spirit points given for %s"), $game_result['hometeamname']) . "</h3>\n";
 
   $points = $game->getSpiritPoints($game_result['hometeam']);
   $html .= SpiritTable($game_result, $points, $categories, true, false);
 
-  $html .= "<h3>" . sprintf(_("Spirit points given for %s"), utf8entities($game_result['visitorteamname'])) . "</h3>\n";
+  $html .= "<h3>" . sprintf(_("Spirit points given for %s"), $game_result['visitorteamname']) . "</h3>\n";
 
   $points = $game->getSpiritPoints($game_result['visitorteam']);
   $html .= SpiritTable($game_result, $points, $categories, false, false);

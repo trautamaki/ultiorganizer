@@ -68,7 +68,14 @@ foreach ($respGameArray as $tournament => $resArray) {
         continue;
       }
 
-      if ($prevrg != $game->getReservationGroup()) {
+      $reservationgroup = $starttime = "";
+      $reservation = $game->getReservation();
+      if ($reservation != NULL) {
+        $reservationgroup = $reservation->getReservationGroup();
+        $starttime = $reservation->getStartTime();
+      }
+
+      if ($prevrg != $reservationgroup) {
 
         if (!empty($prevloc)) {
           $html .= "<li><a href='#' data-role='button' data-rel='back'>" . _("Back") . "</a></li>";
@@ -81,14 +88,14 @@ foreach ($respGameArray as $tournament => $resArray) {
           $html .= "</ul></li>\n";
         }
         $html .= "<li>\n";
-        $html .= "<div>" . $game->getReservationGroup() . "</div>";
+        $html .= "<div>" . $reservationgroup . "</div>";
         $html .= "<ul>\n";
-        $prevrg = $game->getReservationGroup();
+        $prevrg = $reservationgroup;
       }
 
-      if ($prevrg == $game->getReservationGroup()) {
+      if ($prevrg == $reservationgroup) {
 
-        $gameloc = JustDate($game->getStartTime()) . " " . $game->getLocation() . "#" . $game->getFieldName();
+        $gameloc = JustDate($starttime) . " " . $game->getLocation() . "#" . $game->getFieldName();
 
         if ($prevloc != $gameloc) {
 
@@ -98,7 +105,7 @@ foreach ($respGameArray as $tournament => $resArray) {
           }
 
           $html .= "<li>\n";
-          $html .= "<div>" . JustDate($game->getStartTime()) . " " . utf8entities($game->getLocation()->getName()) . " " . _("Field") . " " . utf8entities($game->getFieldName()) . "</div>";
+          $html .= "<div>" . JustDate($starttime) . " " . $game->getLocation()->getName() . " " . _("Field") . " " . $game->getFieldName() . "</div>";
           $html .= "<ul>\n";
           $prevloc = $gameloc;
         }

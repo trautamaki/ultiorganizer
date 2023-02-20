@@ -22,7 +22,7 @@ if (!empty($_GET["series"])) {
 
 if (!empty($_POST['remove_x'])) {
   $id = $_POST['hiddenDeleteId'];
-  RemoveReservation($id, $season);
+  (new Reservation(GetDatabase(), $id))->removeFromSeason($season);
   $_POST['searchreservation'] = "1"; //do not hide search results
 }
 if (isset($_POST['schedule']) && isset($_POST['reservations'])) {
@@ -108,17 +108,16 @@ if (empty($season)) {
   $html .= "<th>" . _("Starts") . "</th><th>" . _("Ends") . "</th><th>" . _("Games") . "</th>";
   $html .= "<th>" . _("Scoresheets") . "</th><th></th></tr>\n";
   foreach ($reservations as $reservation) {
-    $row = ReservationInfo($reservation['id']);
-    $html  .= "<tr class='admintablerow'><td><input type='checkbox' name='reservations[]' value='" . utf8entities($row['id']) . "'/></td>";
-    $html  .= "<td>" . utf8entities(U_($row['reservationgroup'])) . "</td>";
-    $html  .= "<td><a href='?view=admin/addreservation&amp;reservation=" . $row['id'] . "&amp;season=" . $row['season'] . "'>" . utf8entities(U_($row['name'])) . " " . _("Field") . " " . utf8entities(U_($row['fieldname'])) . "</a></td>";
-    $html  .= "<td>" . DefWeekDateFormat($row['starttime']) . "</td>";
-    $html  .= "<td>" . DefHourFormat($row['starttime']) . "</td>";
-    $html  .= "<td>" . DefHourFormat($row['endtime']) . "</td>";
+    $html  .= "<tr class='admintablerow'><td><input type='checkbox' name='reservations[]' value='" . $reservation->getId() . "'/></td>";
+    $html  .= "<td>" . U_($reservation->getReservationGroup()) . "</td>";
+    $html  .= "<td><a href='?view=admin/addreservation&amp;reservation=" . $reservation->getId() . "&amp;season=" . $row['season'] . "'>" . U_($reservation->getLocation()->getName()) . " " . _("Field") . " " . U_($reservation->getFieldName()) . "</a></td>";
+    $html  .= "<td>" . DefWeekDateFormat($reservation->getStartTime()) . "</td>";
+    $html  .= "<td>" . DefHourFormat($reservation->getStartTime()) . "</td>";
+    $html  .= "<td>" . DefHourFormat($reservation->getEndTime()) . "</td>";
     $html  .= "<td class='center'>" . $row['games'] . "</td>";
-    $html  .= "<td class='center'><a href='?view=user/pdfscoresheet&amp;reservation=" . $row['id'] . "'>" . _("PDF") . "</a></td>";
+    $html  .= "<td class='center'><a href='?view=user/pdfscoresheet&amp;reservation=" . $reservation->getId() . "'>" . _("PDF") . "</a></td>";
     if (intval($row['games']) == 0) {
-      $html  .= "<td class='center'><input class='deletebutton' type='image' src='images/remove.png' name='remove' alt='" . _("X") . "' onclick=\"setId(" . $row['id'] . ");\"/></td>";
+      $html  .= "<td class='center'><input class='deletebutton' type='image' src='images/remove.png' name='remove' alt='" . _("X") . "' onclick=\"setId(" . $reservation->getId() . ");\"/></td>";
     }
 
     $html .= "</tr>\n";

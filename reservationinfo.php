@@ -5,8 +5,9 @@ include_once 'lib/series.functions.php';
 include_once 'lib/configuration.functions.php';
 
 $reservationId = intval(iget("reservation"));
-$place = ReservationInfo($reservationId);
-$title = _("Reservation") . ": " . utf8entities($place['name']) . " " . _("Field") . " " . utf8entities($place['fieldname']);
+$place = new Reservation(GetDatabase(), $reservationId);
+$location = $place->getLocation();
+$title = _("Reservation") . ": " . $location->getName() . " " . _("Field") . " " . $place->getFieldName();
 
 //common page
 pageTopHeadOpen($title);
@@ -26,7 +27,7 @@ pageTopHeadOpen($title);
       map.setCenter(new GLatLng(62, 25), 4);
     }
     <?php
-    echo "		var searchUrl = 'ext/locationxml.php?id=" . $place['location'] . "';\n";
+    echo "		var searchUrl = 'ext/locationxml.php?id=" . $location->getId() . "';\n";
     echo "		searchLocations(searchUrl);\n";
     ?>
   }
@@ -83,10 +84,10 @@ pageTopHeadClose($title, false, "onload=\"load()\" onunload=\"GUnload()\"");
 leftMenu();
 contentStart();
 
-echo "<h1>" . utf8entities($place['name']) . " " . _("Field") . " " . utf8entities($place['fieldname']) . "</h1>\n";
-echo "<p>" . DefTimeFormat($place['starttime']) . " - " . DefHourFormat($place['endtime']) . "</p>\n";
-echo "<p>" . utf8entities($place['address']) . "</p>\n";
-echo "<p>" . $place['info'] . "</p>\n";
+echo "<h1>" . $location->getName() . " " . _("Field") . " " . $place->getFieldName() . "</h1>\n";
+echo "<p>" . DefTimeFormat($place->getStartTime()) . " - " . DefHourFormat($place->getEndTime()) . "</p>\n";
+echo "<p>" . utf8entities($location->getAddress()) . "</p>\n";
+echo "<p>" . $location->getInfoEn() . "</p>\n"; // TODO check language
 echo "<p>&nbsp;</p>";
 ?>
 <div id="map" style="width: 600px; height: 400px; font-family: Arial, sans-serif; font-size: 11px; border: 1px solid black"></div>
