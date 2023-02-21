@@ -75,4 +75,42 @@ if (!iget("view")) {
   $view = iget("view");
 }
 
+$curseason = CurrentSeason();
+
+$smarty->assign("page_title", GetPageTitle());
+$smarty->assign("cust", CUSTOMIZATIONS);
+$smarty->assign("locales", localeSelection());
+$smarty->assign("enable_facebook", IsFacebookEnabled() && $user == 'anonymous');
+$smarty->assign("has_schedule_rights", hasScheduleRights());
+$smarty->assign("is_super_admin", isSuperAdmin());
+$smarty->assign("has_translation_right", hasTranslationRight());
+$smarty->assign("has_player_admin_rights", hasPlayerAdminRights());
+$smarty->assign("user_anonymous", $_SESSION['uid'] == 'anonymous');
+$smarty->assign("menu_edit_links", getEditSeasonLinks());
+$smarty->assign("menu_enroll_seasons", EnrollSeasons());
+$smarty->assign("menu_pools", getViewPools($curseason));
+$smarty->assign("menu_season_series", SeasonSeries($season, true));
+$smarty->assign("menu_urls", GetUrlListByTypeArray(array("menulink", "menumail"), $curseason));
+$smarty->assign("menu_stat_data_available", IsStatsDataAvailable());
+$smarty->assign("menu_countries_count", count(CountryList(true, true)));
+$smarty->assign("menu_urls_list_by_type_array", GetUrlListByTypeArray(array("menulink", "menumail"), 0));
+$smarty->assign("menu_logo_html", logo());
+$smarty->assign("fb_app_id", $serverConf['FacebookAppId']);
+
+$twitter_enabled = IsTwitterEnabled();
+$smarty->assign("twitter_enabled", $twitter_enabled);
+if ($twitter_enabled) {
+  $smarty->assign("saved_url", GetUrl("season", $season, "result_twitter"));
+}
+
+$playerAdmins = array();
+if (!empty($_SESSION['userproperties']['userrole']['playeradmin'])) {
+  foreach ($_SESSION['userproperties']['userrole']['playeradmin'] as $profile_id => $propid) {
+    array_push($playerAdmins, PlayerProfile($profile_id));
+  }
+}
+$smarty->assign("player_admins", $playerAdmins);
+$smarty->assign("current_season_name", CurrentSeasonName());
+
 include $view . ".php";
+$smarty->display($view . '.tpl');

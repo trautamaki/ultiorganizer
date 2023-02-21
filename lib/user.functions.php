@@ -441,11 +441,7 @@ function getViewPools($selSeasonId)
 	}
 	$query .= " ORDER BY seas.endtime > NOW() DESC, seas.starttime DESC, ser.season ASC, ser.ordering ASC, pool.ordering ASC";
 
-	$result = GetDatabase()->DBQuery($query);
-	if (!$result) {
-		die('Invalid query: ' . GetDatabase()->SQLError());
-	}
-
+	$result = GetDatabase()->DBQueryToArray($query);
 	return $result;
 }
 
