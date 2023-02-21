@@ -75,4 +75,76 @@ if (!iget("view")) {
   $view = iget("view");
 }
 
+$curseason = CurrentSeason();
+
+$current_seasons = CurrentSeasons();
+$current_seasons_array = array();
+while ($row = GetDatabase()->FetchAssoc($current_seasons)) {
+  $row['season_name'] = SeasonName($row['season_id']);
+  $current_seasons_array[] = $row;
+}
+
+// Stylesheets
+$stylesheets = array();
+if (is_file($include_prefix . 'cust/' . CUSTOMIZATIONS . '/font.css')) {
+  $stylesheets[] = $include_prefix . "cust/" . CUSTOMIZATIONS . "/font.css";
+} else {
+  $stylesheets[] = $include_prefix . "cust/default/font.css";
+}
+
+if (is_file($include_prefix . 'cust/' . CUSTOMIZATIONS . '/layout.css')) {
+  $stylesheets[] = $styles_prefix . "cust/" . CUSTOMIZATIONS . "/layout.css";
+} else {
+  $stylesheets[] = $styles_prefix . "cust/default/layout.css";
+}
+if (is_file($include_prefix . 'cust/' . CUSTOMIZATIONS . '/font.css')) {
+  $stylesheets[] = $styles_prefix . "cust/" . CUSTOMIZATIONS . "/font.css";
+} else {
+  $stylesheets[] = $styles_prefix . "cust/default/font.css";
+}
+if (is_file($include_prefix . 'cust/' . CUSTOMIZATIONS . '/default.css')) {
+  $stylesheets[] = $styles_prefix . "cust/" . CUSTOMIZATIONS . "/default.css";
+} else {
+  $stylesheets[] = $styles_prefix . "cust/default/default.css";
+}
+$stylesheets[] = "generic.css";
+
+$smarty->assign("page_title", GetPageTitle());
+$smarty->assign("stylesheets", $stylesheets);
+$smarty->assign("cust", CUSTOMIZATIONS);
+$smarty->assign("locales", localeSelection());
+$smarty->assign("enable_facebook", IsFacebookEnabled() && $user == 'anonymous');
+$smarty->assign("has_schedule_rights", hasScheduleRights());
+$smarty->assign("is_super_admin", isSuperAdmin());
+$smarty->assign("has_translation_right", hasTranslationRight());
+$smarty->assign("has_player_admin_rights", hasPlayerAdminRights());
+$smarty->assign("user_anonymous", $_SESSION['uid'] == 'anonymous');
+$smarty->assign("menu_edit_links", getEditSeasonLinks());
+$smarty->assign("menu_enroll_seasons", EnrollSeasons());
+$smarty->assign("menu_pools", getViewPools($curseason));
+$smarty->assign("menu_current_seasons", $current_seasons_array);
+$smarty->assign("menu_season_series", SeasonSeries($season, true));
+$smarty->assign("menu_urls", GetUrlListByTypeArray(array("menulink", "menumail"), $curseason));
+$smarty->assign("menu_stat_data_available", IsStatsDataAvailable());
+$smarty->assign("menu_countries_count", count(CountryList(true, true)));
+$smarty->assign("menu_urls_list_by_type_array", GetUrlListByTypeArray(array("menulink", "menumail"), 0));
+$smarty->assign("menu_logo_html", logo());
+$smarty->assign("fb_app_id", $serverConf['FacebookAppId']);
+
+$twitter_enabled = IsTwitterEnabled();
+$smarty->assign("twitter_enabled", $twitter_enabled);
+if ($twitter_enabled) {
+  $smarty->assign("saved_url", GetUrl("season", $season, "result_twitter"));
+}
+
+$playerAdmins = array();
+if (!empty($_SESSION['userproperties']['userrole']['playeradmin'])) {
+  foreach ($_SESSION['userproperties']['userrole']['playeradmin'] as $profile_id => $propid) {
+    array_push($playerAdmins, PlayerProfile($profile_id));
+  }
+}
+$smarty->assign("player_admins", $playerAdmins);
+$smarty->assign("current_season_name", CurrentSeasonName());
+
 include $view . ".php";
+$smarty->display($view . '.tpl');

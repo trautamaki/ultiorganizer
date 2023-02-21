@@ -1,6 +1,4 @@
 <?php
-$html = "";
-$title = _("Frontpage");
 
 if (iget("hideseason")) {
   $propId = getPropId($user, 'editseason', iget("hideseason"));
@@ -9,26 +7,11 @@ if (iget("hideseason")) {
   exit;
 }
 
-$htmlfile = 'locale/' . getSessionLocale() . '/LC_MESSAGES/welcome.html';
-
-if (is_file('cust/' . CUSTOMIZATIONS . '/' . $htmlfile)) {
-  $html .= file_get_contents('cust/' . CUSTOMIZATIONS . '/' . $htmlfile);
-} else {
-  $html .= file_get_contents($htmlfile);
+$welcomepage = 'locale/' . getSessionLocale() . '/LC_MESSAGES/welcome.html';
+if (is_file('cust/' . CUSTOMIZATIONS . '/' . $welcomepage)) {
+  $welcomepage = 'cust/' . CUSTOMIZATIONS . '/' . $welcomepage;
 }
 
-$html .= "<p>";
-$html .= "<a href='?view=user_guide'>" . _("User Guide") . "</a>\n";
-$html .= "</p>";
-
-$urls = GetUrlListByTypeArray(array("admin"), 0);
-if (!empty($urls)) {
-  $html .= "<p>";
-  $html .= _("In case of feedback, improvement ideas or any other questions, please contact:");
-  foreach ($urls as $url) {
-    $html .= "<br/><a href='mailto:" . $url['url'] . "'>" . U_($url['name']) . "</a>\n";
-  }
-  $html .= "</p>";
-}
-
-showPage($title, $html);
+$smarty->assign("title",  _("Frontpage"));
+$smarty->assign("welcome_message_page", $welcomepage);
+$smarty->assign("frontpage_urls", GetUrlListByTypeArray(array("admin"), 0));
