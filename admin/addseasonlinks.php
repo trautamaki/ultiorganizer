@@ -1,7 +1,8 @@
 <?php
 include_once $include_prefix . 'lib/configuration.functions.php';
 include_once $include_prefix . 'lib/facebook.functions.php';
-include_once $include_prefix . 'lib/url.functions.php';
+
+include_once $include_prefix . 'classes/Url.php';
 
 $LAYOUT_ID = ADDSEASONLINKS;
 $title = _("Event links");
@@ -33,10 +34,11 @@ if (!empty($_POST['save'])) {
 			"publisher_id" => ""
 		);
 
+		$url = new Url(GetDatabase(), $url['url_id']);
 		if ($_POST["urltype$i"] == "menumail") {
-			SetMail($url);
+			$url->setMail($url);
 		} else {
-			SetUrl($url);
+			$url->set($url);
 		}
 	}
 	if (!empty($_POST["newurl"])) {
@@ -52,15 +54,15 @@ if (!empty($_POST['save'])) {
 			"publisher_id" => ""
 		);
 		if ($_POST["newurltype"] == "menumail") {
-			AddMail($url);
+			Url::addMail($url);
 		} else {
-			AddUrl($url);
+			Url::add($url);
 		}
 	}
 	$serverConf = GetSimpleServerConf();
 } elseif (!empty($_POST['remove_x'])) {
 	$id = $_POST['hiddenDeleteId'];
-	RemoveUrl($id);
+	(new Url(GetDatabase(), $id))->remove();
 }
 
 $settings = GetServerConf();
@@ -85,7 +87,7 @@ $html .= "<form method='post' action='?view=admin/addseasonlinks&amp;season=" . 
 
 $html .= "<table style='white-space: nowrap' cellpadding='2'>\n";
 $html .= "<tr><th>" . _("Type") . "</th><th>" . _("Order") . "</th><th>" . _("Name") . "</th><th>" . _("Url") . "</th><th></th></tr>\n";
-$urls = GetUrlListByTypeArray(array("menulink", "menumail"), $seasonId);
+$urls = Url::getUrlListByTypeArray(array("menulink", "menumail"), $seasonId);
 $i = 0;
 foreach ($urls as $url) {
 	$html .= "<tr>";

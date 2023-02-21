@@ -2,7 +2,6 @@
 include_once $include_prefix . 'lib/pool.functions.php';
 include_once $include_prefix . 'lib/player.functions.php';
 include_once $include_prefix . 'lib/image.functions.php';
-include_once $include_prefix . 'lib/url.functions.php';
 include_once $include_prefix . 'lib/common.functions.php';
 
 function TeamPlayerArray($teamId)

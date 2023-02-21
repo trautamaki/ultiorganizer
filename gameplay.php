@@ -4,6 +4,7 @@ include_once 'lib/game.functions.php';
 include_once 'lib/common.functions.php';
 
 include_once 'classes/Game.php';
+include_once 'classes/Url.php';
 
 $html = "";
 
@@ -274,7 +275,7 @@ if ($game->hasStarted() > 0) {
       $html .= "<p>" . _("Game official") . ": " . utf8entities($game_result['official']) . "</p>";
     }
 
-    $urls = GetMediaUrlList("game", $gameId);
+    $urls = Url::getMediaUrlList("game", $gameId);
 
     if (count($urls) > count($mediaevents)) {
       $html .= "<h2>" . _("Photos and Videos") . "</h2>\n";

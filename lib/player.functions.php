@@ -1,6 +1,5 @@
 <?php
 include_once $include_prefix . 'lib/image.functions.php';
-include_once $include_prefix . 'lib/url.functions.php';
 include_once $include_prefix . 'lib/common.functions.php';
 
 /**

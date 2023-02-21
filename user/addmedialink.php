@@ -5,9 +5,9 @@ include_once $include_prefix . 'lib/season.functions.php';
 include_once $include_prefix . 'lib/player.functions.php';
 include_once $include_prefix . 'lib/pool.functions.php';
 include_once $include_prefix . 'lib/reservation.functions.php';
-include_once $include_prefix . 'lib/url.functions.php';
 
 include_once $include_prefix . 'classes/Game.php';
+include_once $include_prefix . 'classes/Url.php';
 
 $LAYOUT_ID = ADDMEDIALINK;
 $max_file_size = 5 * 1024 * 1024; //5 MB
@@ -84,7 +84,7 @@ if (isset($_POST['save'])) {
 			if (!empty($_POST["mediaowner$i"])) {
 				$url['mediaowner'] = $_POST["mediaowner$i"];
 			}
-			$url_id = AddMediaUrl($url);
+			$url_id = Url::addMediaUrl($url);
 			$_SESSION["var$i"] = utf8entities($_POST["url$i"]);
 
 			if ($owner == "game" && !empty($_POST["time$i"])) {
@@ -101,7 +101,7 @@ if (isset($_POST['save'])) {
 } elseif (isset($_POST['removeurl_x'])) {
 	$backurl = utf8entities($_POST['backurl']);
 	$id = $_POST['hiddenDeleteId'];
-	RemoveMediaUrl($id);
+	(new Url(GetDatabase(), $id))->remove();
 }
 
 
@@ -127,7 +127,7 @@ contentStart();
 $html .= "<form method='post' enctype='multipart/form-data' action='$pageurl'>\n";
 
 
-$urls = GetMediaUrlList($owner, $owner_id);
+$urls = Url::getMediaUrlList($owner, $owner_id);
 
 if (count($urls)) {
 	$html .= "<table width='100%'>";
@@ -196,7 +196,7 @@ $html .= "<th>" . _("Media owner") . " (" . _("optional") . ")</th>";
 $html .= "<th>" . _("Publisher") . "</th>";
 $html .= "</tr>";
 
-$urltypes = GetMediaUrlTypes();
+$urltypes = Url::getMediaTypes();
 for ($i = 0; $i < $max_new_links; $i++) {
 	$html .= "<tr>";
 	if ($owner == "game") {

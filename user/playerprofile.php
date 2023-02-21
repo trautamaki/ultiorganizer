@@ -5,6 +5,9 @@ include_once $include_prefix . 'lib/season.functions.php';
 include_once $include_prefix . 'lib/player.functions.php';
 include_once $include_prefix . 'lib/pool.functions.php';
 include_once $include_prefix . 'lib/reservation.functions.php';
+
+include_once $include_prefix . 'classes/Url.php';
+
 $LAYOUT_ID = PLAYERPROFILE;
 $max_file_size = 5 * 1024 * 1024; //5 MB
 $max_new_links = 3;
@@ -310,7 +313,7 @@ $html .= "<td class='center'><input type='checkbox' name='public[]' checked='che
 $html .= "<tr><td colspan='3'>";
 $html .= "<table border='0'>";
 
-$urls = GetUrlList("player", $player['profile_id']);
+$urls = Url::getUrlListByOwner("player", $player['profile_id']);
 
 foreach ($urls as $url) {
 	$html .= "<tr style='border-bottom-style:solid;border-bottom-width:1px;'>";
@@ -339,7 +342,7 @@ $html .= "<td>" . _("URL") . "</td>";
 $html .= "<td>" . _("Name") . " (" . _("optional") . ")</td>";
 $html .= "</tr>";
 
-$urltypes = GetUrlTypes();
+$urltypes = Url::getTypes();
 for ($i = 0; $i < $max_new_links; $i++) {
 	$html .= "<tr>";
 	$html .= "<td><select class='dropdown' name='urltype$i'>\n";

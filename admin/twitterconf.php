@@ -3,6 +3,8 @@ include_once 'lib/season.functions.php';
 include_once 'lib/configuration.functions.php';
 require_once('lib/twitteroauth/twitteroauth.php');
 
+require_once 'classes/Url.php';
+
 $LAYOUT_ID = TWITTERCONFIGURATION;
 $title = _("Twitter configuration");
 $html = "";
@@ -25,8 +27,8 @@ if (!empty($_POST['register']) && isSuperAdmin()) {
 	$twitter = new TwitterOAuth($_SESSION['TwitterConsumerKey'], $_SESSION['TwitterConsumerSecret'], $key['keystring'], $key['secrets']);
 	$twitter->post('account/end_session');
 	DeleteTwitterKey($_POST['id']);
-	$url = GetUrl(substr($key['purpose'], 0, 6), $key['id'], "result_twitter");
-	RemoveUrl($url['url_id']);
+	$url = Url::getUrlByOwnerAndType(substr($key['purpose'], 0, 6), $key['id'], "result_twitter");
+	(new Url(GetDatabase(), $id))->remove();
 }
 //common page
 pageTopHeadOpen($title);
@@ -83,12 +85,12 @@ if ($key) {
 		"ordering" => ""
 	);
 
-	$savedurl = GetUrl($url['owner'], $url['owner_id'], $url['type']);
+	$savedurl = Url::getUrlByOwnerAndType($url['owner'], $url['owner_id'], $url['type']);
 	if ($savedurl) {
 		$url['url_id'] = $savedurl['url_id'];
-		SetUrl($url);
+		(new Url(GetDatabase(), $url['url_id']))->set($url);
 	} else {
-		AddUrl($url);
+		Url::add($url);
 	}
 
 	$content = $twitter->get('account/rate_limit_status');
@@ -126,12 +128,12 @@ foreach ($series as $row) {
 			"ordering" => ""
 		);
 
-		$savedurl = GetUrl($url['owner'], $url['owner_id'], $url['type']);
+		$savedurl = Url::getUrlByOwnerAndType($url['owner'], $url['owner_id'], $url['type']);
 		if ($savedurl) {
 			$url['url_id'] = $savedurl['url_id'];
-			SetUrl($url);
+			(new Url(GetDatabase(), $url['url_id']))->set($url);
 		} else {
-			AddUrl($url);
+			Url::add($url);
 		}
 		$content = $twitter->get('account/rate_limit_status');
 		$html .= "<td>" . $content->remaining_hits . "</td>";

@@ -5,6 +5,7 @@ include_once $include_prefix . 'lib/statistical.functions.php';
 
 include_once $include_prefix . 'classes/Country.php';
 include_once $include_prefix . 'classes/Game.php';
+include_once $include_prefix . 'classes/Url.php';
 
 if (is_file('cust/' . CUSTOMIZATIONS . '/head.php')) {
   include_once 'cust/' . CUSTOMIZATIONS . '/head.php';
@@ -608,7 +609,7 @@ function leftMenu($id = 0, $pagestart = true, $printable = false)
   echo "<tr><td class='menuseasonlevel'>" . utf8entities(_("Event Links")) . "</td></tr>\n";
   echo "<tr><td>";
 
-  $urls = GetUrlListByTypeArray(array("menulink", "menumail"), $curseason);
+  $urls = Url::getUrlListByTypeArray(array("menulink", "menumail"), $curseason);
   foreach ($urls as $url) {
     if ($url['type'] == "menulink") {
       echo "<a class='subnav' href='" . $url['url'] . "'>&raquo; " . U_($url['name']) . "</a>\n";
@@ -621,7 +622,7 @@ function leftMenu($id = 0, $pagestart = true, $printable = false)
   echo "<a class='subnav' style='background: url(./images/linkicons/feed_14x14.png) no-repeat 0 50%; padding: 0 0 0 19px;' href='./ext/rss.php?feed=all'>" . utf8entities(_("Result Feed")) . "</a>\n";
   echo "</td></tr>\n";
   if (IsTwitterEnabled()) {
-    $savedurl = GetUrl("season", $season, "result_twitter");
+    $savedurl = Url::getUrlByOwnerAndType("season", $season, "result_twitter");
     if (!empty($savedurl['url'])) {
       echo "<tr><td>";
       echo "<a class='subnav' style='background: url(./images/linkicons/twitter_14x14.png) no-repeat 0 50%; padding: 0 0 0 19px;' href='" . $savedurl['url'] . "'>" . utf8entities(_("Result Twitter")) . "</a>\n";
@@ -661,7 +662,7 @@ function leftMenu($id = 0, $pagestart = true, $printable = false)
   echo "<table class='leftmenulinks'>\n";
   echo "<tr><td class='menuseasonlevel'>" . utf8entities(_("Links")) . "</td></tr>\n";
   echo "<tr><td>";
-  $urls = GetUrlListByTypeArray(array("menulink", "menumail"), 0);
+  $urls = Url::getUrlListByTypeArray(array("menulink", "menumail"), 0);
   foreach ($urls as $url) {
     if ($url['type'] == "menulink") {
       echo "<a class='subnav' href='" . $url['url'] . "'>&raquo; " . U_($url['name']) . "</a>\n";

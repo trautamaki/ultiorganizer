@@ -1,9 +1,9 @@
 <?php
 include_once 'lib/team.functions.php';
-include_once 'lib/url.functions.php';
 
 include_once 'classes/Country.php';
 include_once 'classes/Club.php';
+include_once 'classes/Url.php';
 
 $html = "";
 $clubId = iget("club");
@@ -65,7 +65,7 @@ if (!empty($club->getAchievements())) {
   $achievements = str_replace("\n", '<br/>', $achievements);
   $html .= "<tr><td colspan='2'>" . $achievements . "</td></tr>\n";
 }
-$urls = GetUrlList("club", $clubId);
+$urls = Url::getUrlListByOwner("club", $clubId);
 if (count($urls)) {
   $html .= "<tr><td colspan='2' class='profileheader' style='vertical-align:top'>" . _("Club pages") . ":</td></tr>";
   $html .= "<tr><td colspan='2'><table>";
@@ -85,7 +85,7 @@ if (count($urls)) {
   $html .= "</td></tr>";
 }
 
-$urls = GetMediaUrlList("club", $clubId);
+$urls = Url::getMediaUrlList("club", $clubId);
 if (count($urls)) {
   $html .= "<tr><td colspan='2' class='profileheader' style='vertical-align:top'>" . _("Photos and Videos") . ":</td></tr>";
   $html .= "<tr><td colspan='2'><table>";

@@ -8,6 +8,7 @@ include_once 'lib/game.functions.php';
 include_once 'lib/statistical.functions.php';
 
 include_once 'classes/Game.php';
+include_once 'classes/Url.php';
 
 $html = "";
 if (iget("profile")) {
@@ -102,7 +103,7 @@ if ($profile) {
   $html .= "</table>";
 }
 
-$urls = GetUrlList("player", $player['profile_id']);
+$urls = Url::getUrlListByOwner("player", $player['profile_id']);
 if (count($urls)) {
   $html .= "<table style='width:600px'>";
   $html .= "<tr><td colspan='2' class='profileheader' style='vertical-align:top'>" . _("Player pages") . ":</td></tr>";
@@ -121,7 +122,7 @@ if (count($urls)) {
   $html .= "</table>";
 }
 
-$urls = GetMediaUrlList("player", $player['profile_id']);
+$urls = Url::getMediaUrlList("player", $player['profile_id']);
 if (count($urls)) {
   $html .= "<table style='width:100%'>";
   $html .= "<tr><td colspan='2' class='profileheader' style='vertical-align:top'>" . _("Photos and Videos") . ":</td></tr>";

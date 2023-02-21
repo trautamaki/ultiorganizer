@@ -3,6 +3,7 @@ include_once $include_prefix . 'lib/configuration.functions.php';
 include_once $include_prefix . 'lib/game.functions.php';
 
 include_once $include_prefix . 'classes/Game.php';
+include_once $include_prefix . 'classes/Url.php';
 
 function TournamentView($games, $grouping = true)
 {
@@ -524,7 +525,7 @@ function GameRow($game, $date = false, $time = true, $field = true, $series = fa
   }
 
   if ($media) {
-    $urls = GetMediaUrlList("game", $game->getId(), "live");
+    $urls = Url::getMediaUrlList("game", $game->getId(), "live");
     $ret .= "<td style='$mediaw;white-space: nowrap;'>";
     if (count($urls) && ($game->isOngoing() || !$game->hasStarted())) {
       foreach ($urls as $url) {

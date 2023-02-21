@@ -31,9 +31,8 @@ abstract class BaseObject
      * Create a new record.
      * 
      * @param Database $database a database instance.
-     * @param string $name the country name.
-     * @param string $abbreviation abbreviation of the country.
-     * @param string $flag path to a flag image file.
+     * @param array $fields the country name.
+     * @param array $values abbreviation of the country.
      */
     static function create($database, $fields, $values)
     {

@@ -6,6 +6,8 @@ include_once 'lib/season.functions.php';
 include_once 'lib/statistical.functions.php';
 include_once 'lib/timetable.functions.php';
 
+include_once 'classes/Url.php';
+
 $html = "";
 
 $teamId = intval(iget("team"));
@@ -62,7 +64,7 @@ if ($profile) {
   $html .= "</table>";
 }
 
-$urls = GetUrlList("team", $teamId);
+$urls = Url::getUrlListByOwner("team", $teamId);
 if (count($urls)) {
   $html .= "<table style='width:100%'>";
   $html .= "<tr><td colspan='2' class='profileheader' style='vertical-align:top'>" . _("Team pages") . ":</td></tr>";
@@ -81,7 +83,7 @@ if (count($urls)) {
   $html .= "</table>";
 }
 
-$urls = GetMediaUrlList("team", $teamId);
+$urls = Url::getMediaUrlList("team", $teamId);
 if (count($urls)) {
   $html .= "<table style='width:100%'>";
   $html .= "<tr><td colspan='2' class='profileheader' style='vertical-align:top'>" . _("Photos and Videos") . ":</td></tr>";

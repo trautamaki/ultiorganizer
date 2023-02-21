@@ -186,14 +186,14 @@ if (IsTwitterEnabled()) {
 	$html .= "<h2>" . _("Twitter") . "</h2>\n";
 	if (count($series)) {
 		$html .= "<ul class='twitter-list'>";
-		$savedurl = GetUrl("season", $season, "result_twitter");
+		$savedurl = Url::getUrlByOwnerAndType("season", $season, "result_twitter");
 		if ($savedurl) {
 			$html .= "<li><a href='" . $savedurl['url'] . "'>"
 				. _("Ultimate results") . ": " . utf8entities(SeasonName($season)) . "</a></li>";
 		}
 
 		foreach ($series as $ser) {
-			$savedurl = GetUrl("series", $ser['series_id'], "result_twitter");
+			$savedurl = Url::getUrlByOwnerAndType("series", $ser['series_id'], "result_twitter");
 			if ($savedurl) {
 				$html .= "<li><a href='" . $ser['series_id'] . "'>"
 					. _("Ultimate results") . ": " . utf8entities(SeasonName($season)) . " " . utf8entities(U_($ser['name'])) . "</a></li>";
