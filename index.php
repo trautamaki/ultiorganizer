@@ -3,6 +3,7 @@ if (is_file('install.php')) {
   die("Delete install.php file from server!");
 }
 
+
 include_once 'lib/database.php';
 
 global $include_prefix;
@@ -14,6 +15,7 @@ include_once $include_prefix . 'lib/logging.functions.php';
 
 include_once $include_prefix . 'lib/debug.functions.php';
 
+include_once $include_prefix . 'lib/smarty/Smarty.class.php';
 
 session_name("UO_SESSID");
 session_start();
@@ -39,6 +41,12 @@ if (isset($_POST['myusername'])) {
   else
     UserAuthenticate($_POST['myusername'], $_POST['mypassword'], "FailRedirectMobile");
 }
+
+$smarty = new Smarty();
+$smarty->setTemplateDir($include_prefix . 'smarty/templates');
+$smarty->setCompileDir($include_prefix . 'smarty/templates_c');
+$smarty->setCacheDir($include_prefix . 'smarty/cache');
+$smarty->setConfigDir($include_prefix . 'smarty/configs');
 
 if (!iget('view')) {
   header("location:?view=frontpage");
