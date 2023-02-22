@@ -3,7 +3,6 @@ if (is_file('install.php')) {
   die("Delete install.php file from server!");
 }
 
-
 include_once 'lib/database.php';
 
 global $include_prefix;
@@ -16,6 +15,12 @@ include_once $include_prefix . 'lib/logging.functions.php';
 include_once $include_prefix . 'lib/debug.functions.php';
 
 include_once $include_prefix . 'lib/smarty/Smarty.class.php';
+
+if (is_file('cust/' . CUSTOMIZATIONS . '/head.php')) {
+  include_once 'cust/' . CUSTOMIZATIONS . '/head.php';
+} else {
+  include_once 'cust/default/head.php';
+}
 
 session_name("UO_SESSID");
 session_start();
@@ -96,6 +101,10 @@ $smarty->assign("menu_countries_count", count(CountryList(true, true)));
 $smarty->assign("menu_urls_list_by_type_array", GetUrlListByTypeArray(array("menulink", "menumail"), 0));
 $smarty->assign("menu_logo_html", logo());
 $smarty->assign("fb_app_id", $serverConf['FacebookAppId']);
+$smarty->assign("user_info", UserInfo($user));
+$smarty->assign("page_header", pageHeader());
+$smarty->assign("rss", IsGameRSSEnabled());
+$smarty->assign("server_request_uri", $_SERVER["REQUEST_URI"]);
 
 $twitter_enabled = IsTwitterEnabled();
 $smarty->assign("twitter_enabled", $twitter_enabled);

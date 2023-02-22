@@ -43,6 +43,6 @@ function debugMsg($msg)
 function pre($var)
 {
   echo "<pre>";
-  var_dump($var);
+  print_r($var);
   echo "</pre>";
 }
