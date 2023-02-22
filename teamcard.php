@@ -6,564 +6,186 @@ include_once 'lib/season.functions.php';
 include_once 'lib/statistical.functions.php';
 include_once 'lib/timetable.functions.php';
 
-$html = "";
-
 $teamId = intval(iget("team"));
 $teaminfo = TeamInfo($teamId);
 $profile = TeamProfile($teamId);
 
-$title = utf8entities($teaminfo['name']);
+$smarty->assign("title", utf8entities($teaminfo['name']));
+$smarty->assign("team_info", $teaminfo);
+$smarty->assign("urls", GetUrlList("team", $teamId));
+$smarty->assign("media_urls", GetMediaUrlList("team", $teamId));
+$smarty->assign("season_name", SeasonName($teaminfo['season']));
 
-$html .= "<h1>";
-$html .= utf8entities($teaminfo['name']) . " (" . U_($teaminfo['type']) . ")</h1>";
-
-if (intval($teaminfo['country']) > 0) {
-  $html .= "<p>";
-  $html .= "<img height='10' src='images/flags/tiny/" . $teaminfo['flagfile'] . "' alt=''/>&nbsp;";
-  $html .= "<a class='headerlink' href='?view=countrycard&amp;country=" . $teaminfo['country'] . "'>" . utf8entities($teaminfo['countryname']) . "</a></p>";
-}
-if (intval($teaminfo['club']) > 0) {
-  $html .= "<p>" . _("Club") . ": <a class='headerlink' href='?view=clubcard&amp;club=" . $teaminfo['club'] . "'>" . utf8entities($teaminfo['clubname']) . "</a></p>";
-}
-if ($profile) {
-  $html .= "<table style='width:100%'>";
-
-  if (!empty($profile['profile_image'])) {
-    $html .= "<tr><td colspan='2'><a href='" . UPLOAD_DIR . "teams/$teamId/" . $profile['profile_image'] . "'>";
-    $html .= "<img src='" . UPLOAD_DIR . "teams/$teamId/thumbs/" . $profile['profile_image'] . "' alt='" . _("Profile image") . "'/></a></td></tr>\n";
-  } else {
-    $html .= "<tr><td colspan='2'></td></tr>";
-  }
-
-  if (!empty($profile['coach'])) {
-    $html .= "<tr><td class='profileheader' style='width:100px'>" . _("Coach") . ":</td>";
-    $html .= "<td>" . utf8entities($profile['coach']) . "</td></tr>\n";
-  }
-  if (!empty($profile['captain'])) {
-    $html .= "<tr><td class='profileheader' style='width:100px'>" . _("Captain") . ":</td>";
-    $html .= "<td>" . utf8entities($profile['captain']) . "</td></tr>\n";
-  }
-
-  if (!empty($profile['story'])) {
-    $html .= "<tr><td colspan='2'>&nbsp;</td></tr>\n";
-    $story = utf8entities($profile['story']);
-    $story = str_replace("\n", '<br/>', $story);
-    $html .= "<tr><td colspan='2'>" . $story . "</td></tr>\n";
-  }
-
-  if (!empty($profile['achievements'])) {
-    $html .= "<tr><td colspan='2'>&nbsp;</td></tr>\n";
-    $html .= "<tr><td class='profileheader' colspan='2'>" . _("Achievements") . ":</td></tr>\n";
-    $html .= "<tr><td colspan='2'></td></tr>\n";
-    $achievements = utf8entities($profile['achievements']);
-    $achievements = str_replace("\n", '<br/>', $achievements);
-    $html .= "<tr><td colspan='2'>" . $achievements . "</td></tr>\n";
-  }
-  $html .= "</table>";
-}
-
-$urls = GetUrlList("team", $teamId);
-if (count($urls)) {
-  $html .= "<table style='width:100%'>";
-  $html .= "<tr><td colspan='2' class='profileheader' style='vertical-align:top'>" . _("Team pages") . ":</td></tr>";
-  foreach ($urls as $url) {
-    $html .= "<tr>";
-    $html .= "<td style='width:18px'><img width='16' height='16' src='images/linkicons/" . $url['type'] . ".png' alt='" . $url['type'] . "'/> ";
-    $html .= "</td><td>";
-    if (!empty($url['name'])) {
-      $html .= "<a href='" . $url['url'] . "'>" . $url['name'] . "</a>";
-    } else {
-      $html .= "<a href='" . $url['url'] . "'>" . $url['url'] . "</a>";
-    }
-    $html .= "</td>";
-    $html .= "</tr>";
-  }
-  $html .= "</table>";
-}
-
-$urls = GetMediaUrlList("team", $teamId);
-if (count($urls)) {
-  $html .= "<table style='width:100%'>";
-  $html .= "<tr><td colspan='2' class='profileheader' style='vertical-align:top'>" . _("Photos and Videos") . ":</td></tr>";
-  foreach ($urls as $url) {
-    $html .= "<tr>";
-    $html .= "<td style='width:18px'><img width='16' height='16' src='images/linkicons/" . $url['type'] . ".png' alt='" . $url['type'] . "'/> ";
-    $html .= "</td><td>";
-    if (!empty($url['name'])) {
-      $html .= "<a href='" . $url['url'] . "'>" . $url['name'] . "</a>";
-    } else {
-      $html .= "<a href='" . $url['url'] . "'>" . $url['url'] . "</a>";
-    }
-    if (!empty($url['mediaowner'])) {
-      $html .= " " . _("from") . " " . $url['mediaowner'];
-    }
-    $html .= "</td>";
-    $html .= "</tr>";
-  }
-  $html .= "</table>";
-}
-
+$show_defense_stats = ShowDefenseStats();
+$smarty->assign("show_defense_stats", $show_defense_stats);
+$team_d_player_info = array();
 if (ShowDefenseStats()) {
-  $playerswihtdef = TeamScoreBoardWithDefenses($teamId, 0, "name", 0);
-  if (GetDatabase()->NumRows($playerswihtdef)) {
-    $html .= "<p><span class='profileheader'>" . utf8entities(U_(SeasonName($teaminfo['season']))) . " " . _("roster") . ":</span></p>\n";
-
-    $html .= "<table style='width:80%'>\n";
-    $html .= "<tr><th style='width:40%'>" . _("Name") . "</th>
-		<th class='center' style='width:15%'>" . _("Games") . "</th>
-		<th class='center' style='width:15%'>" . _("Passes") . "</th>
-		<th class='center' style='width:15%'>" . _("Goals") . "</th>
-		<th class='center' style='width:15%'>" . _("Tot.") . "</th>
-		<th class='center' style='width:15%'>" . _("Defenses") . "</th></tr>\n";
-
-    while ($player = GetDatabase()->FetchAssoc($playerswihtdef)) {
-      $playerinfo = PlayerInfo($player['player_id']);
-      $html .= "<tr><td>";
-      if (!empty($playerinfo['profile_id'])) {
-        if ($playerinfo['num'] > -1) {
-          $html .= "<a href='?view=playercard&amp;series=0&amp;player=" . $player['player_id'] . "'>" .
-            "#" . $playerinfo['num'] . " " . utf8entities($playerinfo['firstname'] . " " . $playerinfo['lastname']) . "</a>";
-        } else {
-          $html .= "<a href='?view=playercard&amp;series=0&amp;player=" . $player['player_id'] . "'>" .
-            utf8entities($playerinfo['firstname'] . " " . $playerinfo['lastname']) . "</a>";
-        }
-        if (!empty($playerinfo['profile_image'])) {
-          $html .= "&nbsp;<img width='10' height='10' src='images/linkicons/image.png' alt='" . _("Photo") . "'/>";
-        }
-      } else {
-        if ($playerinfo['num'] > -1) {
-          $html .= "#" . $playerinfo['num'] . " " . utf8entities($playerinfo['firstname'] . " " . $playerinfo['lastname']);
-        } else {
-          $html .= utf8entities($playerinfo['firstname'] . " " . $playerinfo['lastname']);
-        }
-      }
-      $html .= "</td>";
-      $html .= "<td class='center'>" . $player['games'] . "</td>";
-      $html .= "<td class='center'>" . $player['fedin'] . "</td>";
-      $html .= "<td class='center'>" . $player['done'] . "</td>";
-      $html .= "<td class='center'>" . $player['total'] . "</td>";
-      $html .= "<td class='center'>" . $player['deftotal'] . "</td></tr>\n";
-    }
-    $html .= "</table>\n";
-  }
-} else {
-
-  $players = TeamScoreBoard($teamId, 0, "name", 0);
-  if (GetDatabase()->NumRows($players)) {
-    $html .= "<p><span class='profileheader'>" . utf8entities(U_(SeasonName($teaminfo['season']))) . " " . _("roster") . ":</span></p>\n";
-
-    $html .= "<table style='width:80%'>\n";
-    $html .= "<tr><th style='width:40%'>" . _("Name") . "</th>
-		<th class='center' style='width:15%'>" . _("Games") . "</th>
-		<th class='center' style='width:15%'>" . _("Passes") . "</th>
-		<th class='center' style='width:15%'>" . _("Goals") . "</th>
-		<th class='center' style='width:15%'>" . _("Tot.") . "</th></tr>\n";
-
-    while ($player = GetDatabase()->FetchAssoc($players)) {
-      $playerinfo = PlayerInfo($player['player_id']);
-      $html .= "<tr><td>";
-      if (!empty($playerinfo['profile_id'])) {
-        if ($playerinfo['num'] > -1) {
-          $html .= "<a href='?view=playercard&amp;series=0&amp;player=" . $player['player_id'] . "'>" .
-            "#" . $playerinfo['num'] . " " . utf8entities($playerinfo['firstname'] . " " . $playerinfo['lastname']) . "</a>";
-        } else {
-          $html .= "<a href='?view=playercard&amp;series=0&amp;player=" . $player['player_id'] . "'>" .
-            utf8entities($playerinfo['firstname'] . " " . $playerinfo['lastname']) . "</a>";
-        }
-        if (!empty($playerinfo['profile_image'])) {
-          $html .= "&nbsp;<img width='10' height='10' src='images/linkicons/image.png' alt='" . _("Photo") . "'/>";
-        }
-      } else {
-        if ($playerinfo['num'] > -1) {
-          $html .= "#" . $playerinfo['num'] . " " . utf8entities($playerinfo['firstname'] . " " . $playerinfo['lastname']);
-        } else {
-          $html .= utf8entities($playerinfo['firstname'] . " " . $playerinfo['lastname']);
-        }
-      }
-      $html .= "</td>";
-      $html .= "<td class='center'>" . $player['games'] . "</td>";
-      $html .= "<td class='center'>" . $player['fedin'] . "</td>";
-      $html .= "<td class='center'>" . $player['done'] . "</td>";
-      $html .= "<td class='center'>" . $player['total'] . "</td></tr>\n";
-    }
-    $html .= "</table>\n";
+  $players_wiht_def = TeamScoreBoardWithDefenses($teamId, 0, "name", 0);
+  while ($player = GetDatabase()->FetchAssoc($players_wiht_def)) {
+    $team_d_player_info[$player['player_id']] = PlayerInfo($player['player_id']);
   }
 }
-$allgames = TimetableGames($teamId, "team", "all", "time");
-if (GetDatabase()->NumRows($allgames)) {
-  $html .= "<h2>" . U_(SeasonName($teaminfo['season'])) . ":</h2>\n";
-  $html .=  "<p>" . _("Division") . ": <a href='?view=poolstatus&amp;series=" . $teaminfo['series'] . "'>" . utf8entities(U_($teaminfo['seriesname'])) . "</a></p>";
-  $html .= "<table style='width:80%'>\n";
-  while ($game = GetDatabase()->FetchAssoc($allgames)) {
-    //function GameRow($game, $date=false, $time=true, $field=true, $series=false,$pool=false,$info=true)
-    $html .= GameRow($game, false, false, false, false, false, true);
-  }
 
-  $html .= "</table>\n";
+$smarty->assign("players_with_def", $players_wiht_def);
+$smarty->assign("team_d_player_info", $team_d_player_info);
+
+$team_players = TeamScoreBoard($teamId, 0, "name", 0);
+$team_player_info = array();
+while ($player = GetDatabase()->FetchAssoc($team_players)) {
+  $team_player_info[$player['player_id']] = PlayerInfo($player['player_id']);
 }
+
+$smarty->assign("team_players", $team_players);
+$smarty->assign("team_player_info", $team_player_info);
+
+$all_games = array();
+$timetablegames = TimetableGames($teamId, "team", "all", "time");
+$game_urls = array();
+$xgames = array();
+while ($game = GetDatabase()->FetchAssoc($timetablegames)) {
+  $all_games[] = $game;
+  $game_urls[$game['game_id']] = GetMediaUrlList("game", $game['game_id'], "live");
+
+  $t1 = preg_replace('/\s*/m', '', $game['hometeamname']);
+  $t2 = preg_replace('/\s*/m', '', $game['visitorteamname']);
+  $x_result = GetAllPlayedGames($t1, $t2, $game['type'], "");
+  while ($x_game = GetDatabase()->FetchAssoc($x_result)) {
+    $xgames[$game['game_id']][] = $x_game;
+  }
+}
+$smarty->assign("all_games", $all_games);
+$smarty->assign("xgames", $xgames);
+$smarty->assign("game_urls", $game_urls);
 
 $seasons = TeamStatisticsByName($teaminfo['name'], $teaminfo['type']);
-if (ShowDefenseStats()) {
-  if (count($seasons)) {
-    $html .= "<h2>" . _("History") . ":</h2>\n";
+$smarty->assign("seasons", $seasons);
 
-    $tmphtml = "";
+$stats = array();
+foreach ($seasons as $season) {
+  $pg = array(
+    "season_type" => "",
+    "games" => 0,
+    "wins" => 0,
+    "losses" => 0,
+    "goals_made" => 0,
+    "goals_against" => 0,
+    "defenses" => 0
+  );
 
-    $tmphtml .= "<table style='white-space: nowrap;' border='1' cellspacing='0' width='100%'><tr>
-		<th>" . _("Event") . "</th>
-		<th>" . _("Division") . "</th>
-		<th>" . _("Pos.") . "</th>
-		<th>" . _("Games") . "</th>
-		<th>" . _("Wins") . "</th>
-		<th>" . _("Losses") . "</th>
-		<th>" . _("Win-%") . "</th>
-		<th>" . _("Goals for") . "</th>
-		<th>" . _("GF/game") . "</th>
-		<th>" . _("against") . "</th>
-		<th>" . _("GA/game") . "</th>
-		<th>" . _("diff.") . "</th>
-		<th>" . _("Defenses") . "</th>
-		</tr>";
+  $pg['season_type'] = $season['seasontype'];
+  $pg['season_name'] = $season['seasonname'];
+  $pg['series_name'] = $season['seriesname'];
 
+  $pg['goals_made'] = $season['goals_made'];
+  $pg['goals_against'] = $season['goals_against'];
+  $pg['wins'] = $season['wins'];
+  $pg['losses'] = $season['losses'];
+  $pg['games'] = $season['wins'] + $season['losses'];
+  $pg['defenses'] = $season['defenses_total'];
 
-    $prevseason = "";
-    $seasoncounter = 0;
+  $pg['win_p'] = number_format((SafeDivide($pg['wins'], $pg['games']) * 100), 1);
+  $pg['goals_per_game'] = number_format(SafeDivide($pg['goals_made'], $pg['games']), 1);
+  $pg['goals_a_per_game'] = number_format(SafeDivide($pg['goals_against'], $pg['games']), 1);
+  $pg['goals_diff'] = ($pg['goals_made'] - $pg['goals_against']);
 
-    $nCurSer = 0;
-
-    $stats = array();
-
-    foreach ($seasons as $season) {
-
-      //played games
-      $pg = array(
-        "season_type" => "",
-        "games" => 0,
-        "wins" => 0,
-        "losses" => 0,
-        "goals_made" => 0,
-        "goals_against" => 0,
-        "defenses" => 0
-      );
-
-      $pg['season_type'] = $season['seasontype'];
-      if ($season['season'] != $prevseason) {
-        $seasoncounter++;
-        $prevseason = $season['season'];
-      }
-
-      if ($seasoncounter % 2) {
-        $tmphtml .= "<tr class='highlight'>";
-      } else {
-        $tmphtml .= "<tr>";
-      }
-      $tmphtml .= "<td>" . utf8entities(U_($season['seasonname'])) . "</td>";
-      $tmphtml .= "<td>" . utf8entities(U_($season['seriesname'])) . "</td>";
-      $tmphtml .= "<td>" . $season['standing'] . "</td>";
-      $pg['goals_made'] = $season['goals_made'];
-      $pg['goals_against'] = $season['goals_against'];
-      $pg['wins'] = $season['wins'];
-      $pg['losses'] = $season['losses'];
-      $pg['games'] = $season['wins'] + $season['losses'];
-      $pg['defenses'] = $season['defenses_total'];
-
-      $tmphtml .= "<td>" . $pg['games'] . "</td>";
-      $tmphtml .= "<td>" . $pg['wins'] . "</td>";
-      $tmphtml .= "<td>" . $pg['losses'] . "</td>";
-      $tmphtml .= "<td>" . number_format((SafeDivide($pg['wins'], $pg['games']) * 100), 1) . "%</td>";
-      $tmphtml .= "<td>" . $pg['goals_made'] . "</td>";
-      $tmphtml .= "<td>" . number_format(SafeDivide($pg['goals_made'], $pg['games']), 1) . "</td>";
-      $tmphtml .= "<td>" . $pg['goals_against'] . "</td>";
-      $tmphtml .= "<td>" . number_format(SafeDivide($pg['goals_against'], $pg['games']), 1) . "</td>";
-      $tmphtml .= "<td>" . ($pg['goals_made'] - $pg['goals_against']) . "</td>";
-      $tmphtml .= "<td>" . $pg['defenses'] . "</td>";
-      $tmphtml .= "</tr>";
-
-      $stats[] = $pg;
-    }
-    $tmphtml .= "</table><p></p>";
-
-    mergesort($stats, create_function('$b,$a', 'return strcmp($b[\'season_type\'],$a[\'season_type\']);'));
-
-    $html .= "<table border='1' width='100%'><tr>
-	<th>" . _("Event type") . "</th>
-	<th>" . _("Games") . "</th>
-	<th>" . _("Wins") . "</th>
-	<th>" . _("Losses") . "</th>
-	<th>" . _("Win-%") . "</th>
-	<th>" . _("Goals for") . "</th>
-	<th>" . _("GF/game") . "</th>
-	<th>" . _("against") . "</th>
-	<th>" . _("GA/game") . "</th>
-	<th>" . _("diff.") . "</th>
-	<th>" . _("Defenses") . "</th>
-	</tr>";
-
-    $total_games = 0;
-    $total_wins = 0;
-    $total_losses = 0;
-    $total_goals_made = 0;
-    $total_goals_against = 0;
-    $total_defenses = 0;
-
-    for ($i = 0; $i < count($stats);) {
-      $season_type = $stats[$i]['season_type'];
-      $games = $stats[$i]['games'];
-      $wins = $stats[$i]['wins'];
-      $losses = $stats[$i]['losses'];
-      $goals_made = $stats[$i]['goals_made'];
-      $goals_against = $stats[$i]['goals_against'];
-      $defenses = $stats[$i]['defenses'];
-
-      for ($i = $i + 1; $i < count($stats) && $season_type == $stats[$i]['season_type']; $i++) {
-        $games += $stats[$i]['games'];
-        $wins += $stats[$i]['wins'];
-        $losses += $stats[$i]['losses'];
-        $goals_made += $stats[$i]['goals_made'];
-        $goals_against += $stats[$i]['goals_against'];
-        $defenses += $stats[$i]['defenses'];
-      }
-      $total_games += $games;
-      $total_wins += $wins;
-      $total_losses += $losses;
-      $total_goals_made += $goals_made;
-      $total_goals_against += $goals_against;
-      $total_defenses += $defenses;
-
-      $html .= "<tr>";
-      $html .= "<td>" . U_($season_type) . "</td>";
-      $html .= "<td>$games</td>";
-      $html .= "<td>$wins</td>";
-      $html .= "<td>$losses</td>";
-      $html .= "<td>" . (number_format((SafeDivide($wins, $games) * 100), 1)) . " %</td>";
-      $html .= "<td>$goals_made</td>";
-      $html .= "<td>" . (number_format(SafeDivide($goals_made, $games), 1)) . "</td>";
-      $html .= "<td>$goals_against</td>";
-      $html .= "<td>" . (number_format(SafeDivide($goals_against, $games), 1)) . "</td>";
-      $html .= "<td>" . ($goals_made - $goals_against) . "</td>";
-      $html .= "<td>$defenses</td>";
-      $html .= "</tr>";
-    }
-
-    $html .= "<tr class='highlight'>";
-    $html .= "<td>" . _("Total") . "</td>";
-    $html .= "<td>$total_games</td>";
-    $html .= "<td>$total_wins</td>";
-    $html .= "<td>$total_losses</td>";
-    $html .= "<td>" . (number_format((SafeDivide($total_wins, $total_games) * 100), 1)) . " %</td>";
-    $html .= "<td>$total_goals_made</td>";
-    $html .= "<td>" . (number_format(SafeDivide($total_goals_made, $total_games), 1)) . "</td>";
-    $html .= "<td>$total_goals_against</td>";
-    $html .= "<td>" . (number_format(SafeDivide($total_goals_against, $total_games), 1)) . "</td>";
-    $html .= "<td>" . ($total_goals_made - $total_goals_against) . "</td>";
-    $html .= "<td>$total_defenses</td>";
-    $html .= "</tr>";
-
-
-    $html .= "</table>";
-
-    $html .= $tmphtml;
-  }
-} else {
-  if (count($seasons)) {
-    $html .= "<h2>" . _("History") . ":</h2>\n";
-
-    $tmphtml = "";
-
-    $tmphtml .= "<table style='white-space: nowrap;' border='1' cellspacing='0' width='100%'><tr>
-		<th>" . _("Event") . "</th>
-		<th>" . _("Division") . "</th>
-		<th>" . _("Pos.") . "</th>
-		<th>" . _("Games") . "</th>
-		<th>" . _("Wins") . "</th>
-		<th>" . _("Losses") . "</th>
-		<th>" . _("Win-%") . "</th>
-		<th>" . _("Goals for") . "</th>
-		<th>" . _("GF/game") . "</th>
-		<th>" . _("against") . "</th>
-		<th>" . _("GA/game") . "</th>
-		<th>" . _("diff.") . "</th>
-		</tr>";
-
-
-    $prevseason = "";
-    $seasoncounter = 0;
-
-    $nCurSer = 0;
-
-    $stats = array();
-
-    foreach ($seasons as $season) {
-
-      //played games
-      $pg = array(
-        "season_type" => "",
-        "games" => 0,
-        "wins" => 0,
-        "losses" => 0,
-        "goals_made" => 0,
-        "goals_against" => 0
-      );
-
-      $pg['season_type'] = $season['seasontype'];
-      if ($season['season'] != $prevseason) {
-        $seasoncounter++;
-        $prevseason = $season['season'];
-      }
-
-      if ($seasoncounter % 2) {
-        $tmphtml .= "<tr class='highlight'>";
-      } else {
-        $tmphtml .= "<tr>";
-      }
-      $tmphtml .= "<td>" . utf8entities(U_($season['seasonname'])) . "</td>";
-      $tmphtml .= "<td>" . utf8entities(U_($season['seriesname'])) . "</td>";
-      $tmphtml .= "<td>" . $season['standing'] . "</td>";
-      $pg['goals_made'] = $season['goals_made'];
-      $pg['goals_against'] = $season['goals_against'];
-      $pg['wins'] = $season['wins'];
-      $pg['losses'] = $season['losses'];
-      $pg['games'] = $season['wins'] + $season['losses'];
-
-      $tmphtml .= "<td>" . $pg['games'] . "</td>";
-      $tmphtml .= "<td>" . $pg['wins'] . "</td>";
-      $tmphtml .= "<td>" . $pg['losses'] . "</td>";
-      $tmphtml .= "<td>" . number_format((SafeDivide($pg['wins'], $pg['games']) * 100), 1) . "%</td>";
-      $tmphtml .= "<td>" . $pg['goals_made'] . "</td>";
-      $tmphtml .= "<td>" . number_format(SafeDivide($pg['goals_made'], $pg['games']), 1) . "</td>";
-      $tmphtml .= "<td>" . $pg['goals_against'] . "</td>";
-      $tmphtml .= "<td>" . number_format(SafeDivide($pg['goals_against'], $pg['games']), 1) . "</td>";
-      $tmphtml .= "<td>" . ($pg['goals_made'] - $pg['goals_against']) . "</td>";
-      $tmphtml .= "</tr>";
-
-      $stats[] = $pg;
-    }
-    $tmphtml .= "</table><p></p>";
-
-    mergesort($stats, create_function('$b,$a', 'return strcmp($b[\'season_type\'],$a[\'season_type\']);'));
-
-    $html .= "<table border='1' width='100%'><tr>
-	<th>" . _("Event type") . "</th>
-	<th>" . _("Games") . "</th>
-	<th>" . _("Wins") . "</th>
-	<th>" . _("Losses") . "</th>
-	<th>" . _("Win-%") . "</th>
-	<th>" . _("Goals for") . "</th>
-	<th>" . _("GF/game") . "</th>
-	<th>" . _("against") . "</th>
-	<th>" . _("GA/game") . "</th>
-	<th>" . _("diff.") . "</th>
-	</tr>";
-
-    $total_games = 0;
-    $total_wins = 0;
-    $total_losses = 0;
-    $total_goals_made = 0;
-    $total_goals_against = 0;
-
-    for ($i = 0; $i < count($stats);) {
-      $season_type = $stats[$i]['season_type'];
-      $games = $stats[$i]['games'];
-      $wins = $stats[$i]['wins'];
-      $losses = $stats[$i]['losses'];
-      $goals_made = $stats[$i]['goals_made'];
-      $goals_against = $stats[$i]['goals_against'];
-
-      for ($i = $i + 1; $i < count($stats) && $season_type == $stats[$i]['season_type']; $i++) {
-        $games += $stats[$i]['games'];
-        $wins += $stats[$i]['wins'];
-        $losses += $stats[$i]['losses'];
-        $goals_made += $stats[$i]['goals_made'];
-        $goals_against += $stats[$i]['goals_against'];
-      }
-      $total_games += $games;
-      $total_wins += $wins;
-      $total_losses += $losses;
-      $total_goals_made += $goals_made;
-      $total_goals_against += $goals_against;
-
-      $html .= "<tr>";
-      $html .= "<td>" . U_($season_type) . "</td>";
-      $html .= "<td>$games</td>";
-      $html .= "<td>$wins</td>";
-      $html .= "<td>$losses</td>";
-      $html .= "<td>" . (number_format((SafeDivide($wins, $games) * 100), 1)) . " %</td>";
-      $html .= "<td>$goals_made</td>";
-      $html .= "<td>" . (number_format(SafeDivide($goals_made, $games), 1)) . "</td>";
-      $html .= "<td>$goals_against</td>";
-      $html .= "<td>" . (number_format(SafeDivide($goals_against, $games), 1)) . "</td>";
-      $html .= "<td>" . ($goals_made - $goals_against) . "</td>";
-      $html .= "</tr>";
-    }
-
-    $html .= "<tr class='highlight'>";
-    $html .= "<td>" . _("Total") . "</td>";
-    $html .= "<td>$total_games</td>";
-    $html .= "<td>$total_wins</td>";
-    $html .= "<td>$total_losses</td>";
-    $html .= "<td>" . (number_format((SafeDivide($total_wins, $total_games) * 100), 1)) . " %</td>";
-    $html .= "<td>$total_goals_made</td>";
-    $html .= "<td>" . (number_format(SafeDivide($total_goals_made, $total_games), 1)) . "</td>";
-    $html .= "<td>$total_goals_against</td>";
-    $html .= "<td>" . (number_format(SafeDivide($total_goals_against, $total_games), 1)) . "</td>";
-    $html .= "<td>" . ($total_goals_made - $total_goals_against) . "</td>";
-    $html .= "</tr>";
-
-
-    $html .= "</table>";
-
-    $html .= $tmphtml;
-  }
+  $stats[] = $pg;
 }
 
+mergesort($stats, 'cmp_seasons');
+function cmp_seasons($b, $a)
+{
+  return strcmp($b['season_type'], $a['season_type']);
+}
+
+$smarty->assign("stats_per_season", $stats);
+
+$stats_total = array();
+$stats_per_season_type = array();
+for ($i = 0; $i < count($stats);) {
+  $season_type = $stats[$i]['season_type'];
+  $games = $stats[$i]['games'];
+  $wins = $stats[$i]['wins'];
+  $losses = $stats[$i]['losses'];
+  $goals_made = $stats[$i]['goals_made'];
+  $goals_against = $stats[$i]['goals_against'];
+  $defenses = $stats[$i]['defenses'];
+
+  for ($i = $i + 1; $i < count($stats) && $season_type == $stats[$i]['season_type']; $i++) {
+    $stats_per_season_type[$stats[$i]['season_type']]['games'] += $stats[$i]['games'];
+    $stats_per_season_type[$stats[$i]['season_type']]['wins'] += $stats[$i]['wins'];
+    $stats_per_season_type[$stats[$i]['season_type']]['losses'] += $stats[$i]['losses'];
+    $stats_per_season_type[$stats[$i]['season_type']]['goals_made'] += $stats[$i]['goals_made'];
+    $stats_per_season_type[$stats[$i]['season_type']]['goals_against'] += $stats[$i]['goals_against'];
+    $stats_per_season_type[$stats[$i]['season_type']]['defenses'] += $stats[$i]['defenses'];
+  }
+
+  foreach ($stats_per_season_type as $type => $stat) {
+    $stats_per_season_type[$type]['win_p'] = number_format((SafeDivide(
+      $stats_per_season_type[$type]['wins'],
+      $stats_per_season_type[$type]['games']
+    ) * 100), 1);
+
+    $stats_per_season_type[$type]['goals_per_game'] = number_format(SafeDivide(
+      $stats_per_season_type[$type]['goals_made'],
+      $stats_per_season_type[$type]['games']
+    ), 1);
+
+    $stats_per_season_type[$type]['goals_a_per_game'] = number_format(SafeDivide(
+      $stats_per_season_type[$type]['goals_against'],
+      $stats_per_season_type[$type]['games']
+    ), 1);
+
+    $stats_per_season_type[$type]['goals_diff'] =
+      $stats_per_season_type[$type]['goals_made'] -
+      $stats_per_season_type[$type]['goals_against'];
+  }
+
+  $stats_total['total_games'] += $games;
+  $stats_total['total_wins'] += $wins;
+  $stats_total['total_losses'] += $losses;
+  $stats_total['total_goals_made'] += $goals_made;
+  $stats_total['total_goals_against'] += $goals_against;
+  $stats_total['total_defenses'] += $defenses;
+}
+
+$stats_total['total_win_p'] = number_format((SafeDivide(
+  $stats_total['total_wins'],
+  $stats_total['total_games']
+) * 100), 1);
+
+$stats_total['total_goals_per_game'] = number_format(SafeDivide(
+  $stats_total['total_goals_made'],
+  $stats_total['total_games']
+), 1);
+
+$stats_total['total_goals_a_per_game'] = number_format(SafeDivide(
+  $stats_total['total_goals_against'],
+  $stats_total['total_games']
+), 1);
+
+$stats_total['total_goals_diff'] =
+  $stats_total['total_goals_made'] -
+  $stats_total['total_goals_against'];
+
+$smarty->assign("stats_per_season_type", $stats_per_season_type);
+$smarty->assign("stats_total", $stats_total);
 
 $sort = iget("sort");
-
 if (empty($sort)) {
   $sort = "serie";
 }
 
 $played = TeamPlayedGames($teaminfo['name'], $teaminfo['type'], $sort);
+$played_array = array();
 if (GetDatabase()->NumRows($played)) {
-  $html .= "<h2>" . _("Game history") . "</h2>";
-
-  $viewUrl = "?view=teamcard&amp;team=$teamId&amp;";
-
-  $html .= "<table border='1' cellspacing='2' width='100%'><tr>";
-
-  $html .= "<th><a class='thsort' href=\"" . $viewUrl . "sort=team\">" . _("Team") . "</a></th>";
-  $html .= "<th><a class='thsort' href=\"" . $viewUrl . "sort=result\">" . _("Result") . "</a></th>";
-  $html .= "<th><a class='thsort' href=\"" . $viewUrl . "sort=serie\">" . _("Division") . "</a></th></tr>";
   $curSeason = Currentseason();
-
   while ($row = GetDatabase()->FetchAssoc($played)) {
-    if ($row['season_id'] == $curSeason) {
+    if ($row['season_id'] == $curSeason || !GameHasStarted($row)) {
       continue;
     }
-    if (GameHasStarted($row)) {
-      $seasonName = SeasonName($row['season_id']);
-
-      if ($row['homescore'] > $row['visitorscore'])
-        $html .= "<tr><td><b>" . utf8entities($row['hometeamname']) . "</b>";
-      else
-        $html .= "<tr><td>" . utf8entities($row['hometeamname']);
-
-
-      if ($row['homescore'] < $row['visitorscore'])
-        $html .= " - <b>" . utf8entities($row['visitorteamname']) . "</b></td>";
-      else
-        $html .= " - " . utf8entities($row['visitorteamname']) . "</td>";
-
-
-      $html .= "<td><a href=\"?view=gameplay&amp;game=" . $row['game_id'] . "\">" . $row['homescore'] . " - " . $row['visitorscore'] . "</a></td>";
-
-      $html .= "<td>" . utf8entities(U_($seasonName)) . ": <a href=\"?view=poolstatus&amp;pool=" . $row['pool_id'] . "\">" . utf8entities(U_($row['name'])) . "</a></td></tr>";
-    }
+    $row['season_name'] = SeasonName($row['season_id']);
+    $played_array[] = $row;
   }
+}
 
-  $html .= "</table>";
-}
-if ($_SESSION['uid'] != 'anonymous') {
-  $html .= "<div style='float:left;'><hr/><a href='?view=user/addmedialink&amp;team=$teamId'>" . _("Add media") . "</a></div>";
-}
-showPage($title, $html);
+$smarty->assign("played", $played_array);
