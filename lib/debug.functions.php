@@ -40,7 +40,7 @@ function debugMsg($msg)
   }
 }
 
-function pre($var)
+function pre_print($var)
 {
   echo "<pre>";
   print_r($var);
