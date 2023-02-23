@@ -1,0 +1,44 @@
+
+.game_row_date {
+    width: 60px
+}
+
+.game_row_time {
+    width: 40px
+}
+
+.game_row_field {
+    width: 60px
+}
+
+.game_row_team {
+    width: 120px
+}
+
+.game_row_againstmark {
+    width: 5px
+}
+
+.game_row_series {
+    width: 80px
+}
+
+.game_row_pool {
+    width: 130px
+}
+
+.game_row_score {
+    width: 15px
+}
+
+.game_row_info {
+    width: 80px
+}
+
+.game_row_gamename {
+    width: 50px
+}
+
+.game_row_media {
+    width: 40px
+}
