@@ -56,6 +56,8 @@ if (iget("series")) {
   $title = _("Schedule") . " " . utf8entities(U_(SeasonName($id)));
 }
 
+$smarty->assign("title", $title);
+
 $filter  = iget("filter");
 if (empty($filter)) {
   $filter = 'tournaments';
@@ -85,62 +87,67 @@ switch ($filter) {
     $timefilter = "today";
     $order = "series";
     break;
-
   case "tomorrow":
     $timefilter = "tomorrow";
     $order = "series";
     break;
-
   case "yesterday":
     $timefilter = "yesterday";
     $order = "series";
     break;
-
   case "next":
     $order = "tournaments";
     $order = "series";
     break;
-
   case "tournaments":
     $timefilter = "all";
     $order = "tournaments";
     break;
-
   case "series":
     $timefilter = "all";
     $order = "series";
     break;
-
   case "places":
     $timefilter = "all";
     $order = "places";
     break;
-
   case "season":
     $timefilter = "all";
     $order = "places";
     $format = "pdf";
     break;
-
   case "onepage":
     $timefilter = "all";
     $order = "onepage";
     $format = "pdf";
     break;
-
   case "timeslot":
     $timefilter = "all";
     $order = "time";
     break;
-
   default:
     $timefilter = "all";
     $order = "tournaments";
     break;
 }
 
+$smarty->assign("filter", $filter);
+$smarty->assign("baseurl", $baseurl);
+$smarty->assign("id", $id);
+$smarty->assign("group", $group);
+
 $games = TimetableGames($id, $gamefilter, $timefilter, $order, $group);
-$groups = TimetableGrouping($id, $gamefilter, $timefilter);
+$games_array = array();
+if (GetDatabase()->NumRows($games)) {
+  while ($game = GetDatabase()->FetchAssoc($games)) {
+    $game['starttime_justdate'] = JustDate($game['starttime']);
+    $game['starttime_defweekdate'] = DefWeekDateFormat($game['starttime']);
+    $game['time_defour'] = DefHourFormat($game['time']);
+    $game['time_defweekdate'] = DefWeekDateFormat($game['time']);
+    $games_array[] = $game;
+  }
+}
+$smarty->assign("games", $games_array);
 
 if ($format == "pdf") {
   $pdf = new PDF();
@@ -152,75 +159,31 @@ if ($format == "pdf") {
   $pdf->Output();
 }
 
-if (!$print && !$singleview) {
-  $menutabs[_("By grouping")] = ($baseurl) . "&filter=tournaments&group=$group";
-  $menutabs[_("By timeslot")] = ($baseurl) . "&filter=timeslot&group=$group";
-  $menutabs[_("By division")] = ($baseurl) . "&filter=series&group=$group";
-  $menutabs[_("By location")] = ($baseurl) . "&filter=places&group=$group";
-  $menutabs[_("Today")] = ($baseurl) . "&filter=today&group=$group";
-  $menutabs[_("Tomorrow")] = ($baseurl) . "&filter=tomorrow&group=$group";
-  $menutabs[_("Yesterday")] = ($baseurl) . "&filter=yesterday&group=$group";
+$menutabs[_("By grouping")] = ($baseurl) . "&filter=tournaments&group=$group";
+$menutabs[_("By timeslot")] = ($baseurl) . "&filter=timeslot&group=$group";
+$menutabs[_("By division")] = ($baseurl) . "&filter=series&group=$group";
+$menutabs[_("By location")] = ($baseurl) . "&filter=places&group=$group";
+$menutabs[_("Today")] = ($baseurl) . "&filter=today&group=$group";
+$menutabs[_("Tomorrow")] = ($baseurl) . "&filter=tomorrow&group=$group";
+$menutabs[_("Yesterday")] = ($baseurl) . "&filter=yesterday&group=$group";
+$smarty->assign("menu_tabs", $menutabs);
 
-  $html .= pageMenu($menutabs, "", false);
+$groups = TimetableGrouping($id, $gamefilter, $timefilter);
+$smarty->assign("groups", $groups);
 
-  if (count($groups) > 1) {
-    $html .= "<p>\n";
-    foreach ($groups as $grouptmp) {
-      if ($group == $grouptmp['reservationgroup']) {
-        $html .= "<a class='groupinglink' href='" . utf8entities($baseurl) . "&amp;filter=" . $filter . "&amp;group=" . urlencode($grouptmp['reservationgroup']) . "'><span class='selgroupinglink'>" . U_($grouptmp['reservationgroup']) . "</span></a>";
-      } else {
-        $html .= "<a class='groupinglink' href='" . utf8entities($baseurl) . "&amp;filter=" . $filter . "&amp;group=" . urlencode($grouptmp['reservationgroup']) . "'>" . U_($grouptmp['reservationgroup']) . "</a>";
-      }
-      $html .= "&nbsp;&nbsp;&nbsp;&nbsp;";
-    }
-    if ($group == "all") {
-      $html .= "<a class='groupinglink' href='" . utf8entities($baseurl) . "&amp;filter=" . $filter . "&amp;group=all'><span class='selgroupinglink'>" . _("All") . "</span></a>";
-    } else {
-      $html .= "<a class='groupinglink' href='" . utf8entities($baseurl) . "&amp;filter=" . $filter . "&amp;group=all'>" . _("All") . "</a>";
-    }
-    $html .= "</p>\n";
-  }
-}
 if (!empty($group) && $group != "all") {
   $groupheader = false;
 }
+$smarty->assign("group_header", $groupheader);
 
-if (GetDatabase()->NumRows($games) == 0) {
-  $html .= "\n<p>" . _("No games") . ".</p>\n";
-} elseif ($filter == 'tournaments') {
-  $html .= TournamentView($games, $groupheader);
-} elseif ($filter == 'series') {
-  $html .= SeriesView($games);
-} elseif ($filter == 'today') {
-  $html .= SeriesView($games, false);
-} elseif ($filter == 'next') {
-  $html .= TournamentView($games, $groupheader);
-} elseif ($filter == 'tomorrow') {
-  $html .= SeriesView($games, false);
-} elseif ($filter == 'places') {
-  $html .= PlaceView($games, $groupheader);
-} elseif ($filter == 'all') {
-  $html .= SeriesView($games);
-} elseif ($filter == 'timeslot') {
-  $html .= TimeView($games);
+if (!empty($games_array)) {
+  $timezone = end($games_array)['timezone'];
+  $smarty->assign("display_datetime", (class_exists("DateTime") && !empty($timezone)));
+  $smarty->assign("timezone", $timezone);
+  $smarty->assign("datetime",
+      DefTimeFormat((new DateTime("now", new DateTimeZone($timezone)))->format("Y-m-d H:i:s")));
 }
-
 
 $querystring = $_SERVER['QUERY_STRING'];
 $querystring = preg_replace("/&Print=[0-1]/", "", $querystring);
-if ($print) {
-  $html .= "<hr/><div style='text-align:right'><a href='?" . utf8entities($querystring) . "'>" . _("Return") . "</a></div>";
-} elseif (GetDatabase()->NumRows($games)) {
-  $html .= "<hr/>\n";
-  $html .= "<p>";
-  $html .= "<a href='?view=ical&amp;$gamefilter=$id&amp;time=$timefilter&amp;order=$order'>" . _("iCalendar (.ical)") . "</a> | ";
-  $html .= "<a href='" . utf8entities($baseurl) . "&filter=onepage&group=$group'>" . _("Grid (PDF)") . "</a> | ";
-  $html .= "<a href='" . utf8entities($baseurl) . "&filter=season&group=$group'>" . _("List (PDF)") . "</a> | ";
-  $html .= "<a href='?" . utf8entities($querystring) . "&amp;print=1'>" . _("Printable version") . "</a>";
-  $html .= "</p>\n";
-}
-if ($print) {
-  showPrintablePage($title, $html);
-} else {
-  showPage($title, $html);
-}
+$smarty->assign("query_string", $querystring);

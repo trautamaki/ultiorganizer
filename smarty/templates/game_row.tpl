@@ -1,48 +1,3 @@
-<style>
-  .game_row_date {
-    width: 60px
-  }
-
-  .game_row_time {
-    width: 40px
-  }
-
-  .game_row_field {
-    width: 60px
-  }
-
-  .game_row_team {
-    width: 120px
-  }
-
-  .game_row_againstmark {
-    width: 5px
-  }
-
-  .game_row_series {
-    width: 80px
-  }
-
-  .game_row_pool {
-    width: 130px
-  }
-
-  .game_row_score {
-    width: 15px
-  }
-
-  .game_row_info {
-    width: 80px
-  }
-
-  .game_row_gamename {
-    width: 50px
-  }
-
-  .game_row_media {
-    width: 40px
-  }
-</style>
 <tr style='width:100%'>
   {if $date}
   <!-- TODO verify -->
@@ -138,7 +93,7 @@
   {if !intval($game.isongoing)}
   {if intval($game.scoresheet)}
   <td class='right' class='game_row_info'>
-    <span>&nbsp;<a href='?view=gameplay&amp;game={$game.game_id}'>{t} Game play{/t}</a></span>
+    <span>&nbsp;<a href='?view=gameplay&amp;game={$game.game_id}'>{t}Game play{/t}</a></span>
   </td>
   {else}
   <td class='left' class='game_row_info'></td>
@@ -146,7 +101,7 @@
   {else}
   {if intval($game.scoresheet)}
   <td class='right' class='game_row_info'>
-    <span>&nbsp;&nbsp;<a href='?view=gameplay&amp;game={$game.game_id}'>{t} Ongoing{/t}</a></span>
+    <span>&nbsp;&nbsp;<a href='?view=gameplay&amp;game={$game.game_id}'>{t}Ongoing{/t}</a></span>
   </td>
   {else}
   <td class='right' class='game_row_info'>&nbsp;&nbsp;{t}Ongoing{/t}</td>
