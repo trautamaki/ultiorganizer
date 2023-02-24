@@ -139,6 +139,7 @@ $smarty->assign("user_info", UserInfo($user));
 $smarty->assign("page_header", pageHeader());
 $smarty->assign("rss", IsGameRSSEnabled());
 $smarty->assign("server_request_uri", $_SERVER["REQUEST_URI"]);
+$smarty->assign("UPLOAD_DIR", UPLOAD_DIR);
 
 $twitter_enabled = IsTwitterEnabled();
 $smarty->assign("twitter_enabled", $twitter_enabled);
