@@ -7,25 +7,33 @@ include_once 'lib/team.functions.php';
 $LAYOUT_ID = SERIESTATUS;
 
 $title = _("Statistics") . " ";
+$smarty->assign("title",  _("Statistics"));
+
 $viewUrl = "?view=seriesstatus";
 $sort = "ranking";
-$html = "";
 
 if (iget("series")) {
   $seriesinfo = SeriesInfo(iget("series"));
   $viewUrl .= "&amp;series=" . $seriesinfo['series_id'];
   $seasoninfo = SeasonInfo($seriesinfo['season']);
   $title .= U_($seriesinfo['name']);
+  $smarty->assign("series_info",  $seriesinfo);
 }
+
+$smarty->assign("season_info",  $seasoninfo);
+$smarty->assign("title",  $title);
+$smarty->assign("view_url",  $viewUrl);
 
 if (iget("sort")) {
   $sort = iget("sort");
 }
+$smarty->assign("sort",  $sort);
 
 $teamstats = array();
 $allteams = array();
 $teams = SeriesTeams($seriesinfo['series_id']);
 $spiritAvg = SeriesSpiritBoard($seriesinfo['series_id']);
+$smarty->assign("spirit_avg",  $spiritAvg);
 foreach ($teams as $team) {
   $stats = TeamStats($team['team_id']);
   $points = TeamPoints($team['team_id']);
@@ -35,21 +43,25 @@ foreach ($teams as $team) {
   $teamstats['seed'] = $team['rank'];
   $teamstats['flagfile'] = $team['flagfile'];
   $teamstats['pool'] = $team['poolname'];
-
   $teamstats['wins'] = $stats['wins'];
   $teamstats['games'] = $stats['games'];
-
   $teamstats['for'] = $points['scores'];
   $teamstats['against'] = $points['against'];
-
   $teamstats['losses'] = $teamstats['games'] - $teamstats['wins'];
   $teamstats['diff'] = $teamstats['for'] - $teamstats['against'];
-
   $teamstats['spirit'] = isset($spiritAvg[$team['team_id']]) ? $spiritAvg[$team['team_id']]['total'] : null;
-
   $teamstats['winavg'] = number_format(SafeDivide(intval($stats['wins']), intval($stats['games'])) * 100, 1);
-
   $teamstats['ranking'] = 0;
+
+  $rank = $teamstats['ranking'];
+  if ($rank == null) {
+    $teamstats['pretty_rank'] = "-";
+  } else {
+    $teamstats['pretty_rank'] = intval($rank);
+  }
+
+  $teamstats['pretty_spirit'] = ($teamstats['spirit'] ? $teamstats['spirit'] : "-");
+
   $allteams[] = $teamstats;
 }
 
@@ -63,300 +75,66 @@ foreach ($rankedteams as $rteam) {
   }
 }
 
-
-$html .= CommentHTML(2, $seriesinfo['series_id']);
-
-$html .= "<h2>" . _("Division statistics:") . " " . utf8entities($seriesinfo['name']) . "</h2>";
-$style = "";
-
-$html .= "<table border='1' style='width:100%'>\n";
-$html .= "<tr>";
-
 if ($sort == "ranking") {
-  mergesort($allteams, create_function('$a,$b', '$va=$a[\'' . $sort . '\']; $vb=$b[\'' . $sort . '\'];
-    return $va==$vb?0:($va==null?1:($vb=null?-1:($a[\'' . $sort . '\']<$b[\'' . $sort . '\']?-1:1)));'));
+  mergesort($allteams, 'sortByRanking');
 } else if ($sort == "name" || $sort == "pool" || $sort == "against" || $sort == "seed") {
-  mergesort($allteams, create_function('$a,$b', 'return $a[\'' . $sort . '\']==$b[\'' . $sort . '\']?0:($a[\'' . $sort . '\']<$b[\'' . $sort . '\']?-1:1);'));
+  mergesort($allteams, 'sortByNPAS');
 } else {
-  mergesort($allteams, create_function('$a,$b', 'return $a[\'' . $sort . '\']==$b[\'' . $sort . '\']?0:($a[\'' . $sort . '\']>$b[\'' . $sort . '\']?-1:1);'));
+  mergesort($allteams, 'sortByOther');
 }
 
-if ($sort == "name") {
-  $html .= "<th style='width:180px'>" . _("Team") . "</th>";
-} else {
-  $html .= "<th style='width:180px'><a class='thsort' href='" . $viewUrl . "&amp;Sort=name'>" . _("Team") . "</a></th>";
-}
+$smarty->assign("is_season_admin", isSeasonAdmin($seriesinfo['season']));
+$smarty->assign("all_teams", $allteams);
 
-/*
- if($sort == "pool") {
- $html .= "<th style='width:200px'>"._("Pool")."</th>";
- }else{
- $html .= "<th style='width:200px'><a href='".$viewUrl."&amp;Sort=pool'>"._("Pool")."</a></th>";
- }
- */
-
-if ($sort == "seed") {
-  $html .= "<th class='center'>" . _("Seeding") . "</th>";
-} else {
-  $html .= "<th class='center'><a class='thsort' href='" . $viewUrl . "&amp;Sort=seed'>" . _("Seeding") . "</a></th>";
-}
-
-if ($sort == "ranking") {
-  $html .= "<th class='center'>" . _("Ranking") . "</th>";
-} else {
-  $html .= "<th class='center'><a class='thsort' href='" . $viewUrl . "&amp;Sort=ranking'>" . _("Ranking") . "</a></th>";
-}
-
-if ($sort == "games") {
-  $html .= "<th class='center'>" . _("Games") . "</th>";
-} else {
-  $html .= "<th class='center'><a class='thsort' href='" . $viewUrl . "&amp;Sort=games'>" . _("Games") . "</a></th>";
-}
-
-if ($sort == "wins") {
-  $html .= "<th class='center'>" . _("Wins") . "</th>";
-} else {
-  $html .= "<th class='center'><a class='thsort' href='" . $viewUrl . "&amp;Sort=wins'>" . _("Wins") . "</a></th>";
-}
-
-if ($sort == "losses") {
-  $html .= "<th class='center'>" . _("Losses") . "</th>";
-} else {
-  $html .= "<th class='center'><a class='thsort' href='" . $viewUrl . "&amp;Sort=losses'>" . _("Losses") . "</a></th>";
-}
-
-if ($sort == "for") {
-  $html .= "<th class='center'>" . _("Goals for") . "</th>";
-} else {
-  $html .= "<th class='center'><a class='thsort' href='" . $viewUrl . "&amp;Sort=for'>" . _("Goals for") . "</a></th>";
-}
-
-if ($sort == "against") {
-  $html .= "<th class='center'>" . _("Goals against") . "</th>";
-} else {
-  $html .= "<th class='center'><a class='thsort' href='" . $viewUrl . "&amp;Sort=against'>" . _("Goals against") . "</a></th>";
-}
-
-if ($sort == "diff") {
-  $html .= "<th class='center'>" . _("Goals diff") . "</th>";
-} else {
-  $html .= "<th class='center'><a class='thsort' href='" . $viewUrl . "&amp;Sort=diff'>" . _("Goals diff") . "</a></th>";
-}
-
-if ($sort == "winavg") {
-  $html .= "<th class='center'>" . _("Win-%") . "</th>";
-} else {
-  $html .= "<th class='center'><a class='thsort' href='" . $viewUrl . "&amp;Sort=winavg'>" . _("Win-%") . "</a></th>";
-}
-if ($seasoninfo['spiritmode'] > 0 && ($seasoninfo['showspiritpoints'] || isSeasonAdmin($seriesinfo['season']))) {
-  if ($sort == "spirit") {
-    $html .= "<th class='center'>" . _("Spirit points") . "</th>";
-  } else {
-    $html .= "<th class='center'><a class='thsort' href='" . $viewUrl . "&amp;Sort=spirit'>" . _("Spirit points") . "</a></th>";
-  }
-}
-
-$html .= "</tr>\n";
-
-foreach ($allteams as $stats) {
-  $html .= "<tr>";
-  $flag = "";
-  if (intval($seasoninfo['isinternational'])) {
-    $flag = "<img height='10' src='images/flags/tiny/" . $stats['flagfile'] . "' alt=''/> ";
-  }
-  if ($sort == "name") {
-    $html .= "<td class='highlight'>$flag<a href='?view=teamcard&amp;team=" . $stats['team_id'] . "'>" . utf8entities(U_($stats['name'])) . "</a></td>";
-  } else {
-    $html .= "<td>$flag<a href='?view=teamcard&amp;team=" . $stats['team_id'] . "'>" . utf8entities(U_($stats['name'])) . "</a></td>";
-  }
-  /*
-   if($sort == "pool") {
-   $html .= "<td class='highlight'>",utf8entities(U_($stats['pool'])),"</td>";
-   }else{
-   $html .= "<td>",utf8entities(U_($stats['pool'])),"</td>";
-   }
-   */
-  if ($sort == "seed") {
-    $html .= "<td class='center highlight'>" . intval($stats['seed']) . ".</td>";
-  } else {
-    $html .= "<td class='center'>" . intval($stats['seed']) . ".</td>";
-  } {
-    $rank = $stats['ranking'];
-    if ($rank == null)
-      $rank = "-";
-    else
-      $rank = intval($rank);
-    if ($sort == "ranking") {
-      $html .= "<td class='center highlight'>" . $rank . "</td>";
-    } else {
-      $html .= "<td class='center'>" . $rank . "</td>";
-    }
-  }
-
-  if ($sort == "games") {
-    $html .= "<td class='center highlight'>" . intval($stats['games']) . "</td>";
-  } else {
-    $html .= "<td class='center'>" . intval($stats['games']) . "</td>";
-  }
-  if ($sort == "wins") {
-    $html .= "<td class='center highlight'>" . intval($stats['wins']) . "</td>";
-  } else {
-    $html .= "<td class='center'>" . intval($stats['wins']) . "</td>";
-  }
-  if ($sort == "losses") {
-    $html .= "<td class='center highlight'>" . intval($stats['losses']) . "</td>";
-  } else {
-    $html .= "<td class='center'>" . intval($stats['losses']) . "</td>";
-  }
-  if ($sort == "for") {
-    $html .= "<td class='center highlight'>" . intval($stats['for']) . "</td>";
-  } else {
-    $html .= "<td class='center'>" . intval($stats['for']) . "</td>";
-  }
-  if ($sort == "against") {
-    $html .= "<td class='center highlight'>" . intval($stats['against']) . "</td>";
-  } else {
-    $html .= "<td class='center'>" . intval($stats['against']) . "</td>";
-  }
-  if ($sort == "diff") {
-    $html .= "<td class='center highlight'>" . intval($stats['diff']) . "</td>";
-  } else {
-    $html .= "<td class='center'>" . intval($stats['diff']) . "</td>";
-  }
-
-  if ($sort == "winavg") {
-    $html .= "<td class='center highlight'>" . $stats['winavg'] . "%</td>";
-  } else {
-    $html .= "<td class='center'>" . $stats['winavg'] . "%</td>";
-  }
-
-  if ($seasoninfo['spiritmode'] > 0 && ($seasoninfo['showspiritpoints'] || isSeasonAdmin($seriesinfo['season']))) {
-    if ($sort == "spirit") {
-      $html .= "<td class='center highlight'>" . ($stats['spirit'] ? $stats['spirit'] : "-") . "</td>";
-    } else {
-      $html .= "<td class='center'>" . ($stats['spirit'] ? $stats['spirit'] : "-") . "</td>";
-    }
-  }
-
-  $html .= "</tr>\n";
-}
-$html .= "</table>\n";
-$html .= "<a href='?view=poolstatus&amp;series=" . $seriesinfo['series_id'] . "'>" . _("Show all pools") . "</a>";
-$html .= "<h2>" . _("Scoreboard leaders") . "</h2>\n";
-$html .= "<table cellspacing='0' border='0' width='100%'>\n";
-$html .= "<tr><th style='width:200px'>" . _("Player") . "</th><th style='width:200px'>" . _("Team") . "</th><th class='center'>" . _("Games") . "</th>
-<th class='center'>" . _("Assists") . "</th><th class='center'>" . _("Goals") . "</th><th class='center'>" . _("Tot.") . "</th></tr>\n";
+// TODO https://github.com/trautamaki/ultiorganizer/blob/php7-upgrade/seriesstatus.php#L183
 
 $scores = SeriesScoreBoard($seriesinfo['series_id'], "total", 10);
+$scores_array = array();
 while ($row = GetDatabase()->FetchAssoc($scores)) {
-  $html .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
-  $html .= "<td>" . utf8entities($row['teamname']) . "</td>";
-  $html .= "<td class='center'>" . intval($row['games']) . "</td>";
-  $html .= "<td class='center'>" . intval($row['fedin']) . "</td>";
-  $html .= "<td class='center'>" . intval($row['done']) . "</td>";
-  $html .= "<td class='center'>" . intval($row['total']) . "</td></tr>\n";
+  $scores_array[] = $scores;
 }
-
-$html .= "</table>";
-$html .= "<a href='?view=scorestatus&amp;series=" . $seriesinfo['series_id'] . "'>" . _("Scoreboard") . "</a><br>";
-
-$html .= "<div style='padding: 5px; width: 100%; height: 100%'>";
-
-# Goals
-$html .= "<div style='float: left; width: 50%;'>";
-$html .= "<h2>" . _("Goals leaders") . "</h2>\n";
-$html .= "<table cellspacing='0' border='0' style='margin-left: 0; padding: 0;'>\n";
-$html .= "<tr><th style='width:100%'>" . _("Player") . "</th><th>" . _("Team") . "</th><th class='center'>" . _("Games") . "</th>
-<th class='center'>" . _("Goals") . "</th></tr>\n";
+$smarty->assign("points_leaders", $scores);
 
 $scores = SeriesScoreBoard($seriesinfo['series_id'], "goal", 10);
+$goals_array = array();
 while ($row = GetDatabase()->FetchAssoc($scores)) {
-  $html .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
-  $html .= "<td>" . utf8entities($row['abbr']) . "</td>";
-  $html .= "<td class='center'>" . intval($row['games']) . "</td>";
-  $html .= "<td class='center'>" . intval($row['done']) . "</td></tr>\n";
+  $goals_array[] = $row;
 }
-
-$html .= "</table>";
-$html .= "</div>";
-
-# Assists
-$html .= "<div style='float: right; width: 50%;'>";
-$html .= "<h2>" . _("Assists leaders") . "</h2>\n";
-$html .= "<table cellspacing='0' border='0' style='margin-right: 0; padding: 0;'>\n";
-$html .= "<tr><th style='width:100%'>" . _("Player") . "</th><th>" . _("Team") . "</th><th class='center'>" . _("Games") . "</th>
-<th class='center'>" . _("Assists") . "</th></tr>\n";
+$smarty->assign("goals_leaders", $goals_array);
 
 $scores = SeriesScoreBoard($seriesinfo['series_id'], "pass", 10);
+$assists_array = array();
 while ($row = GetDatabase()->FetchAssoc($scores)) {
-  $html .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
-  $html .= "<td>" . utf8entities($row['abbr']) . "</td>";
-  $html .= "<td class='center'>" . intval($row['games']) . "</td>";
-  $html .= "<td class='center'>" . intval($row['fedin']) . "</td></tr>\n";
+  $assists_array[] = $row;
 }
+$smarty->assign("assists_leaders", $assists_array);
 
-$html .= "</table>";
-$html .= "</div>";
-
-$html .= "</div>";
-
-if (ShowDefenseStats()) {
-  $html .= "<h2>" . _("Defenseboard leaders") . "</h2>\n";
-  $html .= "<table cellspacing='0' border='0' width='100%'>\n";
-  $html .= "<tr><th style='width:200px'>" . _("Player") . "</th><th style='width:200px'>" . _("Team") . "</th><th class='center'>" . _("Games") . "</th>
-	<th class='center'>" . _("Total defenses") . "</th></tr>\n";
-
-
-  $defenses = SeriesDefenseBoard($seriesinfo['series_id'], "deftotal", 10);
+$show_defence_stats = ShowDefenseStats();
+if ($show_defence_stats) {
+  $defenses = SeriesDefenseBoard($series_info['series_id'], "deftotal", 10);
+  $defences_array = array();
   while ($row = GetDatabase()->FetchAssoc($defenses)) {
-    $html .= "<tr><td>" . utf8entities($row['firstname'] . " " . $row['lastname']) . "</td>";
-    $html .= "<td>" . utf8entities($row['teamname']) . "</td>";
-    $html .= "<td>" . _("Games") . "</td>";
-    $html .= "<td class='center'>" . intval($row['games']) . "</td>";
-    $html .= "<td class='center'>" . intval($row['deftotal']) . "</td></tr>\n";
+    $defences_array[] = $row;
   }
+  $smarty->assign("defences_leaders", $defences_array);
+}
+$smarty->assign("show_defence_stats", $show_defence_stats);
 
-  $html .= "</table>";
-  $html .= "<a href='?view=defensestatus&amp;series=" . $seriesinfo['series_id'] . "'>" . _("Defenseboard") . "</a>";
+function sortByRanking($a, $b)
+{
+  global $sort;
+  $va = $a[$sort];
+  $vb = $b[$sort];
+  return $va == $vb ? 0 :($va == null ? 1 :
+      ($vb = null ? -1 : ($a[$sort] < $b[$sort] ? -1 : 1)));
 }
 
-if ($seasoninfo['showspiritpoints']) { // TODO total
-  $categories = SpiritCategories($seasoninfo['spiritmode']);
-  $html .= "<h2>" . _("Spirit points average per category") . "</h2>\n";
-
-  $html .= "<table cellspacing='0' border='0' width='100%'>\n";
-  $html .= "<tr><th style='width:150px'>" . _("Team") . "</th>";
-  $html .= "<th>" . _("Games") . "</th>";
-  foreach ($categories as $cat) {
-    if ($cat['index'] > 0)
-      $html .= "<th class='center'>" . _($cat['index']) . "</th>";
-  }
-  $html .= "<th class='center'>" . _("Tot.") . "</th>";
-  $html .= "</tr>\n";
-
-  foreach ($spiritAvg as $teamAvg) {
-    $html .= "<td>" . utf8entities($teamAvg['teamname']) . "</td>";
-    $html .= "<td>" . $teamAvg['games'] . "</td>";
-    foreach ($categories as $cat) {
-      if ($cat['index'] > 0) {
-        if ($cat['factor'] != 0)
-          $html .= "<td class='center'><b>" . number_format($teamAvg[$cat['category_id']], 2) . "</b></td>";
-        else
-          $html .= "<td class='center'>" . number_format($teamAvg[$cat['category_id']], 2) . "</td>";
-      }
-    }
-    $html .= "<td class='center'><b>" . number_format($teamAvg['total'], 2) . "</b></td>";
-    $html .= "</tr>\n";
-  }
-  $html .= "</table>";
-
-  $html .= "<ul>";
-  foreach ($categories as $cat) {
-    if ($cat['index'] > 0)
-      $html .= "<li>" . $cat['index'] . " " . $cat['text'] . "</li>";
-  }
-  $html .= "</ul>\n";
+function sortByNPAS($a, $b) {
+  global $sort;
+  return $a[$sort] == $b[$sort] ? 0 : ($a[$sort] < $b[$sort] ? -1 : 1);
 }
 
-
-showPage($title, $html);
+function sortByOther($a, $b) {
+  global $sort;
+  return $a[$sort] == $b[$sort] ? 0 : ($a[$sort] > $b[$sort] ? -1 : 1);
+}
