@@ -3,16 +3,19 @@ include_once 'lib/pool.functions.php';
 include_once 'lib/game.functions.php';
 include_once 'lib/common.functions.php';
 
-$html = "";
-
 $gameId = intval(iget("game"));
+$smarty->assign("game_id", $gameId);
 
 $game_result = GameResult($gameId);
+$smarty->assign("game_result", $game_result);
 $seasoninfo = SeasonInfo(GameSeason($gameId));
 $homecaptain = GameCaptain($gameId, $game_result['hometeam']);
+$smarty->assign("home_captain", $homecaptain);
 $awaycaptain = GameCaptain($gameId, $game_result['visitorteam']);
+$smarty->assign("away_captain", $awaycaptain);
 
 $title = _("Game play") . ": " . utf8entities($game_result['hometeamname']) . " vs. " . utf8entities($game_result['visitorteamname']);
+$smarty->assign("title", $title);
 
 $home_team_score_board = GameTeamScoreBorad($gameId, $game_result['hometeam']);
 $guest_team_score_board = GameTeamScoreBorad($gameId, $game_result['visitorteam']);
@@ -22,84 +25,28 @@ $poolinfo = PoolInfo($game_result['pool']);
 $goals = GameGoals($gameId);
 $gameevents = GameEvents($gameId);
 $mediaevents = GameMediaEvents($gameId);
+$smarty->assign("media_events", $mediaevents);
+$game_has_started = GameHasStarted($game_result);
+$smarty->assign("game_has_started", $game_has_started);
 
-if (GameHasStarted($game_result) > 0) {
-  $html .= "<h1>" . utf8entities($game_result['hometeamname']);
-  $html .= " - ";
-  $html .= utf8entities($game_result['visitorteamname']);
-  $html .= "&nbsp;&nbsp;&nbsp;&nbsp;";
-  $html .= intval($game_result['homescore']);
-  $html .= " - ";
-  $html .= intval($game_result['visitorscore']);
-  if (intval($game_result['isongoing'])) {
-    $html .= " (" . _("ongoing") . ")";
-  }
-  $html .= "</h1>\n";
+if ($game_has_started) {
+  $game_not_fed_in = GetDatabase()->NumRows($goals) <= 0;
+  $smarty->assign("game_not_fed_in", $game_not_fed_in);
+  if (!$game_not_fed_in) {
 
-  if (GetDatabase()->NumRows($goals) <= 0) {
-    $html .= "<h2>" . _("Not fed in") . "</h2>
-			  <p>" . _("Please check the status again later") . "</p>";
-  } else {
-
-    //score board
-
-    $html .= "<table style='width:100%'><tr><td valign='top' style='width:45%'>\n";
-
-    $html .= "<table width='100%' cellspacing='0' cellpadding='0' border='0'>\n";
-    $html .= "<tr style='height=20'><td align='center'><b>";
-    $html .= utf8entities($game_result['hometeamname']) . "</b></td></tr>\n";
-    $html .= "</table><table width='100%' cellspacing='0' cellpadding='3' border='0'>";
-    $html .= "<tr><th class='home'>#</th><th class='home'>" . _("Name") . "</th><th class='home center'>" . _("Assists") . "</th><th class='home center'>" . _("Goals") . "</th>
-		 <th class='home center'>" . _("Tot.") . "</th></tr>\n";
-
+    $home_players_stats = array();
     while ($row = GetDatabase()->FetchAssoc($home_team_score_board)) {
-      $html .= "<tr>";
-      $html .= "<td style='text-align:right'>" . $row['num'] . "</td>";
-      $html .= "<td><a href='?view=playercard&amp;series=0&amp;player=" . $row['player_id'];
-      $html .= "'>" . utf8entities($row['firstname']) . "&nbsp;";
-      $html .= utf8entities($row['lastname']) . "</a>";
-      if ($row['player_id'] == $homecaptain) {
-        $html .= "&nbsp;" . _("(C)");
-      }
-      $html .= "</td>";
-      $html .= "<td class='center'>" . $row['fedin'] . "</td>";
-      $html .= "<td class='center'>" . $row['done'] . "</td>";
-      $html .= "<td class='center'>" . $row['total'] . "</td>";
-      $html .= "</tr>";
+      $home_players_stats[] = $row;
     }
+    $smarty->assign("home_players_stats", $home_players_stats);
 
-
-    $html .= "</table></td>\n<td style='width:10%'>&nbsp;</td><td valign='top' style='width:45%'>";
-
-    $html .= "<table width='100%' cellspacing='0' cellpadding='0' border='0'>";
-    $html .= "<tr><td><b>";
-    $html .= utf8entities($game_result['visitorteamname']) . "</b></td></tr>\n";
-    $html .= "</table><table width='100%' cellspacing='0' cellpadding='3' border='0'>";
-    $html .= "<tr><th class='guest'>#</th><th class='guest'>" . _("Name") . "</th><th class='guest center'>";
-    $html .= _("Assists") . "</th><th class='guest center'>" . _("Goals");
-    $html .= "</th><th class='guest center'>" . _("Tot.") . "</th></tr>\n";
-
-
+    $away_players_stats = array();
     while ($row = GetDatabase()->FetchAssoc($guest_team_score_board)) {
-      $html .= "<tr>";
-      $html .= "<td style='text-align:right'>" . $row['num'] . "</td>";
-      $html .= "<td><a href='?view=playercard&amp;series=0&amp;player=" . $row['player_id'];
-      $html .= "'>" . utf8entities($row['firstname']) . "&nbsp;";
-      $html .= utf8entities($row['lastname']) . "</a>";
-      if ($row['player_id'] == $awaycaptain) {
-        $html .= "&nbsp;" . _("(C)");
-      }
-      $html .= "</td>";
-      $html .= "<td class='center'>" . $row['fedin'] . "</td>";
-      $html .= "<td class='center'>" . $row['done'] . "</td>";
-      $html .= "<td class='center'>" . $row['total'] . "</td>";
-      $html .= "</tr>";
+      $away_players_stats[] = $row;
     }
+    $smarty->assign("away_players_stats", $away_players_stats);
 
-    $html .= "</table></td></tr></table>\n";
-
-    //timeline
-    //$points[50][7];
+    // Timeline
     $points = array(array());
     $i = 0;
     $lprev = 0;
@@ -109,7 +56,6 @@ if (GameHasStarted($game_result) > 0) {
     $total = 0;
 
     while ($goal = GetDatabase()->FetchAssoc($goals)) {
-
       if (!$bHt && $goal['time'] > $game_result['halftime']) {
         $points[$i][0] = (intval($game_result['halftime']) - $lprev);
         $points[$i][4] = intval($game_result['halftime']);
@@ -137,16 +83,14 @@ if (GameHasStarted($game_result) > 0) {
       $lprev = intval($goal['time']);
       $total += $points[$i][0];
 
-
       $i++;
     }
-
-    $html .= "<table border='1' style='height: 15px; color: white; border-width: 1; border-color: white; width: 100%;'><tr>\n";
 
     $maxlength = 600;
     $latestHomeGoalTime = 0;
     $latestGuestGoalTime = 0;
     $offset = $maxlength / $total;
+    $timeline_array = array();
     for ($i = 0; $i < 50 && !empty($points[$i][0]); $i++) {
       if ($points[$i][1] == 1) {
         $color = "home";
@@ -164,58 +108,43 @@ if (GameHasStarted($game_result) > 0) {
       $width_a = $points[$i][0] * $offset;
 
       if ($points[$i][1] == -2) {
-        $td_title = SecToMin($points[$i][4]) . " halftime";
+        $td_title = SecToMin($points[$i][4]) . " " . _("halftime");
       } else {
         $td_title = SecToMin($points[$i][4]) . " " . $points[$i][5] . "-" . $points[$i][6] . " " . $points[$i][3] . " -> " . $points[$i][2];
       }
-      $html .= "<td style='width:" . $width_a . "px' class='$color' title='$td_title'></td>\n";
-    }
-    $html .= "</tr></table>\n";
 
-    $html .= "<table border='1' cellpadding='2' width='100%'>\n";
-    $html .= "<tr><th>" . _("Scores") . "</th><th>" . _("Assist") . "</th><th>" . _("Goal") . "</th><th>" . _("Time") . "</th><th>" . _("Dur.") . "</th>";
-    if (count($gameevents) || count($mediaevents)) {
-      $html .= "<th>" . _("Game events ") . "</th>";
+      $item['width_a'] = $width_a;
+      $item['td_title'] = $td_title;
+      $item['color'] = $color;
+      $timeline_array[] = $item;
     }
-    $html .= "</tr>\n";
+    $smarty->assign("timeline_items", $timeline_array);
 
     $bHt = false;
-
     $prevgoal = 0;
     GetDatabase()->DataSeek($goals, 0);
+    $game_goals = array();
+    $has_media_events = false;
+    $has_game_events = false;
     while ($goal = GetDatabase()->FetchAssoc($goals)) {
+      $goal['halftime'] = false;
       if (!$bHt && $game_result['halftime'] > 0 && $goal['time'] > $game_result['halftime']) {
-        $html .= "<tr><td colspan='6' class='halftime'>" . _("Half-time") . "</td></tr>";
+        $goal['halftime'] = true;
         $bHt = 1;
         $prevgoal = intval($game_result['halftime']);
       }
 
-      $html .= "<tr><td style='width:45px;white-space: nowrap'";
-      if (intval($goal['ishomegoal']) == 1) {
-        $html .= " class='home'>";
-      } else {
-        $html .= " class='guest'>";
-      }
-      $html .= $goal['homescore'] . " - " . $goal['visitorscore'] . "</td>";
-
-      if (intval($goal['iscallahan'])) {
-        $html .= "<td class='callahan'>" . _("Callahan-goal") . "&nbsp;</td>";
-      } else {
-        $html .= "<td>" . utf8entities($goal['assistfirstname']) . " " . utf8entities($goal['assistlastname']) . "&nbsp;</td>";
-      }
-      $html .= "<td>" . utf8entities($goal['scorerfirstname']) . " " . utf8entities($goal['scorerlastname']) . "&nbsp;</td>";
-      $html .= "<td>" . SecToMin($goal['time']) . "</td>";
-      $duration = $goal['time'] - $prevgoal;
-
-      $html .= "<td>" . SecToMin($duration) . "</td>";
+      $goal['pretty_time'] = SecToMin($goal['time']);
+      $goal['pretty_duration'] = SecToMin($goal['time'] - $prevgoal);
 
       if (count($gameevents) || count($mediaevents)) {
-        $html .= "<td>";
-        //gameevents
+        // Game events
+        $game_events_array = array();
         foreach ($gameevents as $event) {
           if ((intval($event['time']) >= $prevgoal) &&
             (intval($event['time']) < intval($goal['time']))
           ) {
+            $has_game_events = true;
             if ($event['type'] == "timeout") {
               $gameevent = _("Time-out");
             } elseif ($event['type'] == "turnover") {
@@ -223,82 +152,37 @@ if (GameHasStarted($game_result) > 0) {
             } elseif ($event['type'] == "offence") {
               $gameevent = _("Offence");
             }
-            //hack to not show timeouts not correctly marked into scoresheet
-            if ($event['type'] == "timeout" && ($event['time'] == 0 || $event['time'] == 60)) {
-              continue;
-            }
 
-            if (intval($event['ishome']) > 0) {
-              $html .= "<div class='home'>" . $gameevent . "&nbsp;" . SecToMin($event['time']) . "</div>";
-            } else {
-              $html .= "<div class='guest'>" . $gameevent . "&nbsp;" . SecToMin($event['time']) . "</div>";
-            }
+            // Hack to not show timeouts not correctly marked into scoresheet
+            $event['skip_timeout_hack'] = $event['type'] == "timeout" && ($event['time'] == 0 || $event['time'] == 60);
+            $event['game_event'] = $gameevent;
+            $event['pretty_time'] = SecToMin($event['time']);
+            $game_events_array[] = $event;
           }
+          $goal['game_events'] = $game_events_array;
         }
-        //mediaevents
-        $tmphtml = "";
+
+        // Media events
+        $media_events_array = array();
         foreach ($mediaevents as $event) {
           if ((intval($event['time']) >= $prevgoal) &&
             (intval($event['time']) < intval($goal['time']))
           ) {
-            $tmphtml .= "<a style='color: #ffffff;' href='" . $event['url'] . "'>";
-            $tmphtml .= "<img width='12' height='12' src='images/linkicons/" . $event['type'] . ".png' alt='" . $event['type'] . "'/></a>";
+            $has_media_events = true;
+            $media_events_array[] = $event;
           }
         }
-        if (!empty($tmphtml)) {
-          $html .= "<div class='mediaevent'>" . $tmphtml . "</div>\n";
-        }
-        $html .= "</td>";
+        $goal['media_events'] = $media_events_array;
       }
-      $html .= "</tr>";
       $prevgoal = intval($goal['time']);
+      $game_goals[] = $goal;
     }
-    if (intval($game_result['isongoing'])) {
-      $html .= "<tr style='border-style:dashed;border-width:1px;'>";
-      $html .= "<td>&nbsp;</td>";
-      $html .= "<td>&nbsp;</td>";
-      $html .= "<td>&nbsp;</td>";
-      $html .= "<td>&nbsp;</td>";
-      $html .= "<td>&nbsp;</td>";
-      if (count($gameevents) || count($mediaevents)) {
-        $html .= "<td>&nbsp;</td>";
-      }
-      $html .= "</tr>";
-    }
-    $html .= "</table>\n";
-
-    if (!empty($game_result['official'])) {
-      $html .= "<p>" . _("Game official") . ": " . utf8entities($game_result['official']) . "</p>";
-    }
+    $smarty->assign("game_goals", $game_goals);
+    $smarty->assign("has_game_events", $has_game_events);
+    $smarty->assign("has_media_events", $has_media_events);
 
     $urls = GetMediaUrlList("game", $gameId);
-
-    if (count($urls) > count($mediaevents)) {
-      $html .= "<h2>" . _("Photos and Videos") . "</h2>\n";
-      $html .= "<table>";
-      foreach ($urls as $url) {
-        //if time set those are shown as gameevent
-        if (!empty($url['time'])) {
-          continue;
-        }
-
-        $html .=  "<tr>";
-        $html .=  "<td colspan='2'><img width='16' height='16' src='images/linkicons/" . $url['type'] . ".png' alt='" . $url['type'] . "'/> ";
-        $html .=  "</td><td>";
-        if (!empty($url['name'])) {
-          $html .= "<a href='" . $url['url'] . "'>" . $url['name'] . "</a>";
-        } else {
-          $html .= "<a href='" . $url['url'] . "'>" . $url['url'] . "</a>";
-        }
-        if (!empty($url['mediaowner'])) {
-          $html .= " " . _("from") . " " . $url['mediaowner'];
-        }
-
-        $html .= "</td>";
-        $html .= "</tr>";
-      }
-      $html .= "</table>";
-    }
+    $smarty->assign("urls", $urls);
 
     if (!intval($game_result['isongoing'])) {
       //statistics
@@ -389,8 +273,8 @@ if (GameHasStarted($game_result) > 0) {
         } else {
           $nVOffencePoint++;
         }
-        //If turnovers before goal
 
+        //If turnovers before goal
         if (GetDatabase()->NumRows($turnovers)) {
           $turnovers = GameTurnovers($gameId);
         }
@@ -400,14 +284,8 @@ if (GameHasStarted($game_result) > 0) {
           ) {
             if (intval($turnover['ishome'])) {
               $nHLosesDisc++;
-              //$nDuration = intval($turnover['time']) - $nClockTime;
-              //$nClockTime = intval($turnover['time']);
-              //$nHTotalTime += $nDuration;
             } else {
               $nVLosesDisc++;
-              //$nDuration = intval($turnover['time']) - $nClockTime;
-              //$nClockTime = intval($turnover['time']);
-              //$nVTotalTime += $nDuration;
             }
           }
         }
@@ -422,12 +300,12 @@ if (GameHasStarted($game_result) > 0) {
         //point duration
         $nDuration = intval($goal['time']) - $nClockTime;
         $nClockTime = intval($goal['time']);
-
         if ($bHOffence) {
           $nHTotalTime += $nDuration;
         } else {
           $nVTotalTime += $nDuration;
         }
+
         //If home goal
         if (intval($goal['ishomegoal'])) {
           $nHGoals++;
@@ -440,7 +318,6 @@ if (GameHasStarted($game_result) > 0) {
 
       //timeouts
       $timeouts = GameTimeouts($gameId);
-
       while ($timeout = GetDatabase()->FetchAssoc($timeouts)) {
         if (intval($timeout['ishome'])) {
           $nHTO++;
@@ -451,197 +328,59 @@ if (GameHasStarted($game_result) > 0) {
       $dblHAvg = 0.0;
       $dblVAvg = 0.0;
 
-      //Build HTML-table
-      $html .= "<table style='width:60%' border='1' cellpadding='2' cellspacing='0'><tr><th></th><th>" . utf8entities($game_result['hometeamname']) .
-        "</th><th>" . utf8entities($game_result['visitorteamname']) . "</th></tr>";
-
-      $html .= "<tr><td>" . _("Goals") . ":</td> <td class='home'>$nHGoals</td> <td class='guest'>$nVGoals</td></tr>\n";
-
-      $dblHAvg = SafeDivide($nHTotalTime, ($nHTotalTime + $nVTotalTime)) * 100;
-      $dblVAvg = SafeDivide($nVTotalTime, ($nHTotalTime + $nVTotalTime)) * 100;
-
-      $html .= "<tr><td>" . _("Time on offence") . ":</td>
-			<td class='home'>" . SecToMin($nHTotalTime) . " min (" . number_format($dblHAvg, 1) . " %)</td>
-			<td class='guest'>" . SecToMin($nVTotalTime) . " min (" . number_format($dblVAvg, 1) . " %)</td></tr>\n";
-
-      $html .= "<tr><td>" . _("Time on defence") . ":</td>
-			<td class='home'>" . SecToMin($nVTotalTime) . " min (" . number_format($dblVAvg, 1) . " %)</td>
-			<td class='guest'>" . SecToMin($nHTotalTime) . " min (" . number_format($dblHAvg, 1) . " %)</td></tr>\n";
-
-      $html .= "<tr><td>" . _("Time on offence") . "/" . _("goal") . ":</td>
-			<td class='home'>" . SecToMin(SafeDivide($nHTotalTime, $nHGoals)) . " min</td>
-			<td class='guest'>" . SecToMin(SafeDivide($nVTotalTime, $nVGoals)) . " min</td></tr>\n";
-
-      $html .= "<tr><td>" . _("Time on defence") . "/" . _("goal") . ":</td>
-			<td class='home'>" . SecToMin(SafeDivide($nVTotalTime, $nVGoals)) . " min</td>
-			<td class='guest'>" . SecToMin(SafeDivide($nHTotalTime, $nHGoals)) . " min</td></tr>\n";
-
-      $dblHAvg = SafeDivide(abs($nHGoals - $nHBreaks), $nHOffencePoint) * 100;
-      $dblVAvg = SafeDivide(abs($nVGoals - $nVBreaks), $nVOffencePoint) * 100;
-
-      $html .= "<tr><td>" . _("Goals from starting on offence") . ":</td>
-			<td class='home'>" . abs($nHGoals - $nHBreaks) . "/" . $nHOffencePoint . " (" . number_format($dblHAvg, 1) . " %)</td>
-			<td class='guest'>" . abs($nVGoals - $nVBreaks) . "/" . $nVOffencePoint . " (" . number_format($dblVAvg, 1) . " %)</td></tr>";
-
-      $dblHAvg = SafeDivide($nHBreaks, $nVOffencePoint) * 100;
-      $dblVAvg = SafeDivide($nVBreaks, $nHOffencePoint) * 100;
-
-      $html .= "<tr><td>" . _("Goals from starting on defence") . ":</td>
-			<td class='home'>" . $nHBreaks . "/" . $nVOffencePoint . " (" . number_format($dblHAvg, 1) . " %)</td>
-			<td class='guest'>" . $nVBreaks . "/" . $nHOffencePoint . " (" . number_format($dblVAvg, 1) . " %)</td></tr>";
-
-      if ($nHLosesDisc + $nVLosesDisc > 0) {
-        $html .= "<tr><td>" . _("Turnovers") . ":</td>
-				<td class='home'>" . $nHLosesDisc . "</td>
-				<td class='guest'>" . $nVLosesDisc . "</td></tr>";
-      }
-
-      $html .= "<tr><td>" . _("Goals from turnovers") . ":</td>
-			<td class='home'>" . $nHBreaks . "</td>
-			<td class='guest'>" . $nVBreaks . "</td></tr>";
-
-      $html .= "<tr><td>" . _("Time-outs") . ":</td>
-			<td class='home'>" . $nHTO . "</td>
-			<td class='guest'>" . $nVTO . "</td></tr>";
-
-      if ($seasoninfo['spiritmode'] > 0 && ($seasoninfo['showspiritpoints'] || isSeasonAdmin($seasoninfo['season_id']))) {
-        $html .= "<tr><td>" . _("Spirit points") . ":</td>
-				<td class='home'>" . $game_result['homesotg'] . "</td>
-				<td class='guest'>" . $game_result['visitorsotg'] . "</td></tr>";
-      }
-      $html .= "</table>";
-    }
-    $html .= "<p><a href='?view=gamecard&amp;team1=" . utf8entities($game_result['hometeam']) . "&amp;team2=" . utf8entities($game_result['visitorteam']) . "'>";
-    $html .=  _("Game history") . "</a></p>\n";
-    if ($_SESSION['uid'] != 'anonymous') {
-      $html .= "<div style='float:left;'><hr/><a href='?view=user/addmedialink&amp;game=$gameId'>" . _("Add media") . "</a></div>";
+      $smarty->assign("nHGoals", $nHGoals);
+      $smarty->assign("nVGoals", $nVGoals);
+      $smarty->assign("nHOffencePoint", $nHOffencePoint);
+      $smarty->assign("nVOffencePoint", $nVOffencePoint);
+      $smarty->assign("dblHAvgTimeOnOffence", number_format(SafeDivide($nHTotalTime, ($nHTotalTime + $nVTotalTime)) * 100, 1));
+      $smarty->assign("dblVAvgTimeOnOffence", number_format(SafeDivide($nVTotalTime, ($nHTotalTime + $nVTotalTime)) * 100, 1));
+      $smarty->assign("nHTotalTime", SecToMin($nHTotalTime));
+      $smarty->assign("nVTotalTime", SecToMin($nVTotalTime));
+      $smarty->assign("nHTotalTime", SecToMin($nHTotalTime));
+      $smarty->assign("dlbHTimeOnOffence", SecToMin(SafeDivide($nHTotalTime, $nHGoals)));
+      $smarty->assign("dlbVTimeOnOffence", SecToMin(SafeDivide($nVTotalTime, $nVGoals)));
+      $smarty->assign("dblHAvgGoalsFromOffence", number_format(SafeDivide(abs($nHGoals - $nHBreaks), $nHOffencePoint) * 100, 1));
+      $smarty->assign("dblVAvgGoalsFromOffence", number_format(SafeDivide(abs($nVGoals - $nVBreaks), $nVOffencePoint) * 100, 1));
+      $smarty->assign("nHBreaks", $nHBreaks);
+      $smarty->assign("nVBreaks", $nVBreaks);
+      $smarty->assign("nHLosesDisc", $nHLosesDisc);
+      $smarty->assign("nVLosesDisc", $nVLosesDisc);
+      $smarty->assign("nHTO", $nHTO);
+      $smarty->assign("nVTO", $nVTO);
+      $smarty->assign("dblHAvgGoalsFromDefense", number_format(SafeDivide($nHBreaks, $nVOffencePoint) * 100, 1));
+      $smarty->assign("dblVAvgGoalsFromDefense", number_format(SafeDivide($nHBreaks, $nVOffencePoint) * 100, 1));
+      $smarty->assign("is_season_admin", isSeasonAdmin($seasoninfo['season_id']));
     }
 
-    //}
-    //defense board
+    $smarty->assign("show_defense_stats", ShowDefenseStats());
+    // Defense board
     if (ShowDefenseStats()) {
-      $html .= "<br><br>";
-      $html .= "<h3>" . _("Defensive plays") . "</h3>\n";
       $home_team_defense_board = GameTeamDefenseBoard($gameId,  $game_result['hometeam']);
       $guest_team_defense_board = GameTeamDefenseBoard($gameId,  $game_result['visitorteam']);
       $defenses = GameDefenses($gameId);
-      $html .= "<table style='width:100%'><tr><td valign='top' style='width:45%'>\n";
 
-      $html .= "<table width='100%' cellspacing='0' cellpadding='0' border='0'>\n";
-      $html .= "<tr style='height=20'><td align='center'><b>";
-      $html .= utf8entities($game_result['hometeamname']) . "</b></td></tr>\n";
-      $html .= "</table><table width='100%' cellspacing='0' cellpadding='3' border='0'>";
-      $html .= "<tr><th class='home'>#</th><th class='home'>" . _("Name") . "</th><th class='home center'>" . _("Defenses") . "</th></tr>\n";
-
+      $home_defenses_array = array();
       while ($row = GetDatabase()->FetchAssoc($home_team_defense_board)) {
-        $html .= "<tr>";
-        $html .= "<td style='text-align:right'>" . $row['num'] . "</td>";
-        $html .= "<td><a href='?view=playercard&amp;series=0&amp;player=" . $row['player_id'];
-        $html .= "'>" . utf8entities($row['firstname']) . "&nbsp;";
-        $html .= utf8entities($row['lastname']) . "</a>";
-        if ($row['player_id'] == $homecaptain) {
-          $html .= "&nbsp;" . _("(C)");
-        }
-        $html .= "</td>";
-        //$html .= "<td class='center'>". $row['fedin'] ."</td>";
-        $html .= "<td class='center'>" . $row['done'] . "</td>";
-        //$html .="<td class='center'>". $row['total'] ."</td>";
-        $html .= "</tr>";
+        $defenses_array[] = $row;
       }
+      $smarty->assign("home_defenses", $defenses_array);
 
-      $html .= "</table></td>\n<td style='width:10%'>&nbsp;</td><td valign='top' style='width:45%'>";
-
-      $html .= "<table width='100%' cellspacing='0' cellpadding='0' border='0'>";
-      $html .= "<tr><td><b>";
-      $html .= utf8entities($game_result['visitorteamname']) . "</b></td></tr>\n";
-      $html .= "</table><table width='100%' cellspacing='0' cellpadding='3' border='0'>";
-      $html .= "<tr><th class='guest'>#</th><th class='guest'>" . _("Name") . "</th><th class='guest center'>";
-      $html .= _("Defenses") . "</th></tr>\n";
-
+      $visitor_defenses_array = array();
       while ($row = GetDatabase()->FetchAssoc($guest_team_defense_board)) {
-        $html .= "<tr>";
-        $html .= "<td style='text-align:right'>" . $row['num'] . "</td>";
-        $html .= "<td><a href='?view=playercard&amp;series=0&amp;player=" . $row['player_id'];
-        $html .= "'>" . utf8entities($row['firstname']) . "&nbsp;";
-        $html .= utf8entities($row['lastname']) . "</a>";
-        if ($row['player_id'] == $awaycaptain) {
-          $html .= "&nbsp;" . _("(C)");
-        }
-        $html .= "</td>";
-        //$html .= "<td class='center'>". $row['fedin'] ."</td>";
-        $html .= "<td class='center'>" . $row['done'] . "</td>";
-        //$html .="<td class='center'>". $row['total'] ."</td>";
-        $html .= "</tr>";
+        $visitor_defenses_array[] = $row;
       }
-
-      $html .= "</table></td></tr></table>\n";
-
-      $html .= "<table border='1' cellpadding='2' width='100%'>\n";
-      $html .= "<tr><th>" . _("Time defense play") . "</th><th>" . _("Player") . "</th><th>" . _("Callahan defense") . "</th>";
-      $html .= "</tr>\n";
-
-      //$bHt=false;
+      $smarty->assign("visitor_defenses", $defenses_array);
 
       $prevdefense = 0;
       GetDatabase()->DataSeek($defenses, 0);
+      $all_defenses_array = array();
       while ($defense = GetDatabase()->FetchAssoc($defenses)) {
-        // 		if (!$bHt && $game_result['halftime']>0 && $goal['time'] > $game_result['halftime']){
-        // 			$html .= "<tr><td colspan='6' class='halftime'>"._("Half-time")."</td></tr>";
-        // 			$bHt = 1;
-        // 			$prevgoal = intval($game_result['halftime']);
-        // 		}
-
-        $html .= "<tr><td style='width:120px;white-space: nowrap'";
-        if (intval($defense['ishomedefense']) == 1) {
-          $html .= " class='home'>";
-        } else {
-          $html .= " class='guest'>";
-        }
-        $html .= SecToMin($defense['time']) . "</td>";
-        //$html .= $goal['homescore'] ." - ". $goal['visitorscore'] ."</td>";
-        $html .= "<td>" . utf8entities($defense['defenderfirstname']) . " " . utf8entities($defense['defenderlastname']) . "&nbsp;</td>";
-
-        if (intval($defense['iscallahan'])) {
-          $html .= "<td style='width:100px' class='callahan'>&nbsp;</td>";
-        } else {
-          $html .= "<td style='width:100px'>&nbsp;</td>";
-        }
-        //$html .= "<td>". SecToMin($defense['time']) ."</td>";
-
-        $html .= "</tr>";
+        $all_defenses_array[] = $defense;
       }
-      $html .= "</table>\n";
+      $smarty->assign("all_defenses", $all_defenses_array);
     }
   }
 } else {
-  $game_result = GameInfo($gameId);
-
-  if ($game_result['hometeam'] && $game_result['visitorteam']) {
-    $html .= "<h1>";
-    $html .= utf8entities($game_result['hometeamname']);
-    $html .= " - ";
-    $html .= utf8entities($game_result['visitorteamname']);
-    $html .= "&nbsp;&nbsp;&nbsp;&nbsp;";
-    $html .= "? - ?";
-    $html .= "</h1>\n";
-  } else {
-    $html .= "<h1>";
-    $html .= utf8entities(U_($game_result['gamename']));
-    $html .= "</h1>\n";
-    $html .= "<h2>";
-    $html .= utf8entities(U_($game_result['phometeamname']));
-    $html .= " - ";
-    $html .= utf8entities(U_($game_result['pvisitorteamname']));
-    $html .= "&nbsp;&nbsp;&nbsp;&nbsp;";
-    $html .= "? - ?";
-    $html .= "</h2>\n";
-  }
-
-  $html .= "<p>";
-  $html .= ShortDate($game_result['time']) . " " . DefHourFormat($game_result['time']) . " ";
-  if (!empty($game_result['fieldname'])) {
-    $html .= _("on field") . " " . utf8entities($game_result['fieldname']);
-  }
-  $html .= "</p>";
+  $smarty->assign("shortdate_game_result_time", ShortDate($game_result['time']));
+  $smarty->assign("hourformat_game_result_time", DefHourFormat($game_result['time']));
 }
-showPage($title, $html);
