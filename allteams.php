@@ -28,6 +28,7 @@ while ($team = GetDatabase()->FetchAssoc($teams)) {
     if ($listletter != $firstchar && in_array($firstchar, $validletters)) {
       $listletter = $firstchar;
       $team['show_letter'] = true;
+      $team['list_letter'] = $listletter;
     }
   }
   $teams_array[] = $team;
