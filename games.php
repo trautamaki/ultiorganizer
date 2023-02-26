@@ -11,7 +11,6 @@ if (is_file('cust/' . CUSTOMIZATIONS . '/pdfprinter.php')) {
   include_once 'cust/default/pdfprinter.php';
 }
 
-$html = "";
 $filter = 'tournaments';
 $baseurl = "?view=games";
 $id = 0;
