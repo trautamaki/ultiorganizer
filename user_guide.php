@@ -1,8 +1,7 @@
 <?php
-
+// TODO printable
 $title = _("User Guide");
 $smarty->assign("title", $title);
-$print = iget("print");
 
 $html_file = 'locale/' . getSessionLocale() . '/LC_MESSAGES/user_guide.html';
 
