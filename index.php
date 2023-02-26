@@ -119,6 +119,7 @@ $smarty->assign("stylesheets", $stylesheets);
 $smarty->assign("cust", CUSTOMIZATIONS);
 $smarty->assign("locales", localeSelection());
 $smarty->assign("enable_facebook", IsFacebookEnabled() && $user == 'anonymous');
+$smarty->assign("is_facebook_enabled", IsFacebookEnabled());
 $smarty->assign("has_schedule_rights", hasScheduleRights());
 $smarty->assign("is_super_admin", isSuperAdmin());
 $smarty->assign("has_translation_right", hasTranslationRight());
