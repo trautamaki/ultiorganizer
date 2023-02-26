@@ -140,8 +140,7 @@ function PlayerListAll($lastname = "")
 {
   $query = "SELECT MAX(player_id) AS player_id, firstname, lastname, num, accreditation_id, profile_id, team, uo_team.name AS teamname
 		FROM uo_player p 
-		LEFT JOIN uo_team ON p.team=team_id
-		WHERE accredited=1";
+		LEFT JOIN uo_team ON p.team=team_id";
   if (!empty($lastname) && $lastname != "ALL") {
     $query .= " AND UPPER(lastname) LIKE '" . GetDatabase()->RealEscapeString($lastname) . "%'";
   }
