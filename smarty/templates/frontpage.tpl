@@ -3,7 +3,7 @@
 
 {include file=$welcome_message_page}
 
-<p><a href='?view=user_guide'>User Guide</a></p>
+<p><a href='?view=user_guide'>{t}User Guide{/t}</a></p>
 
 {if count($frontpage_urls)}
 <p>
