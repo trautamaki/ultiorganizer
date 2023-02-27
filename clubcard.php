@@ -27,8 +27,8 @@ if (!empty($profile['story'])) {
   $story = utf8entities($profile['story']);
   $story = explode("\n", $story);
   $smarty->assign("story", $story);
-
 }
+
 if (!empty($profile['achievements'])) {
   $achievements = utf8entities($profile['achievements']);
   $achievements = explode("\n", $achievements);

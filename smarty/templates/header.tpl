@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="cust/{$cust}/font.css" type="text/css" />
   <link rel="stylesheet" href="cust/{$cust}/default.css" type="text/css" />
   <link rel="stylesheet" href="generic.css" type="text/css" />
+  <link rel="stylesheet" href="flag-icon.css" type="text/css" />
   <title>{$page_title|default:"no title"} {$title}</title>
 </head>
 <!-- TODO printable -->
