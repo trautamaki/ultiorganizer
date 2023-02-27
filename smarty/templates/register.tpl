@@ -29,31 +29,31 @@
     <tr>
       <td class='infocell'>{t}Name{/t}:</td>
       <td>
-        <input type='text' class='input' maxlength='256' id='Name' name='Name' value='{if isset($_POST["Name"])} Name {/if}' />
+        <input type='text' class='input' maxlength='256' id='Name' name='Name' value='{if isset($smarty.post.Name)} Name {/if}' />
       </td>
     </tr>
     <tr>
       <td class='infocell'>{t}Username{/t}:</td>
       <td>
-        <input type='text' class='input' maxlength='20' id='UserName' name='UserName' value='{if isset($_POST["UserName"])} UserName {/if}' />
+        <input type='text' class='input' maxlength='20' id='UserName' name='UserName' value='{if isset($smarty.post.UserName)} UserName {/if}' />
       </td>
     </tr>
     <tr>
       <td class='infocell'>{t}Password{/t}:</td>
       <td>
-        <input type='password' class='input' maxlength='20' id='Password' name='Password' value='{if isset($_POST["Password"])} Password {/if}' />
+        <input type='password' class='input' maxlength='20' id='Password' name='Password' value='{if isset($smarty.post.Password)} Password {/if}' />
       </td>
     </tr>
     <tr>
       <td class='infocell'>{t}Repeat password{/t}:</td>
       <td>
-        <input type='password' class='input' maxlength='20' id='Password2' name='Password2' value='{if isset($_POST["Password"])} Password {/if}' />
+        <input type='password' class='input' maxlength='20' id='Password2' name='Password2' value='{if isset($smarty.post.Password)} Password {/if}' />
       </td>
     </tr>
     <tr>
       <td class='infocell'>{t}Email{/t}:</td>
       <td>
-        <input type='text' class='input' maxlength='512' id='Email' name='Email' size='40' value='{if isset($_POST["Email"])} Email {/if}' />
+        <input type='text' class='input' maxlength='512' id='Email' name='Email' size='40' value='{if isset($smarty.post.Email)} Email {/if}' />
       </td>
     </tr>
     <tr>
