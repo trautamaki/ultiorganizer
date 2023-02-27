@@ -26,7 +26,9 @@
             <div style='float: left; clear: left;'>
               <a href='?view=countrycard&amp;country={$country_info.country_id}'>{$country_info.name}</a>
             </div>
-            <div>&nbsp;<img src='images/flags/tiny/{$country_info.flagfile}' alt='' /></div>
+            <div>
+              &nbsp;<span class="flag-icon flag-icon-{$country_info.abbreviation|lower}"></span>
+            </div>
           </td>
         </tr>
         {/if}
