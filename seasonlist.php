@@ -4,8 +4,7 @@ include_once 'lib/series.functions.php';
 
 $title = _("Old events");
 $smarty->assign("title", $title);
-$maxcols = 3;
-$smarty->assign("maxcols", $maxcols);
+$smarty->assign("maxcols", 3);
 
 $seasons = Seasons();
 $seasons_array = array();
