@@ -686,24 +686,24 @@ function GameHasStarted($gameInfo)
 function CheckGameResult($game, $home, $away)
 {
 	$gameId = (int) substr($game, 0, -1);
-	$errors = "";
+	$errors = array();
 	if ($gameId == 0 || !checkChkNum($game)) {
-		$errors .= "<p class='warning'>" . _("Erroneous scoresheet number:") . " " . $game . "</p>";
+		$errors[] = array("class='warning'", _("Erroneous scoresheet number:") . " " . $game);
 	} else {
 		$pool = GamePool($gameId);
 		if (!$pool) {
-			$errors .= "<p class='warning'>" . _("Game has no pool.") . "</p>";
+			$errors[] = array("class='warning'", _("Game has no pool."));
 		} else {
 			if (IsPoolLocked($pool)) {
-				$errors .= "<p class='warning'>" . _("Pool is locked.") . "</p>";
+				$errors[] = array("class='warning'", _("Pool is locked."));
 			}
 		}
 	}
 	if (IsSeasonStatsCalculated(GameSeason($gameId))) {
-		$errors .= "<p class='warning'>" . _("Event played.") . "</p>";
+		$errors[] = array("class='warning'", _("Event played."));
 	}
 	if (!($home + $away)) {
-		$errors .= "<p class='warning'>" . _("No goals.") . "</p>";
+		$errors[] = array("class='warning'", _("No goals."));
 	}
 	return $errors;
 }
