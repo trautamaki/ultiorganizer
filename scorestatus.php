@@ -72,4 +72,3 @@ while ($row = GetDatabase()->FetchAssoc($scores)) {
   $i++;
 }
 $smarty->assign("scores", $scores_array);
-
