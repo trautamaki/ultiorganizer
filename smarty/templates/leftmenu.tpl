@@ -56,7 +56,7 @@
         <tr>
           <td>
             {foreach $links as $href => $name}
-            <a class='subnav' href='$href'>&raquo;{$name}</a>
+            <a class='subnav' href='{$href}'>&raquo;{$name}</a>
             {/foreach}
           </td>
         </tr>
