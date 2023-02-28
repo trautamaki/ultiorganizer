@@ -9,9 +9,7 @@ $seriesId = 0;
 $teamId = 0;
 $sort = "deftotal";
 
-$html = "";
 $title = _("Defenseboard");
-
 
 if (iget("pool")) {
   $poolId = intval(iget("pool"));
@@ -29,13 +27,13 @@ if (iget("team")) {
   $teamId = intval(iget("team"));
   $title = $title . ": " . utf8entities(TeamName($teamId));
 }
+$smarty->assign("pool_id", $poolId);
+$smarty->assign("title", $title);
+
 if (iget("sort")) {
   $sort = iget("sort");
 }
-
-$html .= "<h1>" . _("Defenseboard") . "</h1>\n";
-
-$html .= "<table style='width:100%' cellpadding='1' border='1'>";
+$smarty->assign("sort", $sort);
 
 $viewUrl = "?view=defensestatus&amp;";
 if ($teamId) {
@@ -50,77 +48,53 @@ if (count($poolIds)) {
 if ($seriesId) {
   $viewUrl .= "Series=$seriesId&amp;";
 }
+$smarty->assign("view_url", $viewUrl);
 
-$html .= "<tr>\n";
-$html .= "<th style='width:5%'>#</th>";
-if ($sort == "name")
-  $html .= "<th style='width:30%'>" . _("Player") . "</th>";
-else
-  $html .= "<th style='width:30%'><a class='thsort' href='" . $viewUrl . "Sort=name'>" . _("Player") . "</a></th>";
-
-if ($sort == "team")
-  $html .= "<th style='width:25%'><b>" . _("Team") . "</b></th>";
-else
-  $html .= "<th style='width:25%'><a class='thsort' href='" . $viewUrl . "Sort=team'>" . _("Team") . "</a></th>";
-
-if ($sort == "games")
-  $html .= "<th class='center' style='width:8%'><b>" . _("Games") . "</b></th>";
-else
-  $html .= "<th class='center' style='width:8%'><a class='thsort' href='" . $viewUrl . "Sort=games'>" . _("Games") . "</a></th>";
-
-if ($sort == "deftotal")
-  $html .= "<th class='center' style='width:8%'><b>" . _("Defenses") . "</b></th>";
-else
-  $html .= "<th class='center' style='width:8%'><a class='thsort' href='" . $viewUrl . "Sort=deftotal'>" . _("Defenses") . "</a></th>";
-
-$html .= "</tr>";
+$table_header = array(
+  array(
+    "title" => _("Player"),
+    "sort" => "name",
+    "url" => $viewUrl . "sort=name",
+    "options" => "style='width:30%'",
+  ),
+  array(
+    "title" => _("Team"),
+    "sort" => "team",
+    "url" => $viewUrl . "sort=team",
+    "options" => "style='width:25%'",
+  ),
+  array(
+    "title" => _("Games"),
+    "sort" => "games",
+    "url" => $viewUrl . "sort=games",
+    "options" => "class='center' style='width:8%'",
+  ),
+  array(
+    "title" => _("Defenses"),
+    "sort" => "deftotal",
+    "url" => $viewUrl . "sort=deftotal",
+    "options" => "class='center' style='width:8%'",
+  ),
+);
+$smarty->assign("table_header", $table_header);
 
 if ($teamId) {
   if (count($poolIds)) {
-    //$scores = TeamScoreBoard($teamId, $poolIds, $sort, 0);
     $defenses = TeamScoreBoardWithDefenses($teamId, $poolIds, $sort, 0);
   } else {
-    //$scores = TeamScoreBoard($teamId, $poolId, $sort, 0);
     $defenses = TeamScoreBoardWithDefenses($teamId, $poolId, $sort, 0);
   }
 } elseif ($poolId) {
-  //$scores = PoolScoreBoard($poolId, $sort, 0);
   $defenses = PoolScoreBoardWithDefenses($poolId, $sort, 0);
 } elseif (count($poolIds)) {
-  //$scores = PoolsScoreBoard($poolIds, $sort, 0);
   $defenses = PoolScoreBoardWithDefenses($poolIds, $sort, 0);
 } elseif ($seriesId) {
-  //$scores = SeriesScoreBoard($seriesId, $sort, 0);
   $defenses = SeriesDefenseBoard($seriesId, $sort, 0);
 }
+
 $i = 1;
+$data_array = array();
 while ($row = GetDatabase()->FetchAssoc($defenses)) {
-  $html .= "<tr>";
-  $html .= "<td>" . $i++ . "</td>";
-  if ($sort == "name") {
-    $html .= "<td class='highlight'><a href='?view=playercard&amp;series=$poolId&amp;player=" . $row['player_id'] . "'>";
-    $html .= utf8entities($row['firstname'] . " " . $row['lastname']);
-    $html .= "</a></td>";
-  } else {
-    $html .= "<td><a href='?view=playercard&amp;series=$poolId&amp;player=" . $row['player_id'] . "'>";
-    $html .= utf8entities($row['firstname'] . " " . $row['lastname']);
-    $html .= "</a></td>";
-  }
-  if ($sort == "team")
-    $html .= "<td class='highlight'>" . utf8entities($row['teamname']) . "</td>";
-  else
-    $html .= "<td>" . utf8entities($row['teamname']) . "</td>";
-
-  if ($sort == "games")
-    $html .= "<td class='center highlight'>" . intval($row['games']) . "</td>";
-  else
-    $html .= "<td class='center'>" . intval($row['games']) . "</td>";
-
-  if ($sort == "deftotal")
-    $html .= "<td class='center highlight'>" . intval($row['deftotal']) . "</td>";
-  else
-    $html .= "<td class='center'>" . intval($row['deftotal']) . "</td>";
+  $row['i'] = $i++;
+  $data_array[] = $row;
 }
-$html .= "</table>";
-
-showPage($title, $html);

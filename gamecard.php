@@ -134,19 +134,19 @@ if ($nGames) {
 
   $viewUrl = "?view=gamecard&amp;team1=$teamId1&amp;team2=$teamId2&amp;";
   $games_header = array(
-    0 => array(
+    array(
       "title" => _("Game"),
       "sort" => "team",
       "url" => $viewUrl . "sort=team",
       "options" => "",
     ),
-    1 => array(
+    array(
       "title" => _("Result"),
       "sort" => "result",
       "url" => $viewUrl . "sort=result",
       "options" => "",
     ),
-    2 => array(
+    array(
       "title" => _("Division"),
       "sort" => "series",
       "url" => $viewUrl . "sort=series",
