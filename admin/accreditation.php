@@ -4,20 +4,23 @@ include_once 'lib/accreditation.functions.php';
 $LAYOUT_ID = ACCREDITATION;
 
 $title = _("Accreditation");
-$html = "";
+$smarty->assign("title", $title);
 
 if (isset($_GET['season'])) {
   $season = $_GET['season'];
 } else {
   $season = CurrentSeason();
 }
+$smarty->assign("season", $season);
 
 if (isset($_GET['list'])) {
-  $view = $_GET['list'];
+  $list = $_GET['list'];
 } else {
-  $view = "acc";
+  $list = "acc";
 }
-$url = "?view=admin/accreditation&amp;season=" . $season . "&amp;list=" . $view;
+$smarty->assign("list", $list);
+$url = "?view=admin/accreditation&amp;season=" . $season . "&amp;list=" . $list;
+$smarty->assign("url", $url);
 
 if (isset($_POST['acknowledge'])) {
   foreach ($_POST['acknowledged'] as $playerGame) {
@@ -39,173 +42,70 @@ if (isset($_POST['accredit']) && isset($_POST['series'])) {
 
 $unAccredited = SeasonUnaccredited($season);
 
-//common page
-pageTopHeadOpen($title);
-?>
-<script type="text/javascript">
-  <!--
-  function setId(id, name) {
-    var input = document.getElementById(name);
-    input.value = id;
-  }
-  //
-  -->
-</script>
-<?php
-pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
-contentStart();
-
-$html .= "[<a href='?view=admin/accreditation&amp;season=" . $season . "&amp;list=acc'>" . _("Accreditation") . "</a>]";
-$html .= "&nbsp;&nbsp;";
-$html .= "[<a href='?view=admin/accreditation&amp;season=" . $season . "&amp;list=autoacc'>" . _("Automatic Accreditation") . "</a>]";
-$html .= "&nbsp;&nbsp;";
-$html .= "[<a href='?view=admin/accreditation&amp;season=" . $season . "&amp;list=acclog'>" . _("Accreditation log") . "</a>]";
-$html .= "&nbsp;&nbsp;";
-$html .= "[<a href='?view=admin/accreditation&amp;season=" . $season . "&amp;list=accevents'>" . _("Accreditation events") . "</a>]";
-$html .= "&nbsp;&nbsp;";
-$html .= "[<a href='?view=admin/accreditation&amp;season=" . $season . "&amp;list=accId'>" . _("Missing IDs") . "</a>]";
-$html .= "&nbsp;&nbsp;";
-
-echo $html;
-
-
-if ($view == "acc") {
-  echo "<p>";
-  echo _("Accreditation can be done manually player by player from team roster or automatically against event organizer's external license database.");
-  echo "</p>";
+if ($list == "autoacc") {
   if (is_file('cust/' . CUSTOMIZATIONS . '/mass-accreditation.php')) {
     include_once 'cust/' . CUSTOMIZATIONS . '/mass-accreditation.php';
   }
 }
 
-if ($view == "autoacc") {
-  if (is_file('cust/' . CUSTOMIZATIONS . '/mass-accreditation.php')) {
-    include_once 'cust/' . CUSTOMIZATIONS . '/mass-accreditation.php';
-  }
-}
-
-if ($view == "acclog") {
-  echo "<h3>" . _("Games played without accreditation") . "</h3>";
-  echo "<form method='post' action='$url'>\n";
-  echo "<table class='infotable'><tr><th>" . _("Player") . "</th><th>" . _("Team") . "</th><th>" . _("Game") . "</th><th>" . _("Acknowledged") . "</th></tr>\n";
+if ($list == "acclog") {
   $acknowledged = array();
-
+  $unaccredited_array = array();
   while ($row = GetDatabase()->FetchAssoc($unAccredited)) {
     if (hasAccredidationRight($row['team'])) {
+      $row['game_name'] = utf8entities(GameName($row));
       if (!$row['acknowledged']) {
-        echo "<tr>";
-        echo "<td>" . utf8entities($row['firstname']) . " " . utf8entities($row['lastname']) . "</td>";
-        echo "<td>" . utf8entities($row['teamname']) . "</td>";
-        echo "<td>" . utf8entities(GameName($row)) . "</td>";
-        echo "<td style='text-align:center'><input type='checkbox' name='acknowledged[]' ";
-        echo "value='" . utf8entities($row['player_id']) . "_" . $row['game_id'] . "'/></td></tr>\n";
+        $unaccredited_array[] = $row;
       } else {
-        $acknowledged[] = $row;
+        if (hasAccredidationRight($row['team'])) {
+          $acknowledged[] = $row;
+        }
       }
     }
   }
-
-  echo "</table>";
-  echo "<p><input type='submit' name='acknowledge' value='" . _("Acknowledge") . "'/></p>\n";
-  echo "<h3>" . _("Acknowledged") . "</h3>";
-  echo "<table class='infotable'><tr><th>" . _("Player") . "</th><th>" . _("Team") . "</th><th>" . _("Game") . "</th><th>" . _("Acknowledged") . "</th></tr>\n";
-  foreach ($acknowledged as $row) {
-    if (hasAccredidationRight($row['team'])) {
-      echo "<tr>";
-      echo "<td>" . utf8entities($row['firstname']) . " " . utf8entities($row['lastname']) . "</td>";
-      echo "<td>" . utf8entities($row['teamname']) . "</td>";
-      echo "<td>" . utf8entities(GameName($row)) . "</td>";
-      echo "<td style='text-align:center'><input class='deletebutton' type='image' src='images/remove.png' name='remacknowledge' ";
-      echo "value='X' alt='X' onclick='setId(\"" . $row['player_id'] . "_" . $row['game_id'] . "\", \"deleteAckId\");'/>";
-      echo "</td></tr>\n";
-    }
-  }
-  echo "</table>";
-  echo "<div><input type='hidden' id='deleteAckId' name='deleteAckId'/></div>\n";
-  echo "</form>";
+  $smarty->assign("unaccredited", $acknounaccredited_arraywledged);
+  $smarty->assign("acknowledged", $acknowledged);
 }
 
-if ($view == "accevents") {
-  echo "<h3>" . _("Accreditation events") . "</h3>";
-  echo "<table class='infotable'><tr><th>" . _("Event") . "</th><th>" . _("Time") . "</th><th>" . _("Player") . "</th>";
-  echo "<th>" . _("Team") . "</th><th>" . _("Game") . "</th><th>" . _("Value") . "</th>";
-  echo "<th>" . _("User") . "</th><th>" . _("Source") . "</th></tr>\n";
+if ($list == "accevents") {
+  $accevents_array = array();
   $logResult = SeasonAccreditationLog($season);
   while ($row = GetDatabase()->FetchAssoc($logResult)) {
     if (hasAccredidationRight($row['team'])) {
       if ($row['value']) {
-        echo "<tr class='posvalue'>";
+        $row['class'] = "posvalue";
       } else {
-        echo "<tr class='negvalue'>";
+        $row['class'] = "negvalue";
       }
+
       if (!empty($row['game'])) {
-        echo "<td>" . _("Game acknowledgement") . "</td>";
+      $row['game_name'] = GameName($row);
       } else {
-        echo "<td>" . _("Accreditation") . "</td>";
+        $row['game_name'] = "&nbsp;";
       }
-      echo "<td>" . DefBirthdayFormat($row['time']) . " " . DefHourFormat($row['time']) . "</td>";
-      echo "<td>" . utf8entities($row['firstname']) . " " . utf8entities($row['lastname']) . "</td>";
-      echo "<td>" . utf8entities($row['teamname']) . "</td>";
-      if (!empty($row['game'])) {
-        echo "<td>" . utf8entities(GameName($row)) . "</td>";
-      } else {
-        echo  "<td>&nbsp;</td>";
-      }
-      if ($row['value']) {
-        echo "<td>+</td>";
-      } else {
-        echo "<td>-</td>";
-      }
-      if (!empty($row['email'])) {
-        echo "<td><a href='mailto:" . $row['email'] . "'>" . utf8entities($row['uname']) . "</a></td>";
-      } else {
-        echo "<td>" . utf8entities($row['uname']) . "</td>";
-      }
-      echo "<td>" . utf8entities($row['source']) . "</td>";
-      echo "</tr>\n";
+      $row['time_bdayformat'] = DefBirthdayFormat($row['time']);
+      $row['time_hourformat'] = DefHourFormat($row['time']);
     }
   }
-  echo "</table>";
+  $smarty->assign("accevents", $accevents_array);
 }
 
-if ($view == "accId") {
-  echo "<h3>" . _("Players without membership Id") . "</h3>";
+if ($list == "accId") {
   $players = SeasonAllPlayers($season);
-  echo "<table class='infotable'>";
+  $players_no_membership_array = array();
+  $players_not_accredited_array = array();
   foreach ($players as $player) {
     $playerinfo = PlayerInfo($player['player_id']);
     if (empty($playerinfo['accreditation_id'])) {
-      echo "<tr><td>";
-      echo utf8entities($playerinfo['seriesname']);
-      echo "</td><td>";
-      echo utf8entities($playerinfo['teamname']);
-      echo "</td><td>";
-      echo utf8entities($playerinfo['firstname'] . " " . $playerinfo['lastname']);
-      echo "</td></tr>";
+      $players_array[] = $playerinfo;
     }
-  }
-  echo "</table>";
-
-  echo "<h3>" . _("Players not accredited") . "</h3>";
-  $players = SeasonAllPlayers($season);
-  echo "<table class='infotable'>";
-  foreach ($players as $player) {
-    $playerinfo = PlayerInfo($player['player_id']);
+    
     if (empty($playerinfo['accredited'])) {
-      echo "<tr><td>";
-      echo utf8entities($playerinfo['seriesname']);
-      echo "</td><td>";
-      echo utf8entities($playerinfo['teamname']);
-      echo "</td><td>";
-      echo utf8entities($playerinfo['firstname'] . " " . $playerinfo['lastname']);
-      echo "</td></tr>";
+      $players_not_accredited_array[] = $playerinfo;
     }
   }
-  echo "</table>";
+  $smarty->assign("players_no_membership", $players_no_membership_array);
+  $smarty->assign("players_not_accredited", $players_not_accredited_array);
 }
-
-contentEnd();
-pageEnd();
 
 ?>
