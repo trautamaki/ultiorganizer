@@ -172,8 +172,6 @@ include_once 'lib/yui.functions.php';
 $smarty->assign("yui_load", yuiLoad(array("utilities", "slider", "colorpicker", "datasource", "autocomplete")));
 $smarty->assign("body_functions", "onload=\"document.getElementById('name').focus();\"");
 
-$smarty->assign("name_translated", TranslatedField("name", $pp['name']));
-
 // If poolId is empty, then add new pool	
 if (!$poolId || $addmore) {
 	$templates = PoolTemplates();
@@ -192,5 +190,3 @@ if (!$poolId || $addmore) {
 	$comment = CommentRaw(3, $pool_id);
 	$smarty->assign("comment", $comment);
 }
-
-$smarty->assign("name_translationscript", TranslationScript("name"));

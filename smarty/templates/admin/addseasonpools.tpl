@@ -70,7 +70,7 @@
   <table cellpadding='2'>
     <tr>
       <td class='infocell'>{t}Name{/t}:</td>
-      <td>{$name_translated}</td>
+      <td>{include file="translated_field.tpl" field_name="name" value=$pp.name}</td>
       </tr>
     <tr>
       <td class='infocell'>{t}Order{/t} (A,B,C,D ...):</td>
@@ -313,6 +313,6 @@
 </form>
 {/if}
 
-{$name_translationscript nofilter}
+{include file="translation_script.tpl" field_name="name"}
 
 {include file="footer.tpl"}
