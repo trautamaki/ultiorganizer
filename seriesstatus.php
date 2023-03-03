@@ -263,17 +263,17 @@ while($row = DB()->FetchAssoc($scores)){
 $html .= "</table>";
 $html .= "<a href='?view=scorestatus&amp;series=".$seriesinfo['series_id']."'>"._("Scoreboard")."</a><br>";
 
-$html .= "<div style='padding: 5px; width: 100%; height: 100%'>";
+$html .= "<div style='padding: 5px; width: 100%;'>";
 
 # Goals
-$html .= "<div style='float: left; width: 50%'>";
+$html .= "<div style='float: left; width: 50%;'>";
 $html .= "<h2>"._("Goals leaders")."</h2>\n";
-$html .= "<table cellspacing='0' border='0' style='margin-left: 0; padding: 0;>\n";
+$html .= "<table cellspacing='0' border='0' style='margin-left: 0; padding: 0;'>\n";
 $html .= "<tr><th style='width:100%'>"._("Player")."</th><th>"._("Team")."</th><th class='center'>"._("Games")."</th>
 <th class='center'>"._("Goals")."</th></tr>\n";
 
 $scores = SeriesScoreBoard($seriesinfo['series_id'],"goal", 10);
-while($row = mysql_fetch_assoc($scores)){
+while($row = DB()->FetchAssoc($scores)){
   $html .= "<tr><td>". utf8entities($row['firstname']." ".$row['lastname'])."</td>";
   $html .= "<td>".utf8entities($row['abbr'])."</td>";
   $html .= "<td class='center'>".intval($row['games'])."</td>";
@@ -286,12 +286,12 @@ $html .= "</div>";
 # Assists
 $html .= "<div style='float: right; width: 50%'>";
 $html .= "<h2>"._("Assists leaders")."</h2>\n";
-$html .= "<table cellspacing='0' border='0' style='margin-right: 0; padding: 0;>\n";
+$html .= "<table cellspacing='0' border='0' style='margin-right: 0; padding: 0;'>\n";
 $html .= "<tr><th style='width:100%'>"._("Player")."</th><th>"._("Team")."</th><th class='center'>"._("Games")."</th>
 <th class='center'>"._("Assists")."</th></tr>\n";
 
 $scores = SeriesScoreBoard($seriesinfo['series_id'],"pass", 10);
-while($row = mysql_fetch_assoc($scores)){
+while($row = DB()->FetchAssoc($scores)){
   $html .= "<tr><td>". utf8entities($row['firstname']." ".$row['lastname'])."</td>";
   $html .= "<td>".utf8entities($row['abbr'])."</td>";
   $html .= "<td class='center'>".intval($row['games'])."</td>";
