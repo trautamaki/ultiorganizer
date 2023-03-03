@@ -7,7 +7,6 @@ include_once 'lib/club.functions.php';
 include_once 'lib/country.functions.php';
 
 $LAYOUT_ID = ADDSEASONTEAMS;
-$html = "";
 $teamId = 0;
 $season = 0;
 $seriesId = 0;
@@ -17,7 +16,9 @@ if (!empty($_GET["team"]))
 
 $team_info = TeamInfo($teamId);
 $seriesId = $team_info['series'];
+$smarty->assign("series_id", $seriesId);
 $season = $team_info['season'];
+$smarty->assign("season", $season);
 
 $tp = array(
 	"team_id" => "",
@@ -32,10 +33,11 @@ $tp = array(
 	"bye" => "0"
 );
 
-//process itself on submit
+$messages = array();
+// Process itself on submit
 if (!empty($_POST['save']) || !empty($_POST['add'])) {
 	if (empty($_POST['name'])) {
-		$html .= "<p>" . _("Name is mandatory!") . "</p><hr/>";
+		$messages[] = _("Name is mandatory!");
 	} else {
 		$tp['team_id'] = $teamId;
 		$tp['name'] = trim($_POST['name']);
@@ -73,13 +75,13 @@ if (!empty($_POST['save']) || !empty($_POST['add'])) {
 			SetTeam($tp);
 			if (intval($tp['pool']))
 				PoolAddTeam($tp['pool'], $teamId, $tp['rank']);
-			$html .= "<p>" . _("Changes saved") . "</p><hr/>";
+				$messages[] = _("Changes saved") . "</p>";
 		} else {
 			$teamId = AddTeam($tp);
 			if (intval($tp['pool']))
 				PoolAddTeam($tp['pool'], $teamId, $tp['rank']);
 
-			$html .= "<p>" . $tp['name'] . " " . _("added") . ".</p><hr/>";
+			$messages[] = $tp['name'] . " " . _("added");
 			$teamId = 0;
 			$tp['name'] = "";
 			$tp['club'] = "";
@@ -88,6 +90,7 @@ if (!empty($_POST['save']) || !empty($_POST['add'])) {
 		header("location:?view=admin/seasonteams&season=$season&series=$seriesId");
 	}
 }
+$smarty->assign("team_id", $teamid);
 
 $orgarray = "";
 $result = ClubList(true);
@@ -95,32 +98,17 @@ while ($row = @GetDatabase()->FetchAssoc($result)) {
 	$orgarray .= "\"" . $row['name'] . "\",";
 }
 $orgarray = trim($orgarray, ',');
+$smarty->assign("orgarray", $orgarray);
 
-//common page
 $title = _("Edit");
-pageTopHeadOpen($title);
+$smarty->assign("title", $title);
+
 include_once 'script/disable_enter.js.inc';
 include_once 'lib/yui.functions.php';
-echo yuiLoad(array("utilities", "datasource", "autocomplete"));
-?>
-<style type="text/css">
-	#orgAutoComplete {
-		width: 26em;
-		padding-bottom: 2em;
-	}
-</style>
-<script type="text/javascript">
-	var clubs = new Array(
-		<?php
-		echo $orgarray;
-		?>
-	);
-</script>
-<?php
-pageTopHeadClose($title);
-leftMenu($LAYOUT_ID);
-contentStart();
+$smarty->assign("yui_load", yuiLoad(array("utilities", "datasource", "autocomplete")));
+
 $seasonInfo = SeasonInfo($season);
+$smarty->assign("season_info", $seasonInfo);
 
 if ($teamId) {
 	$info = TeamFullInfo($teamId);
@@ -133,106 +121,11 @@ if ($teamId) {
 	$tp['valid'] = $info['valid'];
 	$tp['rank'] = $info['rank'];
 	$tp['series'] = $info['series'];
-
-	$html .= "<h2>" . _("Edit team") . "</h2>\n";
-	$html .= "<form method='post' action='?view=admin/addseasonteams&amp;season=$season&amp;series=$seriesId&amp;team=$teamId'>";
-} else {
-	$html .= "<h2>" . _("Add team") . "</h2>\n";
-	$html .= "<form method='post' action='?view=admin/addseasonteams&amp;season=$season&amp;series=$seriesId'>";
 }
-
-$html .= "<table cellpadding='2px' class='yui-skin-sam'><tr><td class='infocell'>" . _("Name") . ":</td><td>";
-if (!intval($seasonInfo['isnationalteams'])) {
-	$html .= "<input class='input' id='name' name='name' size='50' value='" . utf8entities($tp['name']) . "'/></td></tr>";
-	$html .= "<tr><td class='infocell'>" . _("Club") . ":</td>\n";
-	$html .= "<td><div id='orgAutoComplete'><input class='input' type='text' id='club' name='club' size='50' value='" . utf8entities(ClubName($tp['club'])) . "'/>";
-	$html .= "<div id='orgContainer'></div>";
-	$html .= "</div>";
-} else {
-	$html .= TranslatedField("name", $tp['name']);
-}
-$html .= "</td></tr>";
-
-if (intval($seasonInfo['isinternational'])) {
-	$html .= "<tr><td class='infocell'>" . _("Country") . ":</td>\n";
-	$html .= "<td>" . CountryDropListWithValues("country", "country", $tp['country']) . "</td></tr>";
-}
-$html .= "<tr><td class='infocell'>" . _("Abbreviation") . ":</td>";
-$html .= "<td><input class='input' id='abbreviation' name='abbreviation' maxlength='15' size='16' value='" . utf8entities($tp['abbreviation']) . "'/></td></tr>";
-
-$seriesname = SeriesName($seriesId);
-$html .= "<tr><td class='infocell'>" . _("Division") . ":</td>
-		<td><input class='input' id='series' name='series' disabled='disabled' size='50' value='" . utf8entities($seriesname) . "'/></td></tr>";
-
-$html .= "<tr><td class='infocell'>" . _("Starting pool") . ":</td>";
-//$html .= "<td><input class='input' id='pool' name='pool' disabled='disabled' size='50' value='".utf8entities($team_info['poolname'])."'/></td></tr>";
-
-
-$html .= "<td><select class='dropdown' name='pool'>";
+$smarty->assign("tp", $tp);
 
 $pools = SeriesPools($seriesId, false, true, true);
-
-//empty selection
-if (intval($tp['pool']))
-	$html .= "<option class='dropdown' value='0'></option>";
-else
-	$html .= "<option class='dropdown' selected='selected' value='0'></option>";
-
-foreach ($pools as $row) {
-	if ($row['pool_id'] == $tp['pool'])
-		$html .= "<option class='dropdown' selected='selected' value='" . utf8entities($row['pool_id']) . "'>" . utf8entities(U_($row['name'])) . "</option>";
-	else
-		$html .= "<option class='dropdown' value='" . utf8entities($row['pool_id']) . "'>" . utf8entities(U_($row['name'])) . "</option>";
-}
-
-$html .= "</select></td></tr>";
-
-$html .= "<tr><td class='infocell'>" . _("Seed") . ":</td>
-		<td><input class='input' id='rank' size='4' name='rank' value='" . utf8entities($tp['rank']) . "'/></td></tr>";
-
-$html .= "<tr><td class='infocell'>" . _("Valid") . ":</td>";
-if (intval($tp['valid']) || !$teamId)
-	$html .= "<td><input class='input' type='checkbox' id='teamvalid' name='teamvalid' checked='checked'/></td>";
-else
-	$html .= "<td><input class='input' type='checkbox' id='teamvalid' name='teamvalid' /></td>";
-
-/* BYE functionality TBD
-$html .= "<tr><td class='infocell'>"._("BYE").":</td>";		
-$html .= "<td><input class='input' type='checkbox' id='teambye' name='teambye'/></td>";
-$html .= "</tr>";
-*/
-$html .= "</table>";
-
-$html .= "<p><a href='?view=admin/users'>" . _("Select contact person") . "</a></p>\n";
-
-if ($teamId)
-	$html .= "<p><input class='button' name='save' type='submit' value='" . _("Save") . "'/>";
-else
-	$html .= "<p><input class='button' name='add' type='submit' value='" . _("Add") . "'/>";
-
-
-
-$html .= "<input class='button' type='button' name='back'  value='" . _("Return") . "' onclick=\"window.location.href='?view=admin/seasonteams&amp;season=$season'\"/></p>";
-$html .= "</form>\n";
-
-echo $html;
-?>
-<script type="text/javascript">
-	YAHOO.autocomplete = function() {
-		var oDS = new YAHOO.util.LocalDataSource(clubs);
-		var oAC = new YAHOO.widget.AutoComplete("club", "orgContainer", oDS);
-		oAC.prehighlightClassName = "yui-ac-prehighlight";
-		oAC.useShadow = true;
-		return {
-			oDS: oDS,
-			oAC: oAC
-		};
-	}();
-</script>
-<?php
-if (intval($seasonInfo['isnationalteams'])) {
-	echo TranslationScript("name");
-}
-contentEnd();
-pageEnd();
-?>
+$smarty->assign("pools", $pools);
+$smarty->assign("club_name", ClubName($tp['club']));
+$smarty->assign("series_name", SeriesName($seriesId));
+$smarty->assign("countries", CountryList());

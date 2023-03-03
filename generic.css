@@ -46,3 +46,8 @@
     border-top-style:solid;
     border-top-width: 1px;
 }
+
+#orgAutoComplete {
+    width: 26em;
+    padding-bottom: 2em;
+}
