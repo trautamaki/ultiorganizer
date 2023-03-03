@@ -3,101 +3,59 @@ include_once 'menufunctions.php';
 include_once 'lib/club.functions.php';
 include_once 'lib/reservation.functions.php';
 include_once 'lib/plugin.functions.php';
-$html = "";
 
-//common page
 $title = _("Database administration");
+$smarty->assign("title", $title);
 $LAYOUT_ID = DBADMIN;
-pageTopHeadOpen($title);
-pageTopHeadClose($title, false);
-leftMenu($LAYOUT_ID);
-contentStart();
+
 if (isSuperAdmin()) {
-
-	$html .= "<p><span class='profileheader'>" . _("Database administration") . ": </span><br/>\n";
-	$html .= "<a href='?view=admin/executesql'>&raquo; " . _("Run SQL") . "</a><br/>\n";
-	$html .= "<a href='?view=admin/dbbackup'>&raquo; " . _("Backup") . "</a><br/>\n";
-	$html .= "<a href='?view=admin/dbrestore'>&raquo; " . _("Restore") . "</a><br/>\n";
-	$html .= "<a href='?view=admin/dbequalize'>&raquo; " . _("Equalization") . "</a><br/>\n";
-	$html .= "</p>\n";
-
 	$types = array("import", "updater", "simulator", "generator");
-
+	$plugins_per_type = array();
 	foreach ($types as $type) {
 		$plugins = GetPluginList("database", $type);
-		if (count($plugins)) {
-			$html .= "<p><span class='profileheader'>" . _("Plugins") . " ($type): </span><br/>\n";
-			foreach ($plugins as $plugin) {
-				$html .= "<a href='?view=" . $plugin['file'] . "'>&raquo; " . $plugin['title'] . "</a><br/>\n";
-			}
-			$html .= "</p>\n";
-		}
+		$plugins_per_type[$type] = $plugins;
 	}
-
+	$smarty->assign("types", $types);
+	$smarty->assign("plugins_per_type", $plugins_per_type);
 	$total_size = 0;
 	$result = GetDatabase()->DBQuery("SHOW TABLE STATUS");
-	$html .= "<p><span class='profileheader'>" . _("Tables") . ": </span></p>\n";
-	$html .= "<table>";
-	$html .= "<tr><th>" . _("Name") . "</th>";
-	$html .= "<th>" . _("Rows") . "</th>";
-	$html .= "<th>" . _("avg. row length") . "</th>";
-	$html .= "<th>" . _("Data") . "</th>";
-	$html .= "<th>" . _("Index") . "</th>";
-	$html .= "<th>" . _("Auto Increment") . "</th>";
-	$html .= "<th>" . _("Updated") . "</th>";
-	$html .= "</tr>\n";
+	$table_statuses = array();
 	while ($row = GetDatabase()->FetchAssoc($result)) {
 		if (substr($row['Name'], 0, 3) == 'uo_') {
-			$sql = urlencode("SELECT * FROM " . $row['Name']);
-			$html .= "<tr>";
-			$html .= "<td><a href='?view=admin/executesql&amp;sql=$sql'>" . $row['Name'] . "</a></td>";
-			$html .= "<td>" . $row['Rows'] . "</td>";
-			$html .= "<td>" . $row['Avg_row_length'] . "</td>";
-			$html .= "<td>" . $row['Data_length'] . "</td>";
-			$html .= "<td>" . $row['Index_length'] . "</td>";
-			$html .= "<td>" . $row['Auto_increment'] . "</td>";
-			$html .= "<td>" . $row['Update_time'] . "</td>";
-			$html .= "</tr>\n";
+			$row['sql'] = urlencode("SELECT * FROM " . $row['Name']);
+			$table_statuses[] = $row;
 			$total_size += intval($row['Data_length']) + intval($row['Index_length']);
 		}
 	}
-	$sql = urlencode("SHOW TABLE STATUS");
-	$html .= "<tr><td colspan='5'>" . _("Execute") . ": <a href='?view=admin/executesql&amp;sql=$sql'>" . "SHOW TABLE STATUS" . "</a></td></tr>";
+	$smarty->assign("table_statuses", $table_statuses);
+	$smarty->assign("total_size", $total_size);
 
-	$html .= "</table>";
-	$html .= "<p>" . _("Database size") . ": " . $total_size . " " . _("bytes") . "</p>\n";
-
-	$html .= "<p><span class='profileheader'>" . _("Statistics") . ": </span><br/>\n";
 	$mysql_stat = GetDatabase()->Stat();
 	$tot_count = preg_match_all('/([a-z ]+):\s*([0-9.]+)/i', $mysql_stat, $matches);
+	$stat_array = array();
 	for ($i = 0; $i < $tot_count; $i++) {
 		$info1 = trim($matches[1][$i]);
 		$info2 = trim($matches[2][$i]);
-		$html .= "&nbsp;" . $info1 . ": " . $info2 . "<br/>\n";
+		$stat_array[] = $info1 . ": " . $info2;
 	}
-	$sql = urlencode("SHOW GLOBAL STATUS");
-	$html .= "&nbsp;" . _("Execute") . ": <a href='?view=admin/executesql&amp;sql=$sql'>" . "SHOW GLOBAL STATUS" . "</a>";
-	$html .= "</p>\n";
+	$smarty->assign("stat_array", $stat_array);
 
-	$html .= "<p><span class='profileheader'>" . _("Client Library version") . ": </span>" . GetDatabase()->GetClientInfo() . "<br/>\n";
-	$html .= "<span class='profileheader'>" . _("Type of connection in use") . ": </span>" . GetDatabase()->GetHostInfo() . "<br/>\n";
-	$html .= "<span class='profileheader'>" . _("Protocol version") . ": </span>" . GetDatabase()->GetProtocolVersion() . "<br/>\n";
-	$html .= "<span class='profileheader'>" . _("Server version") . ": </span>" . GetDatabase()->GetServerInfo() . "</p>\n";
+	$smarty->assign("client_info", GetDatabase()->GetClientInfo());
+	$smarty->assign("host_info", GetDatabase()->GetHostInfo());
+	$smarty->assign("protocol_version", GetDatabase()->GetProtocolVersion());
+	$smarty->assign("server_info", GetDatabase()->GetServerInfo());
 
-	$html .= "<p><span class='profileheader'>" . _("Character set and collation") . ": </span><br/>\n";
 	$result = GetDatabase()->DBQuery("SHOW VARIABLES LIKE 'character_set\_%';");
+	$char_set_array = array();
 	while ($row = GetDatabase()->FetchAssoc($result)) {
-		$html .= "&nbsp;" . $row['Variable_name'] . ": " . $row['Value'] . "<br/>\n";
+		$char_set_array[] = $row;
 	}
-	$result = GetDatabase()->DBQuery("SHOW VARIABLES LIKE 'collation\_%';");
-	while ($row = GetDatabase()->FetchAssoc($result)) {
-		$html .= "&nbsp;" . $row['Variable_name'] . ": " . $row['Value'] . "<br/>\n";
-	}
-	$html .= "</p>\n";
-} else {
-	$html .= "<p>" . _("User credentials does not match") . "</p>\n";
-}
-echo $html;
+	$smarty->assign("char_set_array", $char_set_array);
 
-contentEnd();
-pageEnd();
+	$result = GetDatabase()->DBQuery("SHOW VARIABLES LIKE 'collation\_%';");
+	$collation_array = array();
+	while ($row = GetDatabase()->FetchAssoc($result)) {
+		$collation_array[] = $row;
+	}
+	$smarty->assign("collation_array", $collation_array);
+}
