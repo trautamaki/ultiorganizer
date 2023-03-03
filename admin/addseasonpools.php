@@ -7,7 +7,6 @@ $template = 0;
 $addmore = false;
 
 $poolId = intval($_GET["pool"]);
-$smarty->assign("pool_id", $poolId);
 $info = PoolInfo($poolId);
 $smarty->assign("info", $info);
 $season = $info['season'];
@@ -68,6 +67,7 @@ if (!empty($_POST['add'])) {
 		);
 	}
 }
+$smarty->assign("pool_id", $poolId);
 $smarty->assign("messages", $messages);
 
 if (!empty($_POST['save'])) {
