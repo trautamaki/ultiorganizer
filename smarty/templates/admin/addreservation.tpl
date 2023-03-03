@@ -93,12 +93,12 @@
     <!-- </tr> -->
     <tr>
       <td>{t}Grouping name{/t}:</td>
-      <td>{$res.translated_field_resgroup}</td>
+      <td>{include file="translated_field.tpl" field_name="reservationgroup" value=$res.reservationgroup}</td>
     </tr>
     <tr>
       <td>{t}Fields{/t}:</td>
       <td>
-        {$res.translated_field_field_name}
+      {include file="translated_field.tpl" field_name="fieldname" value=$res.fieldname}
         {if !$add_more}
         {t}Enter separate field numbers (1,2,3) or multiple fields (1-30){/t}
         {/if}
@@ -191,7 +191,7 @@
   }();
 </script>
 
-{$translationscript_resgroup nofilter}
-{$translationscript_fieldname nofilter}
+{include file="translation_script.tpl" field_name="reservationgroup"}
+{include file="translation_script.tpl" field_name="fieldname"}
 
 {include file="footer.tpl"}

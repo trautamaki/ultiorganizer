@@ -109,9 +109,6 @@ if ($reservationId > 0) {
   }
 }
 
-$res['translated_field_resgroup'] = TranslatedField("reservationgroup", $res['reservationgroup']);
-$res['translated_field_field_name'] = TranslatedField("fieldname", $res['fieldname']);
-
 if ($res['location'] > 0) {
   $location_info = LocationInfo($res['location']);
   $res['location_name'] = utf8entities($location_info['name']);
@@ -131,5 +128,3 @@ if (isSuperAdmin()) {
 }
 
 $smarty->assign("res", $res);
-$smarty->assign("translationscript_resgroup", TranslationScript("reservationgroup"));
-$smarty->assign("translationscript_fieldname", TranslationScript("fieldname"));
